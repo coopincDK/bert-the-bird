@@ -26,7 +26,7 @@ async def run_phone(browser, port, width, height):
     page.on('console', lambda message: errors.append(f'console: {message.text}') if message.text.startswith('EDM error') else None)
     await page.add_init_script("window.addEventListener('error', e => console.error(`EDM error ${e.filename}:${e.lineno}:${e.colno} ${e.message} ${e.error?.stack || ''}`));")
     page.on('request', lambda request: posts.append(request.url) if request.method == 'POST' else None)
-    await page.goto(f'http://127.0.0.1:{port}/?qa=1&noclip=1&rev=worlds-relay-38', wait_until='networkidle')
+    await page.goto(f'http://127.0.0.1:{port}/?qa=1&noclip=1&rev=worlds-relay-39', wait_until='networkidle')
     await page.wait_for_function("document.querySelector('#loading').classList.contains('hidden')")
     await page.locator('#play-btn').click()
     button = page.locator('#edm-event-btn')
