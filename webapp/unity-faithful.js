@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-45';
+    const BUILD_VERSION = 'worlds-relay-46';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2517,12 +2517,13 @@
             return;
         }
         if (currentLevel.kind === 'jungle') {
-            const spider = gameRandom() < (10 / 11);
+            const spider = gameRandom() < 0.75;
             const scale = spider ? randomBetween(0.9, 1.12) : randomBetween(1.2, 1.5);
             const width = (spider ? 124 : 76) * scale;
             const height = (spider ? 87 : 119) * scale;
             const fromTop = spider;
-            const groundAnchor = randomBetween(610, 646);
+            // Snakes sit on a rock that rises above the foreground grass.
+            const groundAnchor = spider ? randomBetween(610, 646) : randomBetween(525, 560);
             const y = fromTop ? randomBetween(64, 190) : groundAnchor - height;
             obstacles.push({
                 x, y, width, height, kind: spider ? 'jungle-spider' : 'jungle-snake',
@@ -4654,9 +4655,9 @@
             }
         } else if (obstacle.kind === 'jungle-snake') {
             if (assets.jungleStone && obstacle.baseBottom != null) {
-                const perchWidth = Math.min(138, obstacle.width * 1.3);
-                ctx.drawImage(assets.jungleStone, obstacle.x + (obstacle.width - perchWidth) / 2,
-                    obstacle.baseBottom - 47, perchWidth, 65);
+                // The snake coils on top of a real rock (art 180×140, kept in proportion).
+                const rock = BertCollision.snakeRock(obstacle);
+                ctx.drawImage(assets.jungleStone, rock.x, rock.y, rock.width, rock.height);
             }
             const idleSequence = [0, 1, 2, 3, 4, 5, 6, 6, 5, 4, 0, 3, 0, 3];
             const frame = obstacle.attackFrame == null

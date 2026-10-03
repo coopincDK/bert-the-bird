@@ -77,6 +77,13 @@
         return { type: 'circle', x, y, radius };
     }
 
+    /** Rock under a jungle snake: art 180×140, top just under the snake's coil. */
+    function snakeRock(obstacle) {
+        const width = Math.max(150, obstacle.width * 1.6);
+        const height = width * 140 / 180;
+        return { x: obstacle.x + (obstacle.width - width) / 2, y: obstacle.baseBottom - 18, width, height };
+    }
+
     function rainbowSegments(obstacle) {
         const points = RAINBOW_EDGE.map(([sourceX, sourceY]) => {
             const normalizedX = (sourceX - RAINBOW_BOUNDS.minX) / (RAINBOW_BOUNDS.maxX - RAINBOW_BOUNDS.minX);
@@ -223,12 +230,18 @@
             const y = obstacle.renderY ?? obstacle.y;
             const width = obstacle.renderWidth ?? obstacle.width;
             const height = obstacle.renderHeight ?? obstacle.height;
-            return [box(
+            const shapes = [box(
                 x + width * 0.1,
                 y + height * 0.08,
                 width * 0.8,
                 height * 0.84,
             )];
+            // The rock under the snake is solid too.
+            if (obstacle.baseBottom != null) {
+                const rock = snakeRock(obstacle);
+                shapes.push(box(rock.x + rock.width * 0.08, rock.y + rock.height * 0.12, rock.width * 0.84, rock.height * 0.88));
+            }
+            return shapes;
         }
 
         if (obstacle.kind === 'happy-rainbow') {
@@ -313,5 +326,6 @@
         birdHitsObstacle,
         drawDebug,
         obstacleShapes,
+        snakeRock,
     });
 })();
