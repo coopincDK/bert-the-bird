@@ -98,7 +98,7 @@ assert.equal(powers.score(19, 'Hyper'), 19);
 assert.equal(powers.isFlap('default', 'Flap'), true);
 assert.equal(powers.isFlap('flappy', null), true);
 assert.equal(powers.isFlap('default', null), false);
-assert.equal(powers.DURATION.Flap, 30);
+assert.equal(powers.DURATION.Flap, 10);
 for (const input of [{ up: true, down: false }, { up: false, down: true }]) {
     let normal = 0;
     let heavy = 0;

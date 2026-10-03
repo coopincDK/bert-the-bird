@@ -343,6 +343,13 @@
         return save();
     }
 
+    /** A feather picked up out on a level. Capped so it can never be farmed in bulk. */
+    function addFeathers(amount = 1) {
+        const value = Math.max(0, Math.min(5, Math.floor(Number(amount) || 0)));
+        if (value) data.feathers += value;
+        return save();
+    }
+
     function recordDuel(won) {
         if (won) {
             data.duels.wins += 1;
@@ -444,6 +451,7 @@
     window.BertHaptics?.setEnabled(data.settings.haptics);
     save();
     window.BertMeta = Object.freeze({
+        addFeathers,
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,
         continueSpinOffer, buyContinueSpin, settleContinueSpin,

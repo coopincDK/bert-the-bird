@@ -48,11 +48,14 @@
         route.gates.forEach((gate) => {
             Object.freeze(gate.openingBounds);
             Object.freeze(gate.frameBounds);
+            Object.freeze(gate.bob);
+            Object.freeze(gate.sway);
             Object.freeze(gate);
         });
         Object.freeze(route.gates);
         Object.freeze(route.target.visibleBounds);
         Object.freeze(route.target.contactBounds);
+        Object.freeze(route.target.bob);
         Object.freeze(route.target);
         return Object.freeze(route);
     }
@@ -61,17 +64,58 @@
      * Build a short deterministic course. worldDistance is the integration
      * timeline: renderers move each marker toward Bert as worldDistance rises.
      */
-    function createRoute(seed = 0) {
+    function seededRandom(seed) {
+        let value = (Math.imul((seed >>> 0) ^ 0x9e3779b9, 0x85ebca6b) >>> 0) || 1;
+        value = (Math.imul(value ^ (value >>> 13), 0xc2b2ae35) >>> 0) || 1;
+        return () => {
+            value = (value * 1664525 + 1013904223) >>> 0;
+            return value / 4294967296;
+        };
+    }
+
+    /**
+     * Endless rounds. Round 1 is the original fixed course. Every later round
+     * starts at startDistance, shrinks the painted ring (art and collider scale
+     * together), shortens the clock and adds vertical, then horizontal motion.
+     */
+    function roundSettings(round) {
+        const r = Math.max(1, Math.trunc(numberOr(round, 1)));
+        return {
+            round: r,
+            scale: clamp(1 - 0.055 * (r - 1), 0.66, 1),
+            timeLimit: r === 1 ? TIME_LIMIT : clamp(TIME_LIMIT - 4 * (r - 1), 20, TIME_LIMIT),
+            spacing: r === 1 ? 1500 : clamp(1500 - 70 * (r - 1), 1050, 1500),
+            bobAmplitude: r < 2 ? 0 : clamp(35 * (r - 1), 0, 120),
+            bobSpeed: r < 2 ? 0 : clamp(0.9 + 0.12 * (r - 2), 0.9, 1.8),
+            swayAmplitude: r < 4 ? 0 : clamp(60 * (r - 3), 0, 220),
+            swaySpeed: r < 4 ? 0 : clamp(0.7 + 0.1 * (r - 4), 0.7, 1.4),
+            bellBob: r < 3 ? 0 : clamp(30 * (r - 2), 0, 110),
+        };
+    }
+
+    function createRoute(seed = 0, round = 1, startDistance = 0) {
         const routeSeed = normaliseSeed(seed);
-        const gates = GATE_CENTERS.map((centerY, index) => {
+        const settings = roundSettings(round);
+        const start = Math.max(0, numberOr(startDistance, 0));
+        const random = seededRandom(routeSeed ^ Math.imul(settings.round, 0x27d4eb2d));
+        const firstRound = settings.round === 1;
+        const centers = firstRound ? GATE_CENTERS : GATE_CENTERS.map(() => Math.round(
+            CORRIDOR.top + 60 + random() * (CORRIDOR.bottom - CORRIDOR.top - 120)));
+        const gates = centers.map((centerY, index) => {
             // Fixed art has a fixed opening. Never move the lethal edge invisibly
             // between seeds while rendering the same painted cloud ring.
-            const openingRadius = 106;
+            const openingRadius = Math.round(106 * settings.scale);
             const passRadius = openingRadius - BIRD.visibleBody.halfHeight;
             const previewX = 1000;
+            const capDepth = Math.round(GATE_CAP_DEPTH * settings.scale);
             return {
                 id: index + 1,
-                worldDistance: GATE_DISTANCES[index],
+                round: settings.round,
+                scale: settings.scale,
+                capDepth,
+                bob: { amplitude: settings.bobAmplitude, speed: settings.bobSpeed, phase: random() * Math.PI * 2 },
+                sway: { amplitude: settings.swayAmplitude, speed: settings.swaySpeed, phase: random() * Math.PI * 2 },
+                worldDistance: firstRound ? GATE_DISTANCES[index] : start + 1400 + index * settings.spacing,
                 centerX: previewX,
                 centerY,
                 openingRadius,
@@ -85,14 +129,15 @@
                 frameBounds: {
                     left: previewX - GATE_FRAME - 16,
                     right: previewX + GATE_FRAME + 16,
-                    top: centerY - openingRadius - GATE_CAP_DEPTH,
-                    bottom: centerY + openingRadius + GATE_CAP_DEPTH,
+                    top: centerY - openingRadius - capDepth,
+                    bottom: centerY + openingRadius + capDepth,
                 },
             };
         });
         const target = {
             ...TARGET,
-            worldDistance: TARGET_DISTANCE,
+            bob: { amplitude: settings.bellBob, speed: 1.1, phase: random() * Math.PI * 2 },
+            worldDistance: firstRound ? TARGET_DISTANCE : start + 1400 + 3 * settings.spacing,
             contactRadius: TARGET.contactHeight / 2,
             hitRadius: TARGET.contactHeight / 2 + BIRD.visibleBody.halfHeight,
             visibleBounds: {
@@ -115,10 +160,31 @@
             view: VIEW,
             bird: BIRD,
             corridor: CORRIDOR,
-            timeLimit: TIME_LIMIT,
+            round: settings.round,
+            startDistance: start,
+            timeLimit: settings.timeLimit,
             gates,
             target,
         });
+    }
+
+    /** Where a (possibly moving) gate is at a given world time. */
+    function gatePose(gate, time = 0) {
+        const t = numberOr(time, 0);
+        const bob = gate.bob && gate.bob.amplitude
+            ? Math.sin(t * gate.bob.speed + gate.bob.phase) * gate.bob.amplitude : 0;
+        const sway = gate.sway && gate.sway.amplitude
+            ? Math.sin(t * gate.sway.speed + gate.sway.phase) * gate.sway.amplitude : 0;
+        const centerY = clamp(gate.centerY + bob, CORRIDOR.top + gate.openingRadius * 0.4,
+            CORRIDOR.bottom - gate.openingRadius * 0.4);
+        return { centerY, worldDistance: gate.worldDistance + sway };
+    }
+
+    function targetPose(target, time = 0) {
+        const t = numberOr(time, 0);
+        const bob = target.bob && target.bob.amplitude
+            ? Math.sin(t * target.bob.speed + target.bob.phase) * target.bob.amplitude : 0;
+        return { centerY: target.centerY + bob, worldDistance: target.worldDistance };
     }
 
     function routeGate(route, gateIndex) {
@@ -132,7 +198,7 @@
      * It never mutates the route; collision with the painted top/bottom caps
      * is checked separately before recording a passage or a harmless bypass.
      */
-    function gatePass(route, gateIndex, birdCenterY, time) {
+    function gatePass(route, gateIndex, birdCenterY, time, poseTime = 0) {
         const gate = routeGate(route, gateIndex);
         const elapsed = elapsedSeconds(time);
         if (!gate) {
@@ -141,7 +207,8 @@
                 elapsed, worldDistance: null,
             });
         }
-        const offset = Math.abs(numberOr(birdCenterY, Infinity) - gate.centerY);
+        const pose = gatePose(gate, poseTime);
+        const offset = Math.abs(numberOr(birdCenterY, Infinity) - pose.centerY);
         const withinTime = elapsed <= route.timeLimit;
         const passed = withinTime && offset <= gate.passRadius;
         const progress = clamp(1 - offset / gate.passRadius, 0, 1);
@@ -151,7 +218,7 @@
         const score = passed ? 25 + Math.round(75 * progress) : 0;
         return Object.freeze({
             passed, quality, score, offset, elapsed, worldDistance: gate.worldDistance,
-            gateIndex: Math.trunc(numberOr(gateIndex, -1)), centerY: gate.centerY,
+            gateIndex: Math.trunc(numberOr(gateIndex, -1)), centerY: pose.centerY,
             passRadius: gate.passRadius,
         });
     }
@@ -160,19 +227,24 @@
      * above or below the ring is not a collision. Horizontal contact is
      * conservative at the ring plane rather than across the whole sky art.
      */
-    function frameContact(route, gateIndex, birdCenterY, gateScreenX, birdCenterX, birdRadius = 31) {
+    function frameContact(route, gateIndex, birdCenterY, gateScreenX, birdCenterX, birdRadius = 31, poseTime = 0) {
         const gate = routeGate(route, gateIndex);
         if (!gate) return Object.freeze({ contact: false, side: null });
         const radius = clamp(numberOr(birdRadius, 31), 0, 40);
         const nearPlane = Math.abs(numberOr(gateScreenX, Infinity) - numberOr(birdCenterX, -Infinity))
             <= GATE_FRAME + radius;
         const y = numberOr(birdCenterY, Infinity);
-        const topOfCap = gate.centerY - gate.openingRadius - GATE_CAP_DEPTH;
-        const bottomOfCap = gate.centerY - gate.openingRadius;
-        const topContact = nearPlane && y + radius >= topOfCap && y - radius <= bottomOfCap;
-        const topOfBottomCap = gate.centerY + gate.openingRadius;
-        const bottomOfBottomCap = topOfBottomCap + GATE_CAP_DEPTH;
-        const bottomContact = nearPlane && y + radius >= topOfBottomCap && y - radius <= bottomOfBottomCap;
+        const centerY = gatePose(gate, poseTime).centerY;
+        const capDepth = gate.capDepth || GATE_CAP_DEPTH;
+        const frame = GATE_FRAME * (gate.scale || 1);
+        const nearRing = Math.abs(numberOr(gateScreenX, Infinity) - numberOr(birdCenterX, -Infinity))
+            <= frame + radius;
+        const topOfCap = centerY - gate.openingRadius - capDepth;
+        const bottomOfCap = centerY - gate.openingRadius;
+        const topContact = nearPlane && nearRing && y + radius >= topOfCap && y - radius <= bottomOfCap;
+        const topOfBottomCap = centerY + gate.openingRadius;
+        const bottomOfBottomCap = topOfBottomCap + capDepth;
+        const bottomContact = nearPlane && nearRing && y + radius >= topOfBottomCap && y - radius <= bottomOfBottomCap;
         return Object.freeze({ contact: topContact || bottomContact,
             side: topContact ? 'top' : bottomContact ? 'bottom' : null });
     }
@@ -188,10 +260,10 @@
      * End the relay at the hanging bell. A body-to-contact overlap is required:
      * a near-but-visible miss earns zero final score but still returns completion.
      */
-    function finish(route, birdCenterY, elapsed, gatesHit) {
+    function finish(route, birdCenterY, elapsed, gatesHit, poseTime = 0) {
         const time = elapsedSeconds(elapsed);
         const gates = gateCount(gatesHit, route.gates.length);
-        const offset = Math.abs(numberOr(birdCenterY, Infinity) - route.target.centerY);
+        const offset = Math.abs(numberOr(birdCenterY, Infinity) - targetPose(route.target, poseTime).centerY);
         const timedOut = time > route.timeLimit;
         const hit = !timedOut && offset <= route.target.hitRadius;
         const precision = hit ? clamp(1 - offset / route.target.hitRadius, 0, 1) : 0;
@@ -228,7 +300,7 @@
 
     const BertSkyRelay = Object.freeze({
         VIEW, BIRD, CORRIDOR, TIME_LIMIT, GATE_DISTANCES, GATE_CENTERS, TARGET_DISTANCE,
-        createRoute, gatePass, frameContact, finish,
+        createRoute, roundSettings, gatePose, targetPose, gatePass, frameContact, finish,
     });
 
     if (typeof window !== 'undefined') window.BertSkyRelay = BertSkyRelay;

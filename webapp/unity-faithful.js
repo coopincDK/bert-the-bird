@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-12';
+    const BUILD_VERSION = 'worlds-relay-13';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -22,7 +22,8 @@
     const FOCUS_MIN_SPEED = 0.6;
     const FOCUS_SPEED_RATIO = 0.67;
     const FOCUS_DURATION_SECONDS = 30;
-    const FOCUS_COUNTDOWN_SECONDS = 3;
+    // Focus starts instantly; its soundtrack is decoded at load time.
+    const FOCUS_COUNTDOWN_SECONDS = 0;
     const FOCUS_ENTER_SECONDS = 0.65;
     const GENERATED_HERO_IDS = new Set(['block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism']);
     const GENERATED_FLIGHT_SEQUENCE = Object.freeze([0, 2, 4, 2]);
@@ -347,13 +348,14 @@
         'star', 'blueGlow', 'whiteGlow', 'yellowGlow', 'lightning',
         'powerupWing', 'shieldPickup', 'magnetPickup', 'focusPickup', 'shieldCharge',
         'feather', 'shieldSplinter', 'shieldSplinterOrange',
+        'eventMetal', 'eventHyper', 'eventDouble', 'eventFlap',
     ];
     const LEVEL_ASSET_KEYS = Object.freeze({
         desert: ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'],
         edm: ['edmStage', 'edmMirror', 'edmSpeaker', 'edmTruss', 'edmCenterRig', 'edmCrowdBall', 'edmCrowd'],
         birdRun: ['happySky', 'birdRunBird', 'birdRunSwift', 'birdRunKite', 'birdRunCloud'],
         stormline: ['stormSky', 'stormSail', 'stormSock', 'stormUmbrella', 'stormBranch',
-            'stormSign', 'stormCar', 'eventMetal', 'eventHyper', 'eventDouble', 'eventFlap'],
+            'stormSign', 'stormCar'],
         skyRelay: ['happySky', 'happyMg', 'relayGate', 'relayGateFront', 'relayChime'],
         tunnel: ['tunnelSky', 'tunnelBg1', 'tunnelBg2', 'tunnelMg', 'tunnelFg'],
         flappy: ['flappySky', 'flappyBg', 'flappyMg', 'flappyFg', 'flappyPipe', 'flappyPipeBlue', 'flappyPipeGold', 'flappyCopper', 'flappyPearl'],
@@ -512,6 +514,8 @@
         difficulty: 1,
         nextSpawnAt: 0,
         nextPowerupAt: 20,
+        nextFeatherAt: 40,
+        feathersPicked: 0,
         deathCountdown: 0,
         score: 0,
         streak: 0,
@@ -519,7 +523,7 @@
         highscore: 0,
         activePowerup: null,
         powerupEndsAt: 0,
-        powerupReadyAt: { Shield: 0, Magnet: 0, Focus: 0, Guard: 0 },
+        powerupReadyAt: { Shield: 0, Magnet: 0, Focus: 0, Guard: 0, Heavy: 0, Hyper: 0, Double: 0, Flap: 0 },
         eventPickupIndex: 0,
         shieldCharges: 0,
         streakGuardCharges: 0,
@@ -1231,11 +1235,17 @@
         state.rngState = state.seed;
         state.relayRoute = currentLevel === SKY_RELAY_EVENT ? BertSkyRelay.createRoute(state.seed) : null;
         state.relayGates = [];
+        state.relayBanked = 0;
+        state.relayRoundStart = 0;
+        state.relayPassedTotal = 0;
         state.relayResult = null;
         state.relayFlashUntil = 0;
         state.relayMessage = '';
         state.relayFinishDelay = 0;
         state.nextPowerupAt = currentLevel === STORMLINE_EVENT ? 8 : 15 + gameRandom() * 10;
+        state.nextFeatherAt = 35 + gameRandom() * 25;
+        state.feathersPicked = 0;
+        state.featherFlashUntil = 0;
         state.deathCountdown = 0;
         state.score = 0;
         state.streak = 0;
@@ -1243,7 +1253,7 @@
         state.highscore = loadHighscore(currentLevel.id);
         state.activePowerup = null;
         state.powerupEndsAt = 0;
-        state.powerupReadyAt = { Shield: 0, Magnet: 0, Focus: 0, Guard: 0 };
+        state.powerupReadyAt = { Shield: 0, Magnet: 0, Focus: 0, Guard: 0, Heavy: 0, Hyper: 0, Double: 0, Flap: 0 };
         state.eventPickupIndex = 0;
         state.shieldCharges = 0;
         state.streakGuardCharges = 0;
@@ -1284,6 +1294,7 @@
         state.rescueWheelRotation = 0;
         state.worldBadge = null;
         state.worldBadgeUntil = 0;
+        state.levelUpStage = 1;
         state.worldFinishDelay = 0;
         state.dailyKey = options.dailyKey || null;
         state.dailyTarget = Number(options.dailyTarget) || 0;
@@ -1349,12 +1360,22 @@
         playAudio(levelMusicName());
     }
 
+    // Endless pacing: the stage ladder is climbed 35 % faster than the Unity
+    // original, and after the last stage the game keeps getting harder.
+    const STAGE_TEMPO = 1.35;
     function currentStageValues() {
-        return BertProgression.stageValues(currentLevel.startSpeed, currentLevel.stages, state.stageClock);
+        const values = BertProgression.stageValues(currentLevel.startSpeed, currentLevel.stages, state.stageClock);
+        const stages = currentLevel.stages || [];
+        if (!stages.length || values.progress < 1 || values.index < stages.length - 1) return values;
+        const total = stages.reduce((sum, stage) => sum + Math.max(Number(stage.duration) || 0, 0.001), 0);
+        const overtimeMinutes = Math.max(0, state.stageClock - total) / 60;
+        const growth = Math.min(1.6, 1 + 0.1 * overtimeMinutes);
+        return { ...values, speed: values.speed * growth,
+            difficulty: values.difficulty * Math.min(1.7, 1 + 0.12 * overtimeMinutes) };
     }
 
     function updateStages(delta) {
-        if (state.focusPhase === 'idle' || state.focusPhase === 'countdown') state.stageClock += delta;
+        if (state.focusPhase === 'idle' || state.focusPhase === 'countdown') state.stageClock += delta * STAGE_TEMPO;
         const values = currentStageValues();
         state.stageIndex = values.index;
         state.stageElapsed = values.progress;
@@ -1627,10 +1648,8 @@
             const achievement = BertWorldMastery.award(currentLevel.id, localStorage);
             state.worldBadge = achievement.badge?.label || null;
             state.worldBadgeUntil = state.elapsed + 3;
-            state.worldFinishDelay = 1.85;
-            state.phase = 'world-finish';
-            clearTouchDirection();
-            stopMusic();
+            // Endless: the badge is a milestone, never the end of the run.
+            state.levelUpStage = (state.levelUpStage || 1) + 1;
             burst(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2, '#ffe6a0', 12);
             playAudio('point');
             BertMeta.haptic('reward');
@@ -1639,12 +1658,19 @@
         for (const collectible of collectibles) {
             collectible.x -= scroll * (collectible.motion?.scrollFactor || 1);
             collectible.spin += delta * 5;
-            if (collectible.kind === 'powerup' && collectible.motion) {
+            if ((collectible.kind === 'powerup' || collectible.kind === 'feather') && collectible.motion) {
                 collectible.age += delta;
                 const corridor = collectible.motion.tunnel
                     ? BertTunnel.profileAt(state.worldDistance + collectible.x, state.difficulty, currentLevel.variant).center
                     : collectible.motion.baseY;
                 collectible.y = BertCollectibleMotion.yAt(collectible.motion, collectible.age, corridor);
+            }
+            if (collectible.kind === 'star' && collectible.drift) {
+                collectible.age = (collectible.age || 0) + delta;
+                const drift = collectible.drift;
+                const next = Math.sin(collectible.age * drift.speed + drift.phase) * drift.amplitude;
+                collectible.y += next - drift.offset;
+                drift.offset = next;
             }
             if (interactive && state.activePowerup === POWERUP.MAGNET && collectible.kind === 'star') {
                 const dx = bird.x + BIRD.width / 2 - collectible.x;
@@ -1666,6 +1692,7 @@
                 if (circleHitsRect(liveCollider, liveCollider.radius, collectibleBounds)) {
                     collectible.collected = true;
                     if (collectible.kind === 'powerup') activatePowerup(collectible.type);
+                    else if (collectible.kind === 'feather') collectFeather(collectible);
                     else collectStar(collectible);
                 }
             }
@@ -1700,6 +1727,12 @@
                 state.nextPowerupAt = currentLevel === STORMLINE_EVENT
                     ? state.elapsed + 13 + gameRandom() * 4
                     : state.elapsed + 15 + gameRandom() * 10;
+            }
+
+            // A rare feather for the nest economy, about once a minute (not in events).
+            if (!isEventLevel() && state.elapsed >= state.nextFeatherAt) {
+                spawnFeather();
+                state.nextFeatherAt = state.elapsed + 50 + gameRandom() * 25;
             }
 
             for (const obstacle of obstacles) {
@@ -1875,8 +1908,12 @@
         const experimental = currentLevel === STORMLINE_EVENT;
         const available = experimental
             ? [BertEventPowerups.nextType(state.eventPickupIndex, state.seed)]
-            : [POWERUP.SHIELD, POWERUP.MAGNET, POWERUP.FOCUS]
-                .filter((type) => state.powerupReadyAt[type] <= state.elapsed);
+            : [POWERUP.SHIELD, POWERUP.MAGNET, POWERUP.FOCUS,
+                // Mixed blessings: Tung and Flappy-styring make it harder,
+                // Hyperfart is risky, Point x2 is a bonus. From 20 s in.
+                ...(state.elapsed >= 20 ? [POWERUP.HEAVY, POWERUP.HYPER, POWERUP.DOUBLE,
+                    ...(currentLevel.mode === MODE.FLAPPY ? [] : [POWERUP.FLAP])] : [])]
+                .filter((type) => (state.powerupReadyAt[type] ?? 0) <= state.elapsed);
         const guardAvailable = !experimental && state.elapsed >= 30 && state.streakGuardCharges === 0 && state.powerupReadyAt.Guard <= state.elapsed;
         const guardRoll = guardAvailable && gameRandom() < 0.12;
         if (available.length === 0 && !guardRoll) return false;
@@ -1896,6 +1933,29 @@
         return true;
     }
 
+    function spawnFeather() {
+        const rightmost = obstacles.reduce((x, obstacle) => Math.max(x, obstacle.x + obstacle.width), -Infinity);
+        const y = randomBetween(170, VIEW.height - 170);
+        const motion = BertCollectibleMotion.create(currentLevel.kind, y, gameRandom);
+        const x = BertCollectibleMotion.safeSpawnX(VIEW.width, rightmost, bird.x, motion.scrollFactor);
+        const corridor = motion.tunnel
+            ? BertTunnel.profileAt(state.worldDistance + x, state.difficulty, currentLevel.variant).center
+            : motion.baseY;
+        collectibles.push({ x, y: BertCollectibleMotion.yAt(motion, 0, corridor), width: 70, height: 70,
+            kind: 'feather', spin: 0, age: 0, motion, collected: false });
+    }
+
+    function collectFeather(collectible) {
+        state.feathersPicked += 1;
+        BertMeta.addFeathers(1);
+        playAudio('point');
+        BertMeta.haptic('star');
+        burst(collectible.x, collectible.y, '#fff1c7', 10);
+        dom.powerup.textContent = '+1 FJER';
+        dom.powerup.classList.add('active');
+        state.featherFlashUntil = state.elapsed + 1.4;
+    }
+
     function makePowerupPickup(type, x, y, requestedProfile = null, preparedMotion = null) {
         const motion = preparedMotion || BertCollectibleMotion.create(currentLevel.kind, y, gameRandom, requestedProfile);
         const corridor = motion.tunnel
@@ -1906,8 +1966,19 @@
             spin: 0, age: 0, motion, collected: false };
     }
 
+    // Stars start drifting once a run heats up: more of them, and further,
+    // the harder it gets. Tunnel stars follow their own path and stay put.
+    const DRIFTING_STAR_KINDS = new Set(['desert', 'jungle', 'flappy', 'happySky', 'edm', 'stormline']);
+    function starDrift(risk) {
+        if (!DRIFTING_STAR_KINDS.has(currentLevel.kind) || state.phase !== 'playing') return null;
+        const heat = clamp((state.difficulty - 0.55) / 1.2, 0, 1);
+        if (gameRandom() > heat * 0.75) return null;
+        const reach = risk ? 22 : 30 + 50 * heat;
+        return { amplitude: reach, speed: 1.6 + gameRandom() * 1.4 + heat, phase: gameRandom() * Math.PI * 2, offset: 0 };
+    }
     function makeCollectible(x, y, risk = false) {
-        return { x, y, width: risk ? 54 : 48, height: risk ? 54 : 48, kind: 'star', spin: gameRandom() * Math.PI, collected: false, risk, value: risk ? 2 : 1 };
+        return { x, y, width: risk ? 54 : 48, height: risk ? 54 : 48, kind: 'star', spin: gameRandom() * Math.PI, collected: false, risk, value: risk ? 2 : 1,
+            age: 0, drift: starDrift(risk) };
     }
 
     function collectStar(collectible = null) {
@@ -1928,7 +1999,7 @@
 
     function activatePowerup(type) {
         if (BertEventPowerups.isPrototype(type)) {
-            if (currentLevel !== STORMLINE_EVENT || state.activePowerup) return;
+            if (state.activePowerup) return;
             if (type === POWERUP.FLAP) {
                 const previousPointer = state.activePointerId;
                 clearTouchDirection();
@@ -1973,7 +2044,9 @@
                 bird.velocity = Math.min(bird.velocity, -250);
             }
         }
-        dom.powerup.textContent = type === POWERUP.FOCUS ? 'FOKUS OM 3' : `${type.toUpperCase()} · ${duration}s`;
+        const powerupNames = { [POWERUP.SHIELD]: 'SKJOLD', [POWERUP.MAGNET]: 'MAGNET',
+            [POWERUP.HEAVY]: 'TUNG', [POWERUP.HYPER]: 'HYPERFART', [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: 'FLAPPY-STYRING' };
+        dom.powerup.textContent = type === POWERUP.FOCUS ? 'FOKUS' : `${powerupNames[type] || type.toUpperCase()} · ${duration}s`;
         dom.powerup.classList.add('active');
         burst(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2, type === POWERUP.SHIELD ? '#65d8ff' : '#ffd93b', 16);
         BertMeta.haptic('powerup');
@@ -2379,7 +2452,9 @@
     function updateHud() {
         const scoreText = String(state.score);
         const streakText = `x${state.streak}`;
-        const timeText = formatTime(state.elapsed);
+        const relayClock = currentLevel.kind === 'skyRelay' && state.relayRoute
+            ? Math.max(0, state.relayRoute.timeLimit - (state.elapsed - (state.relayRoundStart || 0))) : null;
+        const timeText = formatTime(relayClock ?? state.elapsed);
         if (dom.score.textContent !== scoreText) dom.score.textContent = scoreText;
         if (dom.streak.textContent !== streakText) dom.streak.textContent = streakText;
         setVisible(dom.streakGuard, state.streakGuardCharges > 0 && ['playing', 'prewarm', 'paused'].includes(state.phase));
@@ -2393,8 +2468,9 @@
                 ? Math.max(0, Math.ceil(state.focusRemaining))
                 : Math.max(0, Math.ceil(state.powerupEndsAt - state.elapsed));
             const label = {
-                [POWERUP.HEAVY]: 'METAL · TUNG', [POWERUP.HYPER]: 'HYPERFART',
-                [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: 'FLAPPY · TAP OVERALT',
+                [POWERUP.FOCUS]: 'FOKUS', [POWERUP.SHIELD]: 'SKJOLD', [POWERUP.MAGNET]: 'MAGNET',
+                [POWERUP.HEAVY]: 'TUNG · STIGER LANGSOMT', [POWERUP.HYPER]: 'HYPERFART',
+                [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: 'FLAPPY-STYRING · TAP',
             }[state.activePowerup] || state.activePowerup.toUpperCase();
             powerupText = state.activePowerup === POWERUP.FOCUS && state.focusPhase === 'countdown'
                 ? `FOKUS OM ${Math.max(1, Math.ceil(state.focusCountdown))}`
@@ -2412,7 +2488,11 @@
             dom.powerup.classList.remove('active');
         }
         if (state.worldBadge && state.elapsed < state.worldBadgeUntil && !powerupText) {
-            powerupText = `VERDEN MESTRET · ${state.worldBadge}`;
+            powerupText = `NIVEAU ${state.levelUpStage || 2}! · ${state.worldBadge}`;
+            dom.powerup.classList.add('active');
+        }
+        if (state.elapsed < (state.featherFlashUntil || 0) && !powerupText) {
+            powerupText = '+1 FJER';
             dom.powerup.classList.add('active');
         }
         if (currentLevel.kind === 'skyRelay' && state.elapsed < state.relayFlashUntil) {
@@ -2425,14 +2505,30 @@
     function finishSkyRelay(timedOut = false) {
         if (state.phase !== 'playing' || !state.relayRoute) return;
         const center = BertCollision.bertCollider(bird, BIRD);
-        const elapsed = timedOut ? state.relayRoute.timeLimit + FIXED_STEP : state.elapsed;
-        const result = BertSkyRelay.finish(state.relayRoute, center.y, elapsed, state.relayGates);
+        const roundElapsed = state.elapsed - (state.relayRoundStart || 0);
+        const elapsed = timedOut ? state.relayRoute.timeLimit + FIXED_STEP : roundElapsed;
+        const result = BertSkyRelay.finish(state.relayRoute, center.y, elapsed, state.relayGates, state.worldTime);
+        if (result.hit) {
+            // Endless: ringing the bell starts the next, harder round at once.
+            const round = state.relayRoute.round || 1;
+            state.relayBanked = (state.relayBanked || 0) + result.score;
+            state.score = state.relayBanked;
+            state.relayRoute = BertSkyRelay.createRoute(state.seed, round + 1, state.worldDistance);
+            state.relayGates = [];
+            state.relayRoundStart = state.elapsed;
+            state.relayMessage = `KLANG! +${result.score} · RUNDE ${round + 1}`;
+            state.relayFlashUntil = state.elapsed + 2;
+            playAudio('point');
+            BertMeta.haptic('reward');
+            burst(center.x + 50, center.y, '#ffdf70', 15);
+            updateHud();
+            return;
+        }
         state.relayResult = result;
-        state.score = result.score;
-        state.bestStreak = state.relayGates.filter((gate) => gate.passed).length;
-        state.streak = state.bestStreak;
-        state.relayMessage = result.hit ? `KLANG! ${result.rating} · ${result.score} POINT`
-            : timedOut ? 'TIDEN UDE · PRØV IGEN' : 'FORBI GULDPLADEN · PRØV IGEN';
+        state.score = (state.relayBanked || 0) + result.score;
+        state.bestStreak = Math.max(state.bestStreak, state.relayPassedTotal || 0);
+        state.streak = state.relayPassedTotal || 0;
+        state.relayMessage = timedOut ? 'TIDEN UDE' : 'FORBI GULDPLADEN';
         state.relayFlashUntil = state.elapsed + 2;
         state.relayFinishDelay = result.hit ? 1.05 : 0.6;
         state.phase = 'relay-finish';
@@ -2454,11 +2550,12 @@
         const center = BertCollision.bertCollider(bird, BIRD);
         for (let index = 0; index < route.gates.length; index += 1) {
             const gate = route.gates[index];
-            const screenX = center.x + gate.worldDistance - state.worldDistance;
+            const pose = BertSkyRelay.gatePose(gate, state.worldTime);
+            const screenX = center.x + pose.worldDistance - state.worldDistance;
             const impact = BertSkyRelay.frameContact(route, index, center.y, screenX, center.x,
-                center.radius);
+                center.radius, state.worldTime);
             if (!DEBUG_NOCLIP && impact.contact) {
-                state.score = 0;
+                state.score = state.relayBanked || 0;
                 state.relayResult = {
                     completed: false, hit: false, outcome: 'ring-hit', score: 0,
                     ringIndex: index + 1, ringSide: impact.side,
@@ -2468,23 +2565,25 @@
                 triggerDeath({ kind: 'relay-cloud-frame', id: gate.id });
                 return;
             }
-            if (state.worldDistance < gate.worldDistance || state.relayGates.length > index) continue;
-            const result = BertSkyRelay.gatePass(route, index, center.y, state.elapsed);
+            if (state.worldDistance < pose.worldDistance || state.relayGates.length > index) continue;
+            const result = BertSkyRelay.gatePass(route, index, center.y,
+                state.elapsed - (state.relayRoundStart || 0), state.worldTime);
             state.relayGates.push(result);
-            state.streak = state.relayGates.filter((entry) => entry.passed).length;
-            state.bestStreak = state.streak;
-            state.score = state.relayGates.reduce((sum, entry) => sum + entry.score, 0);
+            if (result.passed) state.relayPassedTotal = (state.relayPassedTotal || 0) + 1;
+            state.streak = state.relayPassedTotal || 0;
+            state.bestStreak = Math.max(state.bestStreak, state.streak);
+            state.score = (state.relayBanked || 0) + state.relayGates.reduce((sum, entry) => sum + entry.score, 0);
             const gateText = { perfect: 'RENT GENNEM', clean: 'GODT RAMT', edge: 'KANT', miss: 'FORBI' };
             state.relayMessage = `PORT ${index + 1}/3 · ${gateText[result.quality] || 'FORBI'}`;
             state.relayFlashUntil = state.elapsed + 1.5;
             if (result.passed) {
                 playAudio('point');
                 BertMeta.haptic('star');
-                burst(center.x + 35, gate.centerY, '#b4ecff', 5);
+                burst(center.x + 35, pose.centerY, '#b4ecff', 5);
             }
         }
         if (state.worldDistance >= route.target.worldDistance) finishSkyRelay();
-        else if (state.elapsed >= route.timeLimit) finishSkyRelay(true);
+        else if (state.elapsed - (state.relayRoundStart || 0) >= route.timeLimit) finishSkyRelay(true);
     }
 
     function update(delta) {
@@ -3197,7 +3296,14 @@
     function drawCollectible(collectible) {
         ctx.save();
         ctx.translate(collectible.x, collectible.y);
-        if (collectible.kind === 'powerup') {
+        if (collectible.kind === 'feather') {
+            const glowSize = 96;
+            ctx.globalAlpha = 0.42 + Math.sin(collectible.spin * 2) * 0.1;
+            ctx.drawImage(assets.whiteGlow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
+            ctx.globalAlpha = 1;
+            ctx.rotate(Math.sin(collectible.spin * 0.9) * 0.35);
+            if (assets.feather?.naturalWidth) ctx.drawImage(assets.feather, -30, -27, 60, 54);
+        } else if (collectible.kind === 'powerup') {
             const prototypeArt = {
                 [POWERUP.HEAVY]: 'eventMetal', [POWERUP.HYPER]: 'eventHyper',
                 [POWERUP.DOUBLE]: 'eventDouble', [POWERUP.FLAP]: 'eventFlap',
@@ -3413,16 +3519,17 @@
         ctx.save();
         const route = state.relayRoute;
         route.gates.forEach((gate, index) => {
-            const x = centerX + gate.worldDistance - state.worldDistance;
+            const pose = BertSkyRelay.gatePose(gate, state.worldTime);
+            const x = centerX + pose.worldDistance - state.worldDistance;
             if (x < -200 || x > VIEW.width + 200) return;
-            const size = 350;
+            const size = 350 * (gate.scale || 1);
             if (assets.relayGate?.naturalWidth) {
                 ctx.globalAlpha = state.relayGates[index]?.passed ? 0.68 : 1;
-                ctx.drawImage(assets.relayGate, x - size / 2, gate.centerY - size * 0.47, size, size);
+                ctx.drawImage(assets.relayGate, x - size / 2, pose.centerY - size * 0.47, size, size);
                 ctx.globalAlpha = 1;
             }
         });
-        const target = route.target;
+        const target = { ...route.target, centerY: BertSkyRelay.targetPose(route.target, state.worldTime).centerY };
         const x = centerX + target.worldDistance - state.worldDistance;
         if (x >= -target.width && x <= VIEW.width + target.width) {
             const top = target.centerY - target.height * 0.69;
@@ -3453,13 +3560,15 @@
         const centerX = BertCollision.bertCollider(bird, BIRD).x;
         ctx.save();
         state.relayRoute.gates.forEach((gate, index) => {
-            const x = centerX + gate.worldDistance - state.worldDistance;
+            const pose = BertSkyRelay.gatePose(gate, state.worldTime);
+            const x = centerX + pose.worldDistance - state.worldDistance;
             if (x < -200 || x > VIEW.width + 200) return;
             // The near-right rim is a DISTINCT alpha sprite shifted toward the
             // approaching bird. Bert visibly passes behind it, without collision.
-            const size = 350;
+            const scale = gate.scale || 1;
+            const size = 350 * scale;
             ctx.globalAlpha = state.relayGates[index]?.passed ? 0.68 : 1;
-            ctx.drawImage(assets.relayGateFront, x - size / 2 - 38, gate.centerY - size * 0.47,
+            ctx.drawImage(assets.relayGateFront, x - size / 2 - 38 * scale, pose.centerY - size * 0.47,
                 size, size);
         });
         ctx.restore();
@@ -3477,11 +3586,15 @@
         ctx.strokeStyle = 'rgba(25, 75, 106, 0.87)';
         ctx.fillStyle = '#fff8dc';
         state.relayRoute.gates.forEach((gate, index) => {
-            const x = centerX + gate.worldDistance - state.worldDistance;
+            const pose = BertSkyRelay.gatePose(gate, state.worldTime);
+            const x = centerX + pose.worldDistance - state.worldDistance;
             if (x < -200 || x > VIEW.width + 200) return;
-            const label = state.relayGates[index]?.passed ? 'RAMT' : `PORT ${index + 1}/3`;
-            ctx.strokeText(label, x, gate.centerY + 179);
-            ctx.fillText(label, x, gate.centerY + 179);
+            const round = state.relayRoute.round || 1;
+            const label = state.relayGates[index]?.passed ? 'RAMT'
+                : round > 1 ? `RUNDE ${round} · PORT ${index + 1}/3` : `PORT ${index + 1}/3`;
+            const labelY = pose.centerY + 179 * (gate.scale || 1);
+            ctx.strokeText(label, x, labelY);
+            ctx.fillText(label, x, labelY);
         });
         ctx.restore();
     }
@@ -4147,6 +4260,8 @@
         window.BertQA = Object.freeze({
             snapshot: () => ({
                 build: BUILD_VERSION,
+                worldTime: state.worldTime,
+                relayRound: state.relayRoute?.round || null,
                 phase: state.phase,
                 elapsed: state.elapsed,
                 score: state.score,
@@ -4321,6 +4436,9 @@
                         renderHeight: obstacle.renderHeight ?? obstacle.height,
                     })),
                 collectibleCount: collectibles.length,
+                featherPickups: collectibles.filter((item) => item.kind === 'feather').map((item) => ({ x: item.x, y: item.y })),
+                feathersPicked: state.feathersPicked,
+                driftingStars: collectibles.filter((item) => item.kind === 'star' && item.drift).length,
                 starGeometry: collectibles.filter((item) => item.kind === 'star').map((item) => ({ x: item.x, y: item.y, value: item.value })),
                 powerupGeometry: collectibles.filter((item) => item.kind === 'powerup').map((item) => ({
                     x: item.x, y: item.y, width: item.width, height: item.height, type: item.type,

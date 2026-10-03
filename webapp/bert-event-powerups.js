@@ -1,9 +1,9 @@
-/* Experimental pickups live only in Stormline until their mobile balance is approved. */
+/* Mixed-blessing pickups (Tung, Hyperfart, Point x2, Flappy-styring) used on every level. */
 (() => {
     'use strict';
     const TYPES = Object.freeze({ HEAVY: 'Heavy', HYPER: 'Hyper', DOUBLE: 'Double', FLAP: 'Flap' });
     const SEQUENCE = Object.freeze([TYPES.HEAVY, TYPES.HYPER, TYPES.DOUBLE, TYPES.FLAP]);
-    const DURATION = Object.freeze({ Heavy: 6, Hyper: 6, Double: 8, Flap: 30 });
+    const DURATION = Object.freeze({ Heavy: 6, Hyper: 6, Double: 8, Flap: 10 });
     const HYPER_MULTIPLIER = 1.22;
 
     function isPrototype(type) { return Object.values(TYPES).includes(type); }
