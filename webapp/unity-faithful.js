@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-18';
+    const BUILD_VERSION = 'worlds-relay-19';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -25,7 +25,7 @@
     // Focus starts instantly; its soundtrack is decoded at load time.
     const FOCUS_COUNTDOWN_SECONDS = 0;
     const FOCUS_ENTER_SECONDS = 0.65;
-    const GENERATED_HERO_IDS = new Set(['pingo', 'mogens', 'ninja', 'pakke', 'gold', 'epicMalthe', 'epicJohan', 'epicSos', 'epicThor', 'epicFan', 'block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism']);
+    const GENERATED_HERO_IDS = new Set(['pingo', 'mogens', 'ninja', 'pakke', 'gold', 'epicMalthe', 'epicJohan', 'epicSos', 'epicThor', 'epicFan', 'epicCoop', 'block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism']);
     const GENERATED_FLIGHT_SEQUENCE = Object.freeze([0, 2, 4, 2]);
     const GENERATED_ANIMATION_FPS = 6;
     const RESCUE_OUTCOMES = Object.freeze([
@@ -524,7 +524,7 @@
     }));
     let edmSmokeStamp = null;
     const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [],
-        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [] };
+        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
     const EPIC_HEROES = Object.freeze({
@@ -533,6 +533,7 @@
         epicSos: { folder: 'epic-sos', standIn: 'sugar' },
         epicThor: { folder: 'epic-thor', standIn: 'mecha' },
         epicFan: { folder: 'fanbert', standIn: 'bert' },
+        epicCoop: { folder: 'coopinc', standIn: 'bert' },
     });
     const menuHeroArt = Object.freeze({
         bert: 'assets/unity/ui/menu-bird.webp',
@@ -557,6 +558,7 @@
         epicSos: 'assets/sugarrush/up.webp',
         epicThor: 'assets/mechabert/up.webp',
         epicFan: 'assets/fanbert/up.webp',
+        epicCoop: 'assets/coopinc/up.webp',
     });
     const audio = Object.create(null);
     let currentLevel = UNITY_LEVELS[0];
