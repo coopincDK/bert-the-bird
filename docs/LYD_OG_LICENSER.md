@@ -37,6 +37,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | `assets/music/harbor.mp3` | "Harbor" (uploadet fil) | 3. okt. 2026 | Havnen |
 | `assets/music/nightcity.mp3` | "Nightcity" (uploadet fil) | 3. okt. 2026 | Nattebyen |
 | `assets/music/volcano.mp3` | "Volcano" (uploadet fil) | 3. okt. 2026 | Vulkanen |
+| `assets/music/windfarm.mp3` | "Windfarm" (uploadet fil) | 3. okt. 2026 | Vindmøller |
 
 ## Musik – mangler stadig at blive skiftet
 
