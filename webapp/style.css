@@ -2048,3 +2048,11 @@ body.keyboard-open .modal-backdrop > * { margin-top: 0; max-height: none; }
 body.keyboard-open .name-card p, body.keyboard-open .name-card .edition-label { display: none; }
 body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 .first-name-input, #player-name { font-size: 16px; } /* 16px forhindrer iOS i at zoome ind */
+
+/* Låste eventyrbaner: tydeligt låst, men man kan stadig kigge. */
+.level-card.locked .level-thumb { filter: grayscale(.85) brightness(.55); }
+.level-card.locked .level-card-lock { background: rgba(10, 18, 28, .9); color: #ffd34d; }
+.mode-tab.locked-tab { opacity: .8; }
+.mode-tab.locked-tab small { color: #ffd34d; }
+.level-card.shake { animation: card-shake .4s ease; }
+@keyframes card-shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }

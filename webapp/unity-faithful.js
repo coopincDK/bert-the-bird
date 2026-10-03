@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-22';
+    const BUILD_VERSION = 'worlds-relay-23';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -262,6 +262,28 @@
         layers: adventureLayers(theme),
     })));
     const isAdventureLevel = (level = currentLevel) => level?.modeGroup === 'adventure';
+    // Eventyr opens with bronze on all nine base levels; inside, each level
+    // needs silver on the one before. The test worlds open together with Eventyr.
+    const BRONZE_SCORE = 20;
+    const SILVER_SCORE = 50;
+    function baseBronzeCount() {
+        return UNITY_LEVELS.filter((level) => loadHighscore(level.id) >= BRONZE_SCORE).length;
+    }
+    function adventureOpen() {
+        return BertMeta.hasTestAccess?.() || baseBronzeCount() >= UNITY_LEVELS.length;
+    }
+    function adventureStatus(level) {
+        if (BertMeta.hasTestAccess?.()) return { unlocked: true };
+        if (!adventureOpen()) {
+            return { unlocked: false, short: T`${baseBronzeCount()}/${UNITY_LEVELS.length} BRONZE`,
+                long: T`Få bronze (20 point) på alle ${UNITY_LEVELS.length} grundbaner for at åbne Eventyr. Du har ${baseBronzeCount()}.` };
+        }
+        if (level.modeGroup === 'event' || level.modeOrder === 1) return { unlocked: true };
+        const previous = ADVENTURE_LEVELS.find((candidate) => candidate.modeOrder === level.modeOrder - 1);
+        if (!previous || loadHighscore(previous.id) >= SILVER_SCORE) return { unlocked: true };
+        return { unlocked: false, short: T`SØLV I ${previous.name.toUpperCase()}`,
+            long: T`Få sølv (50 point) i ${previous.name} for at åbne ${level.name}.` };
+    }
     // The four test worlds live in the Eventyr tab too, after the five new levels.
     const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT]);
     const EVENT_CARD = Object.freeze({
@@ -1137,8 +1159,18 @@
     }
 
     function attemptLevel(levelId, trigger = null) {
-        if (ADVENTURE_LEVELS.some((level) => level.id === Number(levelId))
-            || EVENT_LEVELS.some((level) => level.id === Number(levelId))) {
+        const adventure = ADVENTURE_LEVELS.find((level) => level.id === Number(levelId))
+            || EVENT_LEVELS.find((level) => level.id === Number(levelId));
+        if (adventure) {
+            const status = adventureStatus(adventure);
+            if (!status.unlocked) {
+                trigger?.classList.remove('shake');
+                void trigger?.offsetWidth;
+                trigger?.classList.add('shake');
+                playAudio('pop');
+                window.BertApp?.showToast(status.long);
+                return;
+            }
             startLevel(Number(levelId));
             return;
         }
@@ -1218,7 +1250,11 @@
             const element = document.getElementById(`level-score-${level.id}`);
             if (element) element.textContent = String(loadHighscore(level.id));
             const lock = document.getElementById(`level-lock-${level.id}`);
-            if (lock) lock.textContent = level.modeGroup === 'event' ? (earnedBadges[level.id] ? T('MÆRKE VUNDET') : T('TESTBANE')) : T('NY BANE');
+            const status = adventureStatus(level);
+            const card = dom.levelGrid.querySelector(`[data-level-id="${level.id}"]`);
+            card?.classList.toggle('locked', !status.unlocked);
+            if (lock) lock.textContent = !status.unlocked ? `🔒 ${status.short}`
+                : level.modeGroup === 'event' ? (earnedBadges[level.id] ? T('MÆRKE VUNDET') : T('TESTBANE')) : T('NY BANE');
             const fill = document.getElementById(`level-unlock-fill-${level.id}`);
             if (fill) fill.style.width = '100%';
         });
@@ -1226,7 +1262,11 @@
         document.querySelectorAll('.mode-tab').forEach((tab) => {
             if (tab.dataset.mode === 'adventure') {
                 const copy = tab.querySelector('small');
-                if (copy) copy.textContent = T`${ADVENTURE_LEVELS.length + EVENT_LEVELS.length} BANER · ${modeHelp.adventure}`;
+                const open = adventureOpen();
+                tab.classList.toggle('locked-tab', !open);
+                if (copy) copy.textContent = open
+                    ? T`${ADVENTURE_LEVELS.length + EVENT_LEVELS.length} BANER · ${modeHelp.adventure}`
+                    : `🔒 ${T`${baseBronzeCount()}/${UNITY_LEVELS.length} BRONZE`}`;
                 return;
             }
             const levels = UNITY_LEVELS.filter((level) => level.modeGroup === tab.dataset.mode);
@@ -1345,7 +1385,7 @@
                     : ADVENTURE_LEVELS.find((level) => level.id === Number(levelId))
                     || UNITY_LEVELS.find((level) => level.id === Number(levelId)) || UNITY_LEVELS[0];
         const unlock = isEventLevel(requestedLevel) || isAdventureLevel(requestedLevel)
-            ? { unlocked: true } : progressionSnapshot()[requestedLevel.id];
+            ? adventureStatus(requestedLevel) : progressionSnapshot()[requestedLevel.id];
         if (!QUERY.has('qa') && !unlock?.unlocked) {
             showLevelMenu(modeForLevel(requestedLevel));
             window.BertApp?.showToast(unlock?.requirement
@@ -1391,6 +1431,9 @@
         state.relayFinishDelay = 0;
         state.nextPowerupAt = currentLevel === STORMLINE_EVENT ? 8 : 15 + gameRandom() * 10;
         state.nextFeatherAt = 35 + gameRandom() * 25;
+        state.lavaTop = LAVA_START;
+        state.nextCoolingAt = 8;
+        state.coolFlashUntil = 0;
         state.feathersPicked = 0;
         state.featherFlashUntil = 0;
         state.deathCountdown = 0;
@@ -1523,7 +1566,9 @@
     }
 
     function updateStages(delta) {
-        if (state.focusPhase === 'idle' || state.focusPhase === 'countdown') state.stageClock += delta * STAGE_TEMPO;
+        // Flappy keeps its speed for longer; the tightening gaps carry the difficulty.
+        const tempo = currentLevel.mode === MODE.FLAPPY ? 0.6 : STAGE_TEMPO;
+        if (state.focusPhase === 'idle' || state.focusPhase === 'countdown') state.stageClock += delta * tempo;
         const values = currentStageValues();
         state.stageIndex = values.index;
         state.stageElapsed = values.progress;
@@ -1772,6 +1817,7 @@
                 BertAdventure.advance(obstacle, delta, {
                     scroll, speed: scroll / Math.max(delta, 1e-6),
                     birdX: bird.x + BIRD.width / 2, birdY: bird.y + BIRD.height / 2, time: state.worldTime,
+                    lavaTop: currentLevel.kind === 'volcano' ? state.lavaTop : undefined,
                 });
             } else if (obstacle.kind === 'edm-crowd-ball') {
                 BertEDM.advanceCrowdBall(obstacle, delta, scroll, bird.x + BIRD.width,
@@ -1848,6 +1894,13 @@
                     collectible.collected = true;
                     if (collectible.kind === 'powerup') activatePowerup(collectible.type);
                     else if (collectible.kind === 'feather') collectFeather(collectible);
+                    else if (collectible.kind === 'cool') {
+                        state.lavaTop = Math.min(LAVA_START, state.lavaTop + 120);
+                        playAudio('point');
+                        BertMeta.haptic('star');
+                        burst(collectible.x, collectible.y, '#bff6ff', 12);
+                        state.coolFlashUntil = state.elapsed + 1.4;
+                    }
                     else collectStar(collectible);
                 }
             }
@@ -1923,13 +1976,23 @@
         return spawnX - rightmostGroupX >= state.spawnSpacing;
     }
 
+    // Flappy gets harder by tightening, not by rushing: the hole shrinks by up
+    // to a third over about 80 seconds, and the pipes move closer together.
+    function flappyGap() {
+        const base = currentLevel.gap || 270;
+        return Math.max(base * 0.67, base - state.elapsed * 1.15);
+    }
+    function flappySpacing(base) {
+        return Math.max(base - 240, base - state.elapsed * 3);
+    }
+
     function spawnObstacle() {
         const x = VIEW.width + 120;
         const id = state.obstacleId++;
         if (BertAdventure.isTheme(currentLevel.kind)) {
             const encounter = BertAdventure.createEncounter(currentLevel.kind, id, x, gameRandom, state.difficulty);
             obstacles.push(...encounter.obstacles);
-            if (encounter.star) collectibles.push(makeCollectible(encounter.star.x, clamp(encounter.star.y, 110, 600)));
+            if (encounter.star) collectibles.push(makeCollectible(encounter.star.x, clamp(encounter.star.y, 110, currentLevel.kind === 'volcano' ? Math.min(600, state.lavaTop - 110) : 600)));
             return;
         }
         if (currentLevel.kind === 'birdRun') {
@@ -1957,7 +2020,7 @@
             ? clamp(284 - state.difficulty * 10, 258, 280)
             : clamp(325 - state.difficulty * 18, 278, 307);
         const gap = currentLevel.mode === MODE.FLAPPY
-            ? (currentLevel.gap || 270)
+            ? flappyGap()
             : currentLevel.kind === 'desert'
                 ? randomBetween(desertGapFloor, desertGapFloor + (narrowDesertPair ? 18 : 42))
                 : 285;
@@ -2654,6 +2717,10 @@
             powerupText = `NIVEAU ${state.levelUpStage || 2}! · ${state.worldBadge}`;
             dom.powerup.classList.add('active');
         }
+        if (state.elapsed < (state.coolFlashUntil || 0) && !powerupText) {
+            powerupText = T('LAVAEN FALDER');
+            dom.powerup.classList.add('active');
+        }
         if (state.elapsed < (state.featherFlashUntil || 0) && !powerupText) {
             powerupText = '+1 FJER';
             dom.powerup.classList.add('active');
@@ -2797,7 +2864,7 @@
                         state.spawnSpacing = currentLevel.kind === 'jungle'
                             ? state.elapsed < 18 ? 940 : state.elapsed < 35 ? 800 : baseDistance
                             : currentLevel.kind === 'flappy'
-                                ? baseDistance + Math.min(80, state.difficulty * 22)
+                                ? flappySpacing(baseDistance)
                                 : baseDistance;
                     }
                     if (currentLevel === STORMLINE_EVENT && state.activePowerup === POWERUP.HYPER) {
@@ -2814,6 +2881,7 @@
                 }
             }
             updateObjects(delta);
+            updateVolcanoLava(delta);
             updateHud();
             return;
         }
@@ -3308,6 +3376,28 @@
             ctx.fillText('!', spot.x, spot.y + 12);
             ctx.restore();
         }
+        if (o.behaviour === 'column') {
+            drawLavaColumn(o);
+            return;
+        }
+        if (o.behaviour === 'bomb') {
+            if (o.phase !== 'fly') return;
+            ctx.save();
+            // Smoke trail behind the bomb, then the bomb itself.
+            for (let i = 1; i <= 4; i += 1) {
+                ctx.globalAlpha = 0.18 * (5 - i) / 4;
+                ctx.fillStyle = '#4a3a3a';
+                ctx.beginPath();
+                ctx.arc(o.x + o.size / 2 + i * 16, o.y + o.size / 2 + i * (o.vy > 0 ? -14 : 14), o.size * (0.18 + i * 0.04), 0, Math.PI * 2);
+                ctx.fill();
+            }
+            ctx.globalAlpha = 1;
+            ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
+            ctx.rotate(o.angle);
+            if (image?.naturalWidth) ctx.drawImage(image, -o.size / 2, -o.size / 2, o.size, o.size);
+            ctx.restore();
+            return;
+        }
         if (!image?.naturalWidth) return;
         ctx.save();
         if (o.clipGround) {
@@ -3355,6 +3445,124 @@
             ctx.drawImage(image, -o.size / 2, -o.size / 2, o.size, o.size);
         } else {
             ctx.drawImage(image, o.x, o.y, o.size, o.size);
+        }
+        ctx.restore();
+    }
+
+    function drawLavaColumn(o) {
+        if (o.topY >= o.lavaTop - 4) return;
+        const cx = o.x + o.size / 2;
+        const w = o.columnWidth;
+        const top = o.topY;
+        const bottom = o.lavaTop + 30;
+        ctx.save();
+        const glow = ctx.createLinearGradient(cx - w, 0, cx + w, 0);
+        glow.addColorStop(0, 'rgba(255, 90, 20, 0)');
+        glow.addColorStop(0.5, 'rgba(255, 140, 40, .45)');
+        glow.addColorStop(1, 'rgba(255, 90, 20, 0)');
+        ctx.fillStyle = glow;
+        ctx.fillRect(cx - w, top, w * 2, bottom - top);
+        const body = ctx.createLinearGradient(cx - w / 2, 0, cx + w / 2, 0);
+        body.addColorStop(0, '#b3260c');
+        body.addColorStop(0.35, '#ff7a1a');
+        body.addColorStop(0.5, '#ffe36b');
+        body.addColorStop(0.65, '#ff7a1a');
+        body.addColorStop(1, '#b3260c');
+        ctx.fillStyle = body;
+        ctx.strokeStyle = '#3a1205';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(cx - w * 0.42, bottom);
+        ctx.lineTo(cx - w * 0.42, top + w * 0.35);
+        ctx.arc(cx, top + w * 0.35, w * 0.45, Math.PI, 0);
+        ctx.lineTo(cx + w * 0.42, bottom);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        // Droplets around the crown so the top reads as a splashing peak.
+        ctx.fillStyle = '#ffb347';
+        for (let i = 0; i < 5; i += 1) {
+            const angle = state.worldTime * 3 + i * 1.3;
+            ctx.beginPath();
+            ctx.arc(cx + Math.cos(angle) * w * 0.7, top + Math.sin(angle * 1.3) * 10 - 6, 6 + (i % 2) * 3, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    // Vulkanen: the lava floor rises; cooling stones push it back down.
+    const LAVA_START = 770;
+    const LAVA_HIGHEST = 440;
+    function updateVolcanoLava(delta) {
+        if (currentLevel.kind !== 'volcano' || state.phase !== 'playing') return;
+        if (state.elapsed > 3) {
+            const rate = 5 + state.difficulty * 6;
+            state.lavaTop = Math.max(LAVA_HIGHEST, state.lavaTop - rate * delta);
+        }
+        if (state.elapsed >= state.nextCoolingAt) {
+            const y = randomBetween(170, Math.max(220, state.lavaTop - 130));
+            collectibles.push({ x: VIEW.width + 140, y, width: 74, height: 74, kind: 'cool', spin: 0, age: 0, collected: false });
+            state.nextCoolingAt = state.elapsed + 9 + gameRandom() * 5;
+        }
+        const collider = BertCollision.bertCollider(bird, BIRD);
+        if (!DEBUG_NOCLIP && state.elapsed >= state.invulnerableUntil && collider.y + collider.radius * 0.6 > state.lavaTop + 8) {
+            triggerDeath({ kind: 'lava-floor', id: -1, x: 0, y: state.lavaTop, width: VIEW.width, height: 100 });
+        }
+    }
+
+    function drawLavaFloor() {
+        if (currentLevel.kind !== 'volcano' || !['prewarm', 'playing', 'dead'].includes(state.phase)) return;
+        const top = state.lavaTop;
+        if (top >= VIEW.height + 20) return;
+        ctx.save();
+        const gradient = ctx.createLinearGradient(0, top - 10, 0, VIEW.height);
+        gradient.addColorStop(0, '#ffe36b');
+        gradient.addColorStop(0.08, '#ff8a1f');
+        gradient.addColorStop(0.5, '#d6380f');
+        gradient.addColorStop(1, '#6e1406');
+        ctx.fillStyle = gradient;
+        ctx.beginPath();
+        ctx.moveTo(0, VIEW.height);
+        for (let x = 0; x <= VIEW.width + 20; x += 20) {
+            const wave = Math.sin((x + state.worldDistance * 0.6) / 70 + state.worldTime * 2) * 7
+                + Math.sin((x + state.worldDistance) / 31 + state.worldTime * 3.1) * 3;
+            ctx.lineTo(x, top + wave);
+        }
+        ctx.lineTo(VIEW.width, VIEW.height);
+        ctx.closePath();
+        ctx.fill();
+        ctx.strokeStyle = 'rgba(255, 245, 190, .9)';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.restore();
+    }
+
+    function drawCoolingStone(collectible) {
+        ctx.save();
+        ctx.translate(collectible.x, collectible.y);
+        const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 52);
+        glow.addColorStop(0, 'rgba(160, 240, 255, .8)');
+        glow.addColorStop(1, 'rgba(160, 240, 255, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 52, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.rotate(Math.sin(collectible.spin) * 0.3);
+        ctx.fillStyle = '#7f95a8';
+        ctx.strokeStyle = '#1d2c3a';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.moveTo(-26, 6); ctx.lineTo(-14, -22); ctx.lineTo(12, -26); ctx.lineTo(28, -4); ctx.lineTo(18, 22); ctx.lineTo(-16, 24);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        ctx.strokeStyle = '#e8fbff';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 3; i += 1) {
+            ctx.beginPath();
+            ctx.moveTo(Math.cos(i * Math.PI / 3) * -11, Math.sin(i * Math.PI / 3) * -11);
+            ctx.lineTo(Math.cos(i * Math.PI / 3) * 11, Math.sin(i * Math.PI / 3) * 11);
+            ctx.stroke();
         }
         ctx.restore();
     }
@@ -3593,6 +3801,11 @@
     function drawCollectible(collectible) {
         ctx.save();
         ctx.translate(collectible.x, collectible.y);
+        if (collectible.kind === 'cool') {
+            ctx.restore();
+            drawCoolingStone(collectible);
+            return;
+        }
         if (collectible.kind === 'feather') {
             const glowSize = 96;
             ctx.globalAlpha = 0.42 + Math.sin(collectible.spin * 2) * 0.1;
@@ -3923,6 +4136,7 @@
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
         drawRelayNearEdge();
         drawRelayLabels();
+        drawLavaFloor();
         drawNightDarkness();
         drawParticles();
         // The shallow top/bottom set pieces are *in front* of Bert, not just

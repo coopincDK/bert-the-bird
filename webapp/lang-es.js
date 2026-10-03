@@ -409,4 +409,9 @@ window.BertI18n.register('es', {
     '{0} FJER': '{0} PLUMAS',
     'TAP FOR AT FLYVE': 'TOCA PARA VOLAR',
     'Slå din vens score på præcis samme bane. Du har tre forsøg, og deres spøgelsesflyvning følger dig.': "Supera la puntuación de tu amigo en el mismo nivel. Tienes tres intentos y su vuelo fantasma te acompaña.",
+    '{0}/{1} BRONZE': '{0}/{1} BRONCE',
+    'Få bronze (20 point) på alle {0} grundbaner for at åbne Eventyr. Du har {1}.': 'Consigue bronce (20 puntos) en los {0} niveles básicos para abrir Aventura. Tienes {1}.',
+    'SØLV I {0}': 'PLATA EN {0}',
+    'Få sølv (50 point) i {0} for at åbne {1}.': 'Consigue plata (50 puntos) en {0} para abrir {1}.',
+    'LAVAEN FALDER': 'LA LAVA BAJA',
 });

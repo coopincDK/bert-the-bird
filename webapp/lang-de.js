@@ -409,4 +409,9 @@ window.BertI18n.register('de', {
     '{0} FJER': '{0} FEDERN',
     'TAP FOR AT FLYVE': 'TIPPEN ZUM FLIEGEN',
     'Slå din vens score på præcis samme bane. Du har tre forsøg, og deres spøgelsesflyvning følger dig.': "Schlag den Score deines Freundes im selben Level. Du hast drei Versuche, und sein Geisterflug begleitet dich.",
+    '{0}/{1} BRONZE': '{0}/{1} BRONZE',
+    'Få bronze (20 point) på alle {0} grundbaner for at åbne Eventyr. Du har {1}.': 'Hol Bronze (20 Punkte) in allen {0} Grundlevels, um Abenteuer zu öffnen. Du hast {1}.',
+    'SØLV I {0}': 'SILBER IN {0}',
+    'Få sølv (50 point) i {0} for at åbne {1}.': 'Hol Silber (50 Punkte) in {0}, um {1} zu öffnen.',
+    'LAVAEN FALDER': 'DIE LAVA SINKT',
 });

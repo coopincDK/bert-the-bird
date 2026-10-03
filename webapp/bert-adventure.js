@@ -144,17 +144,16 @@
                 star = { x: x + 200, y: top - 120 };
             }
         } else if (theme === 'volcano') {
+            // Rising lava floor (handled by the game) + tall columns and arcing bombs.
             if (pick < 0.4) {
-                obstacles.push(bottomAt('lava-ledge', theme, id, x, 600, 300, 380));
-                obstacles.push(eruptAt(theme, id, x + 320, gapBottom - 40, d, random));
-                star = { x: x + 170, y: 430 };
+                obstacles.push(columnAt(theme, id, x, d, random));
+                star = { x: x + 330, y: lerp(200, 380, random()) };
             } else if (pick < 0.72) {
-                obstacles.push(riseAt(theme, id, x, d, random));
-                star = { x: x + 330, y: lerp(260, 460, random()) };
+                obstacles.push(bombAt(theme, id, x, d, random), bombAt(theme, id, x + 260, d, random));
+                star = { x: x + 130, y: lerp(160, 300, random()) };
             } else {
-                obstacles.push(eruptAt(theme, id, x, Math.max(gapTop + 60, 260), d, random));
-                obstacles.push(riseAt(theme, id, x + 360, d, random));
-                star = { x: x + 180, y: 170 };
+                obstacles.push(columnAt(theme, id, x, d, random), bombAt(theme, id, x + 380, d, random));
+                star = { x: x + 200, y: 180 };
             }
         } else {
             if (pick < 0.45) {
@@ -208,6 +207,31 @@
         o.behaviour = 'rise';
         o.riseSpeed = clamp(330 + 60 * difficulty, 330, 560);
         o.clipGround = true;
+        return o;
+    }
+
+    /** A lava column: rests in the lava, warns, then shoots up almost to the top. */
+    function columnAt(theme, id, x, difficulty, random) {
+        const o = base('lava-spout', theme, id, x, 260);
+        o.behaviour = 'column';
+        o.columnWidth = lerp(70, 90, random());
+        o.peakTop = lerp(70, 150, random());
+        o.cycle = clamp(3.0 - 0.35 * difficulty, 1.9, 3.0);
+        o.cycleOffset = random() * o.cycle;
+        o.topY = GROUND;
+        o.lavaTop = GROUND;
+        o.harmful = false;
+        return o;
+    }
+
+    /** A lava bomb: glows on the surface first, then flies in an arc. */
+    function bombAt(theme, id, x, difficulty, random) {
+        const o = base('lava-bubble', theme, id, x, lerp(130, 160, random()));
+        o.behaviour = 'bomb';
+        o.lavaTop = GROUND;
+        o.y = GROUND - o.size * 0.5;
+        o.launchSpeed = clamp(lerp(850, 1050, random()) + 40 * difficulty, 850, 1200);
+        o.harmful = false;
         return o;
     }
 
@@ -284,6 +308,36 @@
             }
         } else if (o.behaviour === 'spin') {
             o.angle += o.spinSpeed * delta;
+        } else if (o.behaviour === 'column') {
+            o.lavaTop = env.lavaTop ?? GROUND;
+            const t = (o.age + o.cycleOffset) % o.cycle;
+            const warnStart = o.cycle - 0.8;
+            const up = 0.25;
+            const hold = 0.9;
+            if (t < up) o.topY = lerp(o.lavaTop, o.peakTop, t / up);
+            else if (t < up + hold) o.topY = o.peakTop;
+            else if (t < up + hold + 0.4) o.topY = lerp(o.peakTop, o.lavaTop, (t - up - hold) / 0.4);
+            else o.topY = o.lavaTop;
+            o.warn = t >= warnStart ? clamp((t - warnStart) / 0.6, 0, 1) : 0;
+            o.harmful = o.topY < o.lavaTop - 24;
+        } else if (o.behaviour === 'bomb') {
+            const lavaTop = env.lavaTop ?? GROUND;
+            if (o.phase === 'idle') {
+                o.lavaTop = lavaTop;
+                o.y = lavaTop - o.size * 0.5;
+                if (distance < speed * 1.35) { o.phase = 'warn'; o.timer = 0; }
+            }
+            if (o.phase === 'warn') {
+                o.timer += delta;
+                o.warn = clamp(o.timer / 0.55, 0, 1);
+                if (o.timer >= 0.6) { o.phase = 'fly'; o.warn = 0; o.vy = -o.launchSpeed; o.harmful = true; }
+            } else if (o.phase === 'fly') {
+                o.vy += 1500 * delta;
+                o.y += o.vy * delta;
+                o.x -= 140 * delta;
+                o.angle += 4 * delta;
+                if (o.vy > 0 && o.y + o.size * 0.5 > lavaTop) o.harmful = false;
+            }
         }
     }
 
@@ -298,6 +352,8 @@
         const scale = o.size / ART;
         if (o.type === 'ice-stalactite') return { x: o.x + 256 * scale, y: Math.max(20, o.y + 70 * scale), radius: 70 * scale + 20 };
         if (o.type === 'diving-gull') return { x: o.x + 256 * scale, y: o.y + 250 * scale, radius: 120 * scale + 20 };
+        if (o.behaviour === 'column') return { x: o.x + o.size / 2, y: (o.lavaTop ?? GROUND) - 10, radius: o.columnWidth + 20 };
+        if (o.behaviour === 'bomb') return { x: o.x + o.size / 2, y: (o.lavaTop ?? GROUND) - 10, radius: o.size * 0.55 };
         if (o.type === 'lava-spout' || o.type === 'lava-bubble') return { x: o.x + 256 * scale, y: GROUND - 8, radius: 110 * scale + 24 };
         return null;
     }
@@ -307,6 +363,14 @@
         if (!o.harmful) return [];
         const s = o.size / ART;
         const p = (ax, ay) => at(o, ax, ay);
+        if (o.behaviour === 'column') {
+            const cx = o.x + o.size / 2;
+            const w = o.columnWidth;
+            return [box(cx - w * 0.42, o.topY + w * 0.3, w * 0.84, Math.max(0, o.lavaTop - o.topY)), circle(cx, o.topY + w * 0.35, w * 0.45)];
+        }
+        if (o.behaviour === 'bomb') {
+            return [circle(o.x + o.size / 2, o.y + o.size * 0.45, o.size * 0.29)];
+        }
         switch (o.type) {
         case 'ice-stalactite': {
             const lip = p(110, 50);

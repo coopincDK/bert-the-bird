@@ -409,4 +409,9 @@ window.BertI18n.register('fr', {
     '{0} FJER': '{0} PLUMES',
     'TAP FOR AT FLYVE': 'TAPOTE POUR VOLER',
     'Slå din vens score på præcis samme bane. Du har tre forsøg, og deres spøgelsesflyvning følger dig.': "Bats le score de ton ami sur exactement le même niveau. Tu as trois essais, et son vol fantôme te suit.",
+    '{0}/{1} BRONZE': '{0}/{1} BRONZE',
+    'Få bronze (20 point) på alle {0} grundbaner for at åbne Eventyr. Du har {1}.': 'Obtiens le bronze (20 points) sur les {0} niveaux de base pour ouvrir Aventure. Tu en as {1}.',
+    'SØLV I {0}': 'ARGENT DANS {0}',
+    'Få sølv (50 point) i {0} for at åbne {1}.': 'Obtiens l’argent (50 points) dans {0} pour ouvrir {1}.',
+    'LAVAEN FALDER': 'LA LAVE DESCEND',
 });

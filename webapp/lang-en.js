@@ -431,4 +431,9 @@ window.BertI18n.register('en', {
     'TAP FOR AT FLYVE': 'TAP TO FLY',
     'Dig': 'You',
     'Slå din vens score på præcis samme bane. Du har tre forsøg, og deres spøgelsesflyvning følger dig.': "Beat your friend's score on exactly the same level. You have three attempts, and their ghost flight follows you.",
+    '{0}/{1} BRONZE': '{0}/{1} BRONZE',
+    'Få bronze (20 point) på alle {0} grundbaner for at åbne Eventyr. Du har {1}.': 'Get bronze (20 points) on all {0} base levels to open Adventure. You have {1}.',
+    'SØLV I {0}': 'SILVER IN {0}',
+    'Få sølv (50 point) i {0} for at åbne {1}.': 'Get silver (50 points) in {0} to open {1}.',
+    'LAVAEN FALDER': 'THE LAVA SINKS',
 });

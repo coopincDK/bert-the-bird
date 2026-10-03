@@ -409,4 +409,9 @@ window.BertI18n.register('nb', {
     '{0} FJER': '{0} FJÆR',
     'TAP FOR AT FLYVE': 'TRYKK FOR Å FLY',
     'Slå din vens score på præcis samme bane. Du har tre forsøg, og deres spøgelsesflyvning følger dig.': "Slå vennens score på nøyaktig samme bane. Du har tre forsøk, og spøkelsesflyturen deres følger deg.",
+    '{0}/{1} BRONZE': '{0}/{1} BRONSE',
+    'Få bronze (20 point) på alle {0} grundbaner for at åbne Eventyr. Du har {1}.': 'Få bronse (20 poeng) på alle {0} grunnbanene for å åpne Eventyr. Du har {1}.',
+    'SØLV I {0}': 'SØLV I {0}',
+    'Få sølv (50 point) i {0} for at åbne {1}.': 'Få sølv (50 poeng) i {0} for å åpne {1}.',
+    'LAVAEN FALDER': 'LAVAEN SYNKER',
 });
