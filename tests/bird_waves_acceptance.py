@@ -11,7 +11,7 @@ from playwright.async_api import async_playwright
 
 PROJECT = Path(__file__).resolve().parents[1]
 OUTPUT = PROJECT.parent / 'qa-bird-waves'
-BUILD = 'worlds-relay-5'
+BUILD = 'worlds-relay-6'
 
 
 def free_port():

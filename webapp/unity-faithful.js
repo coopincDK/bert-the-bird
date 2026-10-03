@@ -10,7 +10,7 @@
     'use strict';
 
     const VIEW = { width: 1280, height: 720 };
-    const BUILD_VERSION = 'worlds-relay-5';
+    const BUILD_VERSION = 'worlds-relay-6';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -3968,7 +3968,9 @@
                 else showMainMenu();
                 return;
             }
-            if (state.phase === 'prewarm' && [' ', 'ArrowUp'].includes(event.key)) {
+            // Tastatur: venstre/op = stig (som venstre side af skærmen), højre/ned = fald.
+            const dir = keyDirection(event.key);
+            if (state.phase === 'prewarm' && (event.key === ' ' || dir === 'up')) {
                 event.preventDefault();
                 beginRun();
                 if (currentLevel.mode === MODE.FLAPPY) flap();
@@ -3978,20 +3980,35 @@
                 }
                 return;
             }
+            if (state.phase === 'prewarm' && dir === 'down' && currentLevel.mode !== MODE.FLAPPY) {
+                event.preventDefault();
+                beginRun();
+                state.inputStrength = 1;
+                state.inputDown = true;
+                return;
+            }
             if (state.phase !== 'playing') return;
-            if (usingFlapControl() && [' ', 'ArrowUp'].includes(event.key)) {
+            if (usingFlapControl() && (event.key === ' ' || dir === 'up')) {
                 event.preventDefault();
                 flap();
-            } else if (!usingFlapControl() && currentLevel.mode === MODE.DEFAULT) {
+            } else if (!usingFlapControl() && currentLevel.mode === MODE.DEFAULT && dir) {
+                event.preventDefault();
                 state.inputStrength = 1;
-                if (event.key === 'ArrowUp') state.inputUp = true;
-                if (event.key === 'ArrowDown') state.inputDown = true;
+                if (dir === 'up') state.inputUp = true;
+                if (dir === 'down') state.inputDown = true;
             }
         });
         document.addEventListener('keyup', (event) => {
-            if (event.key === 'ArrowUp') state.inputUp = false;
-            if (event.key === 'ArrowDown') state.inputDown = false;
+            const dir = keyDirection(event.key);
+            if (dir === 'up') state.inputUp = false;
+            if (dir === 'down') state.inputDown = false;
         });
+    }
+
+    function keyDirection(key) {
+        if (['ArrowUp', 'ArrowLeft', 'w', 'W'].includes(key)) return 'up';
+        if (['ArrowDown', 'ArrowRight', 's', 'S'].includes(key)) return 'down';
+        return null;
     }
 
     function syncOrientationPause() {
