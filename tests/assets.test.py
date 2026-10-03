@@ -19,7 +19,7 @@ def require_match(pattern: str, text: str, label: str) -> str:
     return match.group(1)
 
 
-required = set(re.findall(r"['\"](assets/[^'\"]+\.(?:webp|png|jpg|jpeg|mp3|wav|ttf))['\"]", RUNTIME, re.I))
+required = set(re.findall(r"['\"](assets/[^'\"]+\.(?:webp|png|jpg|jpeg|mp3|wav|ttf|woff2))['\"]", RUNTIME, re.I))
 required.update(f"assets/unity/bird/fly-{index:02d}.webp" for index in range(14))
 required.update(f"assets/unity/bird-blue/fly-{index:02d}.webp" for index in range(14))
 required.update(f"assets/klodsbert/{pose}.webp" for pose in ("up", "mid", "glide", "dead"))

@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-11';
+    const BUILD_VERSION = 'worlds-relay-12';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2733,10 +2733,10 @@
         ctx.strokeStyle = 'rgba(9, 37, 55, .94)';
         ctx.lineWidth = 5;
         ctx.fillStyle = '#fff2d0';
-        ctx.font = '900 20px sans-serif';
+        ctx.font = '900 20px "Bert Rounded", sans-serif';
         ctx.strokeText(`VIND · ${wind.grade.toUpperCase()}`, x, y + 19);
         ctx.fillText(`VIND · ${wind.grade.toUpperCase()}`, x, y + 19);
-        ctx.font = '800 16px sans-serif';
+        ctx.font = '800 16px "Bert Rounded", sans-serif';
         ctx.strokeText(wind.label, x + 35, y + 48);
         ctx.fillText(wind.label, x + 35, y + 48);
         ctx.fillStyle = '#f9c665';
@@ -3389,10 +3389,10 @@
             ctx.fill();
             ctx.stroke();
             ctx.fillStyle = '#fff4d4';
-            ctx.font = '900 16px sans-serif';
+            ctx.font = '900 16px "Bert Rounded", sans-serif';
             ctx.fillText(obstacle.predator ? 'ROVFUGL BAGFRA' : 'FUGL BAGFRA', 27, y - 5);
             ctx.fillStyle = '#f4bd67';
-            ctx.font = '800 13px sans-serif';
+            ctx.font = '800 13px "Bert Rounded", sans-serif';
             ctx.fillText(obstacle.predator
                 ? `FØLGER DIG KORT · ${obstacle.warningRemaining.toFixed(1)}s`
                 : obstacle.pathTravel < 0 ? 'STIGER' : 'DYKKER', 27, y + 16);
@@ -3436,7 +3436,7 @@
             ctx.arc(x, target.centerY, target.contactRadius - 6, 0, Math.PI * 2);
             ctx.stroke();
             ctx.textAlign = 'center';
-            ctx.font = '900 25px sans-serif';
+            ctx.font = '900 25px "Bert Rounded", sans-serif';
             ctx.lineWidth = 6;
             ctx.strokeStyle = 'rgba(53, 79, 80, 0.9)';
             ctx.fillStyle = '#fff2b4';
@@ -3472,7 +3472,7 @@
         ctx.save();
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        ctx.font = '900 23px sans-serif';
+        ctx.font = '900 23px "Bert Rounded", sans-serif';
         ctx.lineWidth = 5;
         ctx.strokeStyle = 'rgba(25, 75, 106, 0.87)';
         ctx.fillStyle = '#fff8dc';
