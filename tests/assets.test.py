@@ -38,7 +38,7 @@ required.update({
     "assets/edm/center-led.webp",
     "assets/edm/crowd-ball.webp",
     "assets/edm/crowd-foreground.webp",
-    "assets/edm/neon-encore.mp3",
+    "assets/music/edm.mp3",
     *(f"assets/obstacles/{name}.webp" for name in (
         "desert-ruin", "desert-banded", "desert-etched", "flappy-copper", "flappy-pearl", "jungle-stone", "happy-coral"
     )),
@@ -104,7 +104,7 @@ if not (WEBAPP / motion_script).is_file() or INDEX.index(motion_script) >= INDEX
     raise AssertionError('Powerup motion must load before the game runtime')
 if f'./{motion_script}?v={runtime_build}' not in SERVICE_WORKER:
     raise AssertionError('Powerup motion is missing from the offline PWA cache')
-for path in ('concert-stage.webp', 'mirror-ball.webp', 'speaker-stack.webp', 'light-truss.webp', 'neon-encore.mp3'):
+for path in ('concert-stage.webp', 'mirror-ball.webp', 'speaker-stack.webp', 'light-truss.webp'):
     if f"'./assets/edm/{path}'" not in SERVICE_WORKER:
         raise AssertionError(f'EDM asset {path} is missing from the offline PWA cache')
 
