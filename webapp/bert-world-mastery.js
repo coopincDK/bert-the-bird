@@ -1,11 +1,14 @@
 /* Local, optional world milestones. No ranked, currency or network side effects. */
 (() => {
     'use strict';
+    // Translation hook: Danish text is the key; BertI18n (when loaded) maps it to the chosen language.
+    const T = (typeof window !== 'undefined' && window.BertI18n) ? window.BertI18n.T
+        : (strings, ...values) => (Array.isArray(strings) ? strings.reduce((out, part, index) => out + part + (index < values.length ? values[index] : ''), '') : String(strings));
     const KEY = 'bert_world_mastery_v1';
     const BADGES = Object.freeze({
-        10: Object.freeze({ label: 'PUBLIKUMSVØLGE', description: 'Kom forbi mindst tre bolde i én koncertbølge' }),
-        11: Object.freeze({ label: 'FRI AF ROVFUGLEN', description: 'Undvig den varslede ørn eller grib' }),
-        12: Object.freeze({ label: 'STORMPILOT', description: 'Undvig en flyvende genstand i storm eller orkan' }),
+        10: Object.freeze({ label: T('PUBLIKUMSVØLGE'), description: T('Kom forbi mindst tre bolde i én koncertbølge') }),
+        11: Object.freeze({ label: T('FRI AF ROVFUGLEN'), description: T('Undvig den varslede ørn eller grib') }),
+        12: Object.freeze({ label: 'STORMPILOT', description: T('Undvig en flyvende genstand i storm eller orkan') }),
     });
     const STORM_HAZARDS = new Set(['storm-sail', 'wind-umbrella', 'wind-branch', 'wind-sign', 'wind-car']);
     function qualifies(levelId, removed, existing) {

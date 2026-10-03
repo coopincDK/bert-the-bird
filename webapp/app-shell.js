@@ -1,5 +1,8 @@
 (() => {
     'use strict';
+    // Translation hook: Danish text is the key; BertI18n (when loaded) maps it to the chosen language.
+    const T = (typeof window !== 'undefined' && window.BertI18n) ? window.BertI18n.T
+        : (strings, ...values) => (Array.isArray(strings) ? strings.reduce((out, part, index) => out + part + (index < values.length ? values[index] : ''), '') : String(strings));
 
     const shell = document.getElementById('game-shell');
     const installButton = document.getElementById('install-btn');
@@ -7,7 +10,7 @@
     const installGuideText = document.getElementById('install-guide-text');
     const closeInstallGuide = document.getElementById('close-install-guide');
     const statusToast = document.getElementById('app-status');
-    const ACTIVE_BUILD = 'worlds-relay-20';
+    const ACTIVE_BUILD = 'worlds-relay-21';
     const IS_QA = new URLSearchParams(window.location.search).has('qa');
     let deferredInstallPrompt = null;
     let toastTimer = 0;
@@ -40,8 +43,8 @@
 
     function showInstallGuide() {
         installGuideText.textContent = isIOS()
-            ? 'I Safari: Del → Føj til hjemmeskærm. Vent på “Klar til offline-spil”, og åbn ikonet én gang med net før du tester i flytilstand.'
-            : 'Installér via browserens menu. Vent på “Klar til offline-spil”, og åbn appen én gang med net før du tester offline.';
+            ? T('I Safari: Del → Føj til hjemmeskærm. Vent på “Klar til offline-spil”, og åbn ikonet én gang med net før du tester i flytilstand.')
+            : T('Installér via browserens menu. Vent på “Klar til offline-spil”, og åbn appen én gang med net før du tester offline.');
         installGuide.classList.remove('hidden');
     }
 
@@ -58,7 +61,7 @@
             const key = `bert-offline-ready-${ACTIVE_BUILD}`;
             if (!sessionFlag(key)) {
                 sessionFlag(key, '1');
-                showToast('Klar til offline-spil');
+                showToast(T('Klar til offline-spil'));
             }
         } catch (_) { /* An incomplete install must never claim to be offline-ready. */ }
     }
@@ -68,7 +71,7 @@
             deferredInstallPrompt.prompt();
             const choice = await deferredInstallPrompt.userChoice;
             deferredInstallPrompt = null;
-            if (choice.outcome === 'accepted') showToast('Bert The Bird bliver installeret');
+            if (choice.outcome === 'accepted') showToast(T('Bert The Bird bliver installeret'));
             updateInstallButton();
             return;
         }
@@ -112,11 +115,11 @@
     window.addEventListener('appinstalled', () => {
         deferredInstallPrompt = null;
         updateInstallButton();
-        showToast('Bert The Bird er installeret');
+        showToast(T('Bert The Bird er installeret'));
     });
-    window.addEventListener('online', () => showToast('Forbindelsen er tilbage'));
+    window.addEventListener('online', () => showToast(T('Forbindelsen er tilbage')));
     window.addEventListener('offline', () => showToast(navigator.serviceWorker?.controller
-        ? 'Offline · lokale resultater' : 'Offline er ikke klar endnu · forbind til nettet'));
+        ? 'Offline · lokale resultater' : T('Offline er ikke klar endnu · forbind til nettet')));
     window.matchMedia('(display-mode: standalone)').addEventListener?.('change', updateInstallButton);
 
     installButton?.addEventListener('click', installApp);
@@ -156,7 +159,7 @@
     document.body.classList.add('is-menu');
     updateInstallButton();
     if (sessionFlag(`bert-reloaded-${ACTIVE_BUILD}`)) {
-        window.setTimeout(() => showToast('Ny mobilversion indlæst'), 250);
+        window.setTimeout(() => showToast(T('Ny mobilversion indlæst')), 250);
     }
 
     window.BertApp = Object.freeze({ build: ACTIVE_BUILD, enterGameMode, leaveGameMode, isStandalone, showToast,

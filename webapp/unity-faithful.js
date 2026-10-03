@@ -8,12 +8,15 @@
  */
 (() => {
     'use strict';
+    // Translation hook: Danish text is the key; BertI18n (when loaded) maps it to the chosen language.
+    const T = (typeof window !== 'undefined' && window.BertI18n) ? window.BertI18n.T
+        : (strings, ...values) => (Array.isArray(strings) ? strings.reduce((out, part, index) => out + part + (index < values.length ? values[index] : ''), '') : String(strings));
 
     const VIEW = { width: 1280, height: 720, margin: 0 };
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-20';
+    const BUILD_VERSION = 'worlds-relay-21';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -29,12 +32,12 @@
     const GENERATED_FLIGHT_SEQUENCE = Object.freeze([0, 2, 4, 2]);
     const GENERATED_ANIMATION_FPS = 6;
     const RESCUE_OUTCOMES = Object.freeze([
-        { id: 'continue', label: 'FORTSÆT' },
-        { id: 'shield', label: 'SKJOLD', powerup: 'Shield' },
-        { id: 'refund', label: 'FJER RETUR', refund: 12 },
-        { id: 'gameover', label: 'GAME OVER' },
-        { id: 'magnet', label: 'MAGNET', powerup: 'Magnet' },
-        { id: 'focus', label: 'FOKUS', powerup: 'Focus' },
+        { id: 'continue', label: T('FORTSÆT') },
+        { id: 'shield', label: T('SKJOLD'), powerup: 'Shield' },
+        { id: 'refund', label: T('FJER RETUR'), refund: 12 },
+        { id: 'gameover', label: T('GAME OVER') },
+        { id: 'magnet', label: T('MAGNET'), powerup: 'Magnet' },
+        { id: 'focus', label: T('FOKUS'), powerup: 'Focus' },
     ]);
     const QUERY = new URLSearchParams(window.location.search);
     const DEBUG_COLLIDERS = QUERY.has('colliders');
@@ -96,7 +99,7 @@
     const UNITY_LEVELS = [
         {
             id: 1, modeGroup: 'classic', modeOrder: 1, unlockScore: 0,
-            name: 'Desert', sourceName: 'Desert', cardText: 'GRUNDFLYVNING', thumbnail: 1,
+            name: 'Desert', sourceName: 'Desert', cardText: T('GRUNDFLYVNING'), thumbnail: 1,
             mode: MODE.DEFAULT, startSpeed: 0.8, kind: 'desert', variant: 'desert', spacing: 820,
             stages: [
                 { duration: 0.5, speed: 0.8, difficulty: 0.3 }, { duration: 35, speed: 1.0, difficulty: 0.5 },
@@ -108,7 +111,7 @@
         },
         {
             id: 4, modeGroup: 'classic', modeOrder: 2, unlockScore: 120,
-            name: 'Jungle', sourceName: 'Jungle', cardText: 'FJENDER & ANGREB', thumbnail: 4,
+            name: 'Jungle', sourceName: 'Jungle', cardText: T('FJENDER & ANGREB'), thumbnail: 4,
             mode: MODE.DEFAULT, startSpeed: 0.8, kind: 'jungle', variant: 'enemies', spacing: 660, spiderWarning: true,
             stages: [
                 { duration: 25, speed: 0.75, difficulty: 0.7 }, { duration: 45, speed: 1.05, difficulty: 1.0 },
@@ -118,7 +121,7 @@
         },
         {
             id: 5, modeGroup: 'classic', modeOrder: 3, unlockScore: 180,
-            name: 'Happy Sky', sourceName: 'Happy Sky', cardText: 'LEVENDE FORHINDRINGER', thumbnail: 5,
+            name: 'Happy Sky', sourceName: 'Happy Sky', cardText: T('LEVENDE FORHINDRINGER'), thumbnail: 5,
             mode: MODE.DEFAULT, startSpeed: 0.76, kind: 'happySky', variant: 'happy', spacing: 710,
             stages: [
                 { duration: 35, speed: 0.75, difficulty: 0.55 }, { duration: 45, speed: 1.0, difficulty: 0.75 },
@@ -128,7 +131,7 @@
         },
         {
             id: 3, modeGroup: 'flappy', modeOrder: 1, unlockScore: 0,
-            name: 'Flappy Bert', sourceName: 'Flappy Bert', cardText: 'FASTE TÅRNE', thumbnail: 3,
+            name: 'Flappy Bert', sourceName: 'Flappy Bert', cardText: T('FASTE TÅRNE'), thumbnail: 3,
             mode: MODE.FLAPPY, startSpeed: 0.45, kind: 'flappy', variant: 'fixed', spacing: 760, gap: 270,
             stages: [
                 { duration: 40, speed: 0.45, difficulty: 0.7 }, { duration: 55, speed: 0.54, difficulty: 0.9 },
@@ -138,7 +141,7 @@
         },
         {
             id: 6, modeGroup: 'flappy', modeOrder: 2, unlockScore: 90,
-            name: 'Sky Shift', sourceName: 'Flappy Bert', cardText: 'BEVÆGELIGE TÅRNE', thumbnail: 3,
+            name: 'Sky Shift', sourceName: 'Flappy Bert', cardText: T('BEVÆGELIGE TÅRNE'), thumbnail: 3,
             mode: MODE.FLAPPY, startSpeed: 0.42, kind: 'flappy', variant: 'moving', spacing: 810, gap: 282,
             stages: [
                 { duration: 40, speed: 0.42, difficulty: 0.75 }, { duration: 55, speed: 0.52, difficulty: 1.0 },
@@ -148,7 +151,7 @@
         },
         {
             id: 7, modeGroup: 'flappy', modeOrder: 3, unlockScore: 130,
-            name: 'Tower Mix', sourceName: 'Flappy Bert', cardText: 'FAST + BEVÆGELIG', thumbnail: 3,
+            name: 'Tower Mix', sourceName: 'Flappy Bert', cardText: T('FAST + BEVÆGELIG'), thumbnail: 3,
             mode: MODE.FLAPPY, startSpeed: 0.48, kind: 'flappy', variant: 'mixed', spacing: 770, gap: 266,
             stages: [
                 { duration: 32, speed: 0.48, difficulty: 0.85 }, { duration: 48, speed: 0.58, difficulty: 1.1 },
@@ -158,7 +161,7 @@
         },
         {
             id: 2, modeGroup: 'tunnel', modeOrder: 1, unlockScore: 0,
-            name: 'Tunnel Training', sourceName: 'Tunnel', cardText: 'LÆR KORRIDOREN', thumbnail: 2,
+            name: 'Tunnel Training', sourceName: 'Tunnel', cardText: T('LÆR KORRIDOREN'), thumbnail: 2,
             mode: MODE.DEFAULT, startSpeed: 0.72, kind: 'tunnel', variant: 'training', spacing: 650,
             stages: [
                 { duration: 35, speed: 0.85, difficulty: 0.8 }, { duration: 50, speed: 1.05, difficulty: 1.0 },
@@ -168,7 +171,7 @@
         },
         {
             id: 8, modeGroup: 'tunnel', modeOrder: 2, unlockScore: 110,
-            name: 'Star Stream', sourceName: 'Tunnel', cardText: 'FØLG STJERNESTRØMMEN', thumbnail: 2,
+            name: 'Star Stream', sourceName: 'Tunnel', cardText: T('FØLG STJERNESTRØMMEN'), thumbnail: 2,
             mode: MODE.DEFAULT, startSpeed: 0.78, kind: 'tunnel', variant: 'star-stream', spacing: 610,
             stages: [
                 { duration: 35, speed: 0.82, difficulty: 0.85 }, { duration: 55, speed: 1.06, difficulty: 1.1 },
@@ -178,7 +181,7 @@
         },
         {
             id: 9, modeGroup: 'tunnel', modeOrder: 3, unlockScore: 160,
-            name: 'Pulse Tunnel', sourceName: 'Tunnel', cardText: 'ÅNDENDE PORTE', thumbnail: 2,
+            name: 'Pulse Tunnel', sourceName: 'Tunnel', cardText: T('ÅNDENDE PORTE'), thumbnail: 2,
             mode: MODE.DEFAULT, startSpeed: 0.76, kind: 'tunnel', variant: 'pulse', spacing: 690,
             stages: [
                 { duration: 35, speed: 0.78, difficulty: 0.9 }, { duration: 55, speed: 1.04, difficulty: 1.18 },
@@ -191,7 +194,7 @@
     // Separate from the nine ranked levels: no progression or server submission.
     const EDM_EVENT = Object.freeze({
         id: 10, modeGroup: 'event', modeOrder: 1, unlockScore: 0,
-        name: 'Neon Encore', sourceName: 'Neon Encore', cardText: 'KONCERT · TESTBANE',
+        name: 'Neon Encore', sourceName: 'Neon Encore', cardText: T('KONCERT · TESTBANE'),
         mode: MODE.DEFAULT, startSpeed: 0.78, kind: 'edm', variant: 'concert', spacing: 860,
         stages: [
             { duration: 38, speed: 0.78, difficulty: 0.72 },
@@ -203,7 +206,7 @@
 
     const BIRD_RUN_EVENT = Object.freeze({
         id: 11, modeGroup: 'event', modeOrder: 2, unlockScore: 0,
-        name: 'Bird Run', sourceName: 'Bird Run', cardText: 'FUGLETRAFIK · TESTBANE',
+        name: 'Bird Run', sourceName: 'Bird Run', cardText: T('FUGLETRAFIK · TESTBANE'),
         mode: MODE.DEFAULT, startSpeed: 0.74, kind: 'birdRun', variant: 'open-sky', spacing: 920,
         stages: [
             { duration: 42, speed: 0.74, difficulty: 0.65 },
@@ -214,7 +217,7 @@
     });
     const STORMLINE_EVENT = Object.freeze({
         id: 12, modeGroup: 'event', modeOrder: 3, unlockScore: 0,
-        name: 'Stormline', sourceName: 'Stormline', cardText: 'VIND · TESTBANE',
+        name: 'Stormline', sourceName: 'Stormline', cardText: T('VIND · TESTBANE'),
         mode: MODE.DEFAULT, startSpeed: 0.72, kind: 'stormline', variant: 'wind-sail', spacing: 1040,
         stages: [
             { duration: 48, speed: 0.72, difficulty: 0.65 },
@@ -225,18 +228,18 @@
     });
     const SKY_RELAY_EVENT = Object.freeze({
         id: 13, modeGroup: 'event', modeOrder: 4, unlockScore: 0,
-        name: 'Sky Relay', sourceName: 'Sky Relay', cardText: 'PRÆCISIONSFLYVNING · LOKAL PRØVE',
+        name: 'Sky Relay', sourceName: 'Sky Relay', cardText: T('PRÆCISIONSFLYVNING · LOKAL PRØVE'),
         mode: MODE.DEFAULT, startSpeed: 0.58, kind: 'skyRelay', variant: 'wind-chime', spacing: 0,
         stages: [], layers: [],
     });
 
     // Five adventure worlds, always open. Endless like every other level.
     const ADVENTURE_ART = Object.freeze({
-        iceberg: { name: 'Isbjerget', card: 'ISTAPPER & SPIDSER', obstacles: { advIceStalactite: 'falling-stalactite', advIceShelf: 'cracking-ice-shelf', advIceSpikes: 'ice-spike-cluster' } },
-        harbor: { name: 'Havnen', card: 'KRANER & MÅGER', obstacles: { advCraneHook: 'crane-hook', advGull: 'diving-gull', advParcel: 'rolling-parcel' } },
-        nightcity: { name: 'Nattebyen', card: 'MØRKE & SKILTE', obstacles: { advWaterTank: 'lit-water-tank', advVent: 'rooftop-vent', advSignboard: 'swaying-signboard' } },
-        volcano: { name: 'Vulkanen', card: 'LAVA & BOBLER', obstacles: { advLavaLedge: 'cracked-lava-ledge', advLavaBubble: 'lava-bubble', advLavaSpout: 'lava-spout' } },
-        windfarm: { name: 'Vindmøller', card: 'ROTORER & BØJER', obstacles: { advRotor: 'rotor-gate', advBuoys: 'buoy-chain', advPlatform: 'service-platform' } },
+        iceberg: { name: T('Isbjerget'), card: T('ISTAPPER & SPIDSER'), obstacles: { advIceStalactite: 'falling-stalactite', advIceShelf: 'cracking-ice-shelf', advIceSpikes: 'ice-spike-cluster' } },
+        harbor: { name: T('Havnen'), card: T('KRANER & MÅGER'), obstacles: { advCraneHook: 'crane-hook', advGull: 'diving-gull', advParcel: 'rolling-parcel' } },
+        nightcity: { name: T('Nattebyen'), card: T('MØRKE & SKILTE'), obstacles: { advWaterTank: 'lit-water-tank', advVent: 'rooftop-vent', advSignboard: 'swaying-signboard' } },
+        volcano: { name: T('Vulkanen'), card: T('LAVA & BOBLER'), obstacles: { advLavaLedge: 'cracked-lava-ledge', advLavaBubble: 'lava-bubble', advLavaSpout: 'lava-spout' } },
+        windfarm: { name: T('Vindmøller'), card: T('ROTORER & BØJER'), obstacles: { advRotor: 'rotor-gate', advBuoys: 'buoy-chain', advPlatform: 'service-platform' } },
     });
     // bg1 ends just inside bg2's solid band, so no seam shows between them.
     const ADVENTURE_BG1_Y = Object.freeze({ iceberg: 310, harbor: 335, nightcity: 350, volcano: 361, windfarm: 238 });
@@ -262,10 +265,10 @@
     // The four test worlds live in the Eventyr tab too, after the five new levels.
     const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT]);
     const EVENT_CARD = Object.freeze({
-        11: { name: 'Bird Run', card: 'FUGLE & ROVFUGL', order: 6 },
-        10: { name: 'Neon Encore', card: 'RIGGE & BOLDE', order: 7 },
-        12: { name: 'Stormline', card: 'VIND & GENSTANDE', order: 8 },
-        13: { name: 'Sky Relay', card: 'PORTE & KLOKKE', order: 9 },
+        11: { name: 'Bird Run', card: T('FUGLE & ROVFUGL'), order: 6 },
+        10: { name: 'Neon Encore', card: T('RIGGE & BOLDE'), order: 7 },
+        12: { name: 'Stormline', card: T('VIND & GENSTANDE'), order: 8 },
+        13: { name: 'Sky Relay', card: T('PORTE & KLOKKE'), order: 9 },
     });
 
     function isEventLevel(level = currentLevel) {
@@ -993,8 +996,8 @@
         const earned = BertWorldMastery.read(localStorage);
         for (const [id, buttonId] of [[10, 'edm-event-btn'], [11, 'bird-run-event-btn'], [12, 'stormline-event-btn']]) {
             const kicker = document.querySelector(`#${buttonId} .edm-event-kicker`);
-            const goals = { 10: 'MÅL: 3 BOLDE', 11: 'MÅL: ROVFUGL', 12: 'MÅL: STORM' };
-            if (kicker) kicker.textContent = earned[id] ? 'VERDEN KLARET · LOKALT' : goals[id];
+            const goals = { 10: T('MÅL: 3 BOLDE'), 11: T('MÅL: ROVFUGL'), 12: T('MÅL: STORM') };
+            if (kicker) kicker.textContent = earned[id] ? T('VERDEN KLARET · LOKALT') : goals[id];
         }
         updateMetaMenu();
         stopMusic();
@@ -1020,7 +1023,7 @@
                         <span class="level-card-title">${level.name}</span>
                         <span class="level-card-mode">${level.cardText}</span>
                     </span>
-                    <span class="level-card-score">REKORD <strong id="level-score-${level.id}">0</strong></span>
+                    <span class="level-card-score">${T('REKORD')} <strong id="level-score-${level.id}">0</strong></span>
                 </span>
                 <span id="level-lock-${level.id}" class="level-card-lock"></span>
                 <span class="level-unlock-track" aria-hidden="true"><i id="level-unlock-fill-${level.id}"></i></span>
@@ -1102,27 +1105,27 @@
         if (!status.requirement || !mission) return;
         lockedCardTrigger = trigger;
         dom.levelLockPreview.src = `assets/unity/ui/previews/level-${level.id}.webp`;
-        dom.levelLockTitle.textContent = `${level.name.toUpperCase()} ER LÅST`;
+        dom.levelLockTitle.textContent = T`${level.name.toUpperCase()} ER LÅST`;
         const scoreCopy = pendingScores.length
-            ? `Klar hele trin ${level.modeOrder - 1}: ${pendingScores.map(scoreRequirementText).join(' · ')}.`
-            : `Alle pointkrav i trin ${level.modeOrder - 1} er klaret.`;
+            ? T`Klar hele trin ${level.modeOrder - 1}: ${pendingScores.map(scoreRequirementText).join(' · ')}.`
+            : T`Alle pointkrav i trin ${level.modeOrder - 1} er klaret.`;
         const missionCopy = mission.complete
-            ? `${mission.target} missionsbelønninger er hentet.`
-            : `Hent ${mission.target} missionsbelønninger i alt; du har ${mission.current}.`;
-        dom.levelLockCopy.textContent = `${scoreCopy} ${missionCopy} Når begge krav er opfyldt, åbner hele trin ${level.modeOrder}.`;
+            ? T`${mission.target} missionsbelønninger er hentet.`
+            : T`Hent ${mission.target} missionsbelønninger i alt; du har ${mission.current}.`;
+        dom.levelLockCopy.textContent = T`${scoreCopy} ${missionCopy} Når begge krav er opfyldt, åbner hele trin ${level.modeOrder}.`;
         dom.levelLockProgress.style.width = `${Math.round(status.progress * 100)}%`;
         const completeScores = (status.requirements || []).filter((requirement) => requirement.complete).length;
-        dom.levelLockNumbers.textContent = `${completeScores}/${status.requirements.length} BANER · ${Math.min(mission.current, mission.target)}/${mission.target} MISSIONER`;
+        dom.levelLockNumbers.textContent = T`${completeScores}/${status.requirements.length} BANER · ${Math.min(mission.current, mission.target)}/${mission.target} MISSIONER`;
         if (!mission.complete) {
             dom.playQualification.dataset.action = 'missions';
             delete dom.playQualification.dataset.levelId;
-            dom.playQualification.textContent = 'ÅBN DAGENS MISSIONER';
+            dom.playQualification.textContent = T('ÅBN DAGENS MISSIONER');
         } else {
             const nextRequirement = pendingScores[0] || status.requirement;
             const previous = UNITY_LEVELS.find((candidate) => candidate.id === nextRequirement.levelId);
             dom.playQualification.dataset.action = 'level';
             dom.playQualification.dataset.levelId = String(nextRequirement.levelId);
-            dom.playQualification.textContent = `SPIL ${(previous?.name || 'KVALIFIKATIONSBANEN').toUpperCase()}`;
+            dom.playQualification.textContent = `SPIL ${(previous?.name || T('KVALIFIKATIONSBANEN')).toUpperCase()}`;
         }
         setVisible(dom.levelLockModal, true);
         playAudio('pop');
@@ -1177,7 +1180,7 @@
         const records = UNITY_LEVELS.map((level) => ({ level, score: loadHighscore(level.id) }));
         const best = records.reduce((winner, candidate) => candidate.score > winner.score ? candidate : winner, records[0]);
         dom.menuHighscore.textContent = String(best.score);
-        dom.menuBestLevel.textContent = best.score > 0 ? `Bedst på level ${best.level.id} · ${best.level.name}` : 'Ingen rekord endnu';
+        dom.menuBestLevel.textContent = best.score > 0 ? T`Bedst på level ${best.level.id} · ${best.level.name}` : T('Ingen rekord endnu');
     }
 
     function updateLevelHighscores() {
@@ -1194,15 +1197,15 @@
             card.classList.toggle('locked', !status.unlocked);
             card.removeAttribute('aria-disabled');
             card.setAttribute('aria-label', status.unlocked
-                ? `${level.name}, åben, personlig rekord ${loadHighscore(level.id)}`
-                : `${level.name}, låst. Tryk for at se oplåsningskravet`);
+                ? T`${level.name}, åben, personlig rekord ${loadHighscore(level.id)}`
+                : T`${level.name}, låst. Tryk for at se oplåsningskravet`);
             if (status.unlocked) {
-                lock.textContent = level.modeOrder === 1 ? 'STARTBANE' : 'LÅST OP';
+                lock.textContent = level.modeOrder === 1 ? T('STARTBANE') : T('LÅST OP');
                 if (fill) fill.style.width = '100%';
             } else {
                 const completeScores = (status.requirements || []).filter((requirement) => requirement.complete).length;
                 const mission = status.missionRequirement;
-                lock.textContent = `${completeScores}/${status.requirements.length} BANER · ${Math.min(mission.current, mission.target)}/${mission.target} MISS.`;
+                lock.textContent = T`${completeScores}/${status.requirements.length} BANER · ${Math.min(mission.current, mission.target)}/${mission.target} MISS.`;
                 if (fill) fill.style.width = `${Math.round(status.progress * 100)}%`;
             }
         });
@@ -1211,21 +1214,21 @@
             const element = document.getElementById(`level-score-${level.id}`);
             if (element) element.textContent = String(loadHighscore(level.id));
             const lock = document.getElementById(`level-lock-${level.id}`);
-            if (lock) lock.textContent = level.modeGroup === 'event' ? (earnedBadges[level.id] ? 'MÆRKE VUNDET' : 'TESTBANE') : 'NY BANE';
+            if (lock) lock.textContent = level.modeGroup === 'event' ? (earnedBadges[level.id] ? T('MÆRKE VUNDET') : T('TESTBANE')) : T('NY BANE');
             const fill = document.getElementById(`level-unlock-fill-${level.id}`);
             if (fill) fill.style.width = '100%';
         });
-        const modeHelp = { classic: 'HOLD OP/NED', flappy: 'TAP', tunnel: 'PRÆCISION', adventure: 'NYE VERDENER' };
+        const modeHelp = { classic: T('HOLD OP/NED'), flappy: T('TAP'), tunnel: T('PRÆCISION'), adventure: T('NYE VERDENER') };
         document.querySelectorAll('.mode-tab').forEach((tab) => {
             if (tab.dataset.mode === 'adventure') {
                 const copy = tab.querySelector('small');
-                if (copy) copy.textContent = `${ADVENTURE_LEVELS.length + EVENT_LEVELS.length} BANER · ${modeHelp.adventure}`;
+                if (copy) copy.textContent = T`${ADVENTURE_LEVELS.length + EVENT_LEVELS.length} BANER · ${modeHelp.adventure}`;
                 return;
             }
             const levels = UNITY_LEVELS.filter((level) => level.modeGroup === tab.dataset.mode);
             const open = levels.filter((level) => progression[level.id]?.unlocked).length;
             const copy = tab.querySelector('small');
-            if (copy) copy.textContent = `${open}/${levels.length} ÅBNE · ${modeHelp[tab.dataset.mode]}`;
+            if (copy) copy.textContent = T`${open}/${levels.length} ÅBNE · ${modeHelp[tab.dataset.mode]}`;
         });
         updateMenuHighscore();
     }
@@ -1245,24 +1248,24 @@
             button.classList.toggle('inspected', button.dataset.hero === inspectedHero && !selected);
             button.setAttribute('aria-selected', String(selected));
             button.setAttribute('aria-label', hero.owned
-                ? `Vælg ${hero.name}, ${hero.source === 'feathers' ? 'købt' : 'låst op'}`
-                : `${hero.name} låst. ${hero.goal}. ${hero.current} af ${hero.target}. Alternativ pris ${hero.price} fjer.`);
+                ? T`Vælg ${hero.name}, ${hero.source === 'feathers' ? 'købt' : 'låst op'}`
+                : T`${hero.name} låst. ${hero.goal}. ${hero.current} af ${hero.target}. Alternativ pris ${hero.price} fjer.`);
             button.querySelector('small').textContent = hero.owned
-                ? hero.source === 'feathers' ? 'KØBT' : hero.source === 'name' ? 'EPISK' : hero.source === 'legacy' ? 'BEHOLDT' : hero.id === 'bert' ? 'ORIGINAL' : 'VUNDET'
-                : `${hero.price} FJER`;
+                ? hero.source === 'feathers' ? T('KØBT') : hero.source === 'name' ? T('EPISK') : hero.source === 'legacy' ? T('BEHOLDT') : hero.id === 'bert' ? T('ORIGINAL') : T('VUNDET')
+                : T`${hero.price} FJER`;
         });
         const active = catalog.find((hero) => hero.id === inspectedHero) || catalog[0];
         dom.heroDetailName.textContent = active.name.toUpperCase();
         dom.heroDetailGoal.textContent = active.secret && active.owned
-            ? active.id === meta.hero ? 'Episk helt · kun til dig · valgt' : 'Episk helt · kun til dig. Tryk for at vælge.'
+            ? active.id === meta.hero ? T('Episk helt · kun til dig · valgt') : T('Episk helt · kun til dig. Tryk for at vælge.')
             : active.owned
-            ? active.id === meta.hero ? 'Valgt og klar til at flyve' : 'Låst op. Tryk på figuren for at vælge.'
+            ? active.id === meta.hero ? T('Valgt og klar til at flyve') : T('Låst op. Tryk på figuren for at vælge.')
             : `${active.goal} · ${active.current}/${active.target} · ${Math.max(0, active.price - meta.feathers)} fjer mangler`;
         dom.heroBuy.classList.toggle('hidden', active.owned);
         dom.heroBuy.disabled = active.owned || meta.feathers < active.price;
         dom.heroBuy.textContent = pendingHeroPurchase === active.id
-            ? `BEKRÆFT · ${active.price} FJER`
-            : `KØB · ${active.price} FJER`;
+            ? T`BEKRÆFT · ${active.price} FJER`
+            : T`KØB · ${active.price} FJER`;
         dom.heroCancelBuy.classList.toggle('hidden', pendingHeroPurchase !== active.id);
     }
 
@@ -1276,13 +1279,13 @@
         if (dom.rescueUpgrade) {
             dom.rescueUpgrade.disabled = rescue.cost == null || !rescue.canBuy;
             dom.rescueUpgrade.textContent = rescue.cost == null
-                ? 'MAKS LÅST OP'
-                : `LÅS OP · ${rescue.cost} FJER`;
+                ? T('MAKS LÅST OP')
+                : T`LÅS OP · ${rescue.cost} FJER`;
         }
         dom.dailyName.textContent = daily.name.toUpperCase();
         const dailyLevel = UNITY_LEVELS.find((level) => level.id === daily.levelId);
-        dom.dailyDetail.textContent = `${dailyLevel?.name || `Level ${daily.levelId}`} · Mål ${daily.target}`;
-        dom.dailyState.textContent = daily.completed ? 'KLARET' : 'SPIL';
+        dom.dailyDetail.textContent = T`${dailyLevel?.name || `Level ${daily.levelId}`} · Mål ${daily.target}`;
+        dom.dailyState.textContent = daily.completed ? T('KLARET') : T('SPIL');
         dom.dailyButton.classList.toggle('completed', daily.completed);
         renderWardrobe();
         const selectedHero = document.querySelector(`.hero-option[data-hero="${meta.hero}"]`) || document.querySelector('.hero-option[data-hero="bert"]');
@@ -1342,8 +1345,8 @@
         if (!QUERY.has('qa') && !unlock?.unlocked) {
             showLevelMenu(modeForLevel(requestedLevel));
             window.BertApp?.showToast(unlock?.requirement
-                ? `Klar hele forrige trin og missionskravet først`
-                : 'Banen er låst');
+                ? T`Klar hele forrige trin og missionskravet først`
+                : T('Banen er låst'));
             return false;
         }
         currentLevel = requestedLevel;
@@ -1458,26 +1461,26 @@
         setVisible(dom.newHighscore, false);
         document.body.classList.add('is-prewarm');
         dom.levelName.textContent = state.dailyKey
-            ? `DAGENS RUTE · MÅL ${state.dailyTarget}`
-            : currentLevel === EDM_EVENT ? 'EVENT · NEON ENCORE · TESTBANE'
-            : currentLevel === BIRD_RUN_EVENT ? 'EVENT · BIRD RUN · TESTBANE'
-            : currentLevel === STORMLINE_EVENT ? 'EVENT · STORMLINE · TESTBANE'
-            : currentLevel === SKY_RELAY_EVENT ? 'MINISPIL · SKY RELAY · LOKALT'
+            ? T`DAGENS RUTE · MÅL ${state.dailyTarget}`
+            : currentLevel === EDM_EVENT ? T('EVENT · NEON ENCORE · TESTBANE')
+            : currentLevel === BIRD_RUN_EVENT ? T('EVENT · BIRD RUN · TESTBANE')
+            : currentLevel === STORMLINE_EVENT ? T('EVENT · STORMLINE · TESTBANE')
+            : currentLevel === SKY_RELAY_EVENT ? T('MINISPIL · SKY RELAY · LOKALT')
             : isAdventureLevel() ? `EVENTYR · ${currentLevel.name.toUpperCase()}`
             : `${currentLevel.modeGroup.toUpperCase()} ${currentLevel.modeOrder} · ${currentLevel.name.toUpperCase()}`;
         dom.hint.textContent = currentLevel.mode === MODE.FLAPPY
-            ? `TAP FOR AT FLYVE · ${currentLevel.cardText}`
+            ? T`TAP FOR AT FLYVE · ${currentLevel.cardText}`
             : currentLevel.kind === 'birdRun'
-                ? 'MÅL: UNDVIG EN ROVFUGL · VENSTRE OP · HØJRE NED'
+                ? T('MÅL: UNDVIG EN ROVFUGL · VENSTRE OP · HØJRE NED')
             : currentLevel.kind === 'stormline'
-                ? 'MÅL: UNDVIG EN STORMGENSTAND · FØLG FLAG OG BLADE'
+                ? T('MÅL: UNDVIG EN STORMGENSTAND · FØLG FLAG OG BLADE')
             : currentLevel.kind === 'edm'
-                ? 'MÅL: KOM FORBI EN BØLGE MED TRE BOLDE · VENSTRE OP · HØJRE NED'
+                ? T('MÅL: KOM FORBI EN BØLGE MED TRE BOLDE · VENSTRE OP · HØJRE NED')
             : currentLevel.kind === 'skyRelay'
-                ? 'FLYV GENNEM TRE SKY-PORTE · RAM GULDPLADEN · VENSTRE OP · HØJRE NED'
+                ? T('FLYV GENNEM TRE SKY-PORTE · RAM GULDPLADEN · VENSTRE OP · HØJRE NED')
             : currentLevel.kind === 'tunnel'
-                ? `${currentLevel.cardText} · VENSTRE OP · HØJRE NED`
-                : 'VENSTRE SIDE = OP · HØJRE SIDE = NED';
+                ? T`${currentLevel.cardText} · VENSTRE OP · HØJRE NED`
+                : T('VENSTRE SIDE = OP · HØJRE SIDE = NED');
         setVisible(dom.hint, true);
         updateHud();
         stopMusic();
@@ -2142,7 +2145,7 @@
         state.starsCollected += value;
         state.score += BertEventPowerups.score(state.streak * value, state.activePowerup);
         if (!isEventLevel() && state.cleanRun && state.score >= 180 && BertMeta.noteCleanScore(state.score)) {
-            window.BertApp?.showToast('NOIRWING LÅST OP · FEJLFRI FLYVNING');
+            window.BertApp?.showToast(T('NOIRWING LÅST OP · FEJLFRI FLYVNING'));
             BertMeta.haptic('reward');
         }
         playAudio('point');
@@ -2199,9 +2202,9 @@
                 bird.velocity = Math.min(bird.velocity, -250);
             }
         }
-        const powerupNames = { [POWERUP.SHIELD]: 'SKJOLD', [POWERUP.MAGNET]: 'MAGNET',
-            [POWERUP.HEAVY]: 'TUNG', [POWERUP.HYPER]: 'HYPERFART', [POWERUP.REVERSE]: 'OMVENDT STYRING', [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: 'FLAPPY-STYRING' };
-        dom.powerup.textContent = type === POWERUP.FOCUS ? 'FOKUS' : `${powerupNames[type] || type.toUpperCase()} · ${duration}s`;
+        const powerupNames = { [POWERUP.SHIELD]: T('SKJOLD'), [POWERUP.MAGNET]: T('MAGNET'),
+            [POWERUP.HEAVY]: T('TUNG'), [POWERUP.HYPER]: T('HYPERFART'), [POWERUP.REVERSE]: T('OMVENDT STYRING'), [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: T('FLAPPY-STYRING') };
+        dom.powerup.textContent = type === POWERUP.FOCUS ? T('FOKUS') : `${powerupNames[type] || type.toUpperCase()} · ${duration}s`;
         dom.powerup.classList.add('active');
         burst(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2, type === POWERUP.SHIELD ? '#65d8ff' : '#ffd93b', 16);
         BertMeta.haptic('powerup');
@@ -2269,7 +2272,7 @@
             burst(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2, '#ffe08a', 10);
             playAudio('shieldBreak');
             BertMeta.haptic('shield');
-            window.BertApp?.showToast('Streak Guard reddede din streak');
+            window.BertApp?.showToast(T('Streak Guard reddede din streak'));
             updateHud();
             return;
         }
@@ -2287,7 +2290,7 @@
         if (state.activePowerup === POWERUP.SHIELD && state.shieldCharges > 0) {
             state.shieldCharges -= 1;
             state.invulnerableUntil = state.elapsed + 2;
-            dom.powerup.textContent = 'SKJOLD BRUGT · 2s';
+            dom.powerup.textContent = T('SKJOLD BRUGT · 2s');
             dom.powerup.classList.add('active');
             burst(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2, '#75e8ff', 22, 'shieldSplinter');
             playAudio('shieldBreak');
@@ -2301,7 +2304,7 @@
             state.streak = 0;
             state.invulnerableUntil = state.elapsed + 2.4;
             state.rescueNoticeUntil = state.elapsed + 2.4;
-            state.rescueNoticeText = 'REDNINGSLIV';
+            state.rescueNoticeText = T('REDNINGSLIV');
             bird.y = clamp(bird.y, 150, VIEW.height - BIRD.height - 150);
             bird.velocity = -90;
             bird.rotation = -5;
@@ -2352,7 +2355,7 @@
     function updateRescueWheelWallet() {
         const offer = BertMeta.continueSpinOffer();
         dom.rescueWheelBalance.textContent = String(offer.balance);
-        dom.rescueSpin.textContent = `SPIN · ${offer.cost} FJER`;
+        dom.rescueSpin.textContent = T`SPIN · ${offer.cost} FJER`;
         dom.rescueSpin.disabled = !offer.canAfford || state.rescueSpinPending;
         return offer;
     }
@@ -2369,7 +2372,7 @@
         dom.rescueWheel.style.transition = 'none';
         dom.rescueWheel.style.transform = `rotate(${state.rescueWheelRotation}deg)`;
         requestAnimationFrame(() => { dom.rescueWheel.style.transition = ''; });
-        dom.rescueWheelResult.textContent = 'SPIN FOR AT SE DIN REDNING';
+        dom.rescueWheelResult.textContent = T('SPIN FOR AT SE DIN REDNING');
         updateRescueWheelWallet();
         setVisible(dom.hud, false);
         setVisible(dom.rescueWheelModal, true);
@@ -2391,7 +2394,7 @@
         state.streak = 0;
         state.invulnerableUntil = state.elapsed + 3;
         state.rescueNoticeUntil = state.elapsed + 3;
-        state.rescueNoticeText = outcome.id === 'refund' ? 'GRATIS REDNING' : 'REDNINGSSPIN';
+        state.rescueNoticeText = outcome.id === 'refund' ? T('GRATIS REDNING') : T('REDNINGSSPIN');
         bird.x = BIRD.x;
         bird.y = (VIEW.height - BIRD.height) / 2;
         bird.velocity = -80;
@@ -2413,7 +2416,7 @@
         card?.classList.remove('spinning');
         if (outcome.id === 'gameover') {
             BertMeta.settleContinueSpin({ survived: false });
-            dom.rescueWheelResult.textContent = 'GAME OVER · TUREN SLUTTER';
+            dom.rescueWheelResult.textContent = T('GAME OVER · TUREN SLUTTER');
             card?.classList.add('lost');
             BertMeta.haptic('death');
             const finish = () => {
@@ -2426,7 +2429,7 @@
             return;
         }
         dom.rescueWheelResult.textContent = outcome.id === 'refund'
-            ? 'REDDET · DINE 12 FJER KOMMER RETUR'
+            ? T('REDDET · DINE 12 FJER KOMMER RETUR')
             : `REDDET · ${outcome.label}`;
         card?.classList.add('rescued');
         if (immediate) resumeFromRescueWheel(outcome);
@@ -2438,7 +2441,7 @@
         const purchase = BertMeta.buyContinueSpin();
         if (!purchase.ok) {
             updateRescueWheelWallet();
-            dom.rescueWheelResult.textContent = `DU MANGLER ${Math.max(0, purchase.offer.cost - purchase.offer.balance)} FJER`;
+            dom.rescueWheelResult.textContent = T`DU MANGLER ${Math.max(0, purchase.offer.cost - purchase.offer.balance)} FJER`;
             BertMeta.haptic('warning');
             return purchase;
         }
@@ -2453,7 +2456,7 @@
         const alignment = ((360 - index * 60 - currentAngle) % 360 + 360) % 360;
         state.rescueWheelRotation += 1800 + alignment;
         dom.rescueWheel.closest('.rescue-wheel-card')?.classList.add('spinning');
-        dom.rescueWheelResult.textContent = 'REDNINGSREDEN SNURRER …';
+        dom.rescueWheelResult.textContent = T('REDNINGSREDEN SNURRER …');
         dom.rescueWheel.style.transform = `rotate(${state.rescueWheelRotation}deg)`;
         updateRescueWheelWallet();
         if (immediate) settleRescueWheel(outcome, true);
@@ -2479,10 +2482,10 @@
     function finishDeath() {
         setVisible(dom.rescueWheelModal, false);
         const resultKicker = dom.gameOver.querySelector('.result-kicker');
-        if (resultKicker) resultKicker.textContent = state.worldBadge ? 'VERDEN KLARET'
-            : currentLevel.kind === 'skyRelay' ? state.relayResult?.outcome === 'ring-hit' ? 'SKYRING RAMT'
-                : state.relayResult?.hit ? 'VINDKLOKKEN RAMT' : 'RUTEN AFSLUTTET'
-                : 'DIN FLYVETUR';
+        if (resultKicker) resultKicker.textContent = state.worldBadge ? T('VERDEN KLARET')
+            : currentLevel.kind === 'skyRelay' ? state.relayResult?.outcome === 'ring-hit' ? T('SKYRING RAMT')
+                : state.relayResult?.hit ? T('VINDKLOKKEN RAMT') : T('RUTEN AFSLUTTET')
+                : T('DIN FLYVETUR');
         const run = { score: state.score, streak: state.bestStreak, time: state.elapsed };
         const nextLevel = nextLevelInMode(currentLevel);
         const nextWasUnlocked = nextLevel ? Boolean(progressionSnapshot()[nextLevel.id]?.unlocked) : true;
@@ -2522,38 +2525,38 @@
         dom.resultMedal.querySelector('strong').textContent = medal.label;
         const unlockAfterRun = nextLevel ? progressionSnapshot()[nextLevel.id] : null;
         const medalText = medal.next
-            ? `${Math.max(0, medal.next - state.score)} point til næste medalje`
-            : 'Topflyvning';
+            ? T`${Math.max(0, medal.next - state.score)} point til næste medalje`
+            : T('Topflyvning');
         dom.resultProgress.classList.toggle('event-status', isEventLevel());
         if (currentLevel === EDM_EVENT) {
-            dom.resultProgress.textContent = `NEON ENCORE · ${state.starsCollected} stjerner · kun lokal eventrekord`;
+            dom.resultProgress.textContent = T`NEON ENCORE · ${state.starsCollected} stjerner · kun lokal eventrekord`;
         } else if (currentLevel === BIRD_RUN_EVENT) {
             const cause = state.deathCause === 'bird-run-bird'
-                ? ` · ${state.deathPredatorHero ? 'ROVFUGL' : 'FUGL'} ${state.deathDirection === 'rear' ? 'BAGFRA' : 'FORFRA'}` : '';
-            dom.resultProgress.textContent = `BIRD RUN${cause} · ${state.starsCollected} stjerner · kun lokal eventrekord`;
+                ? ` · ${state.deathPredatorHero ? T('ROVFUGL') : T('FUGL')} ${state.deathDirection === 'rear' ? T('BAGFRA') : T('FORFRA')}` : '';
+            dom.resultProgress.textContent = T`BIRD RUN${cause} · ${state.starsCollected} stjerner · kun lokal eventrekord`;
         } else if (currentLevel === STORMLINE_EVENT) {
-            dom.resultProgress.textContent = `STORMLINE · VIND OG FLYVENDE TING · ${state.starsCollected} stjerner · kun lokal eventrekord`;
+            dom.resultProgress.textContent = T`STORMLINE · VIND OG FLYVENDE TING · ${state.starsCollected} stjerner · kun lokal eventrekord`;
         } else if (currentLevel === SKY_RELAY_EVENT) {
             const relay = state.relayResult;
             dom.resultProgress.textContent = relay?.outcome === 'ring-hit'
-                ? `SKY RELAY · RAMT ${relay.ringSide === 'top' ? 'TOPPEN' : 'BUNDEN'} AF PORT ${relay.ringIndex} · 0 POINT · PRØV IGEN`
+                ? T`SKY RELAY · RAMT ${relay.ringSide === 'top' ? T('TOPPEN') : T('BUNDEN')} AF PORT ${relay.ringIndex} · 0 POINT · PRØV IGEN`
                 : relay?.hit
-                ? `SKY RELAY · ${relay.gatesHit}/3 PORTE · ${Math.round(relay.precision * 100)}% PRÆCISION · KUN LOKALT`
-                : `SKY RELAY · ${relay?.timedOut ? 'TIDEN UDE' : 'FORBI GULDPLADEN'} · 0 POINT · PRØV IGEN`;
+                ? T`SKY RELAY · ${relay.gatesHit}/3 PORTE · ${Math.round(relay.precision * 100)}% PRÆCISION · KUN LOKALT`
+                : T`SKY RELAY · ${relay?.timedOut ? T('TIDEN UDE') : T('FORBI GULDPLADEN')} · 0 POINT · PRØV IGEN`;
         } else if (nextLevel && !nextWasUnlocked && unlockAfterRun?.unlocked) {
-            dom.resultProgress.textContent = `NYT TRIN: ALLE TRE BANER ER ÅBNE · ${state.starsCollected} stjerner samlet`;
+            dom.resultProgress.textContent = T`NYT TRIN: ALLE TRE BANER ER ÅBNE · ${state.starsCollected} stjerner samlet`;
         } else if (nextLevel && !unlockAfterRun?.unlocked) {
             const blockers = pendingTierRequirements(unlockAfterRun).map((requirement) => {
                 const source = UNITY_LEVELS.find((candidate) => candidate.id === requirement.levelId);
-                return `${Math.max(0, requirement.score - requirement.current)} point i ${source?.name || 'en bane'}`;
+                return T`${Math.max(0, requirement.score - requirement.current)} point i ${source?.name || T('en bane')}`;
             });
             const mission = unlockAfterRun.missionRequirement;
-            if (mission && !mission.complete) blockers.push(`${mission.target - mission.current} missionsbelønninger`);
-            dom.resultProgress.textContent = `${blockers.join(' + ')} til trin ${nextLevel.modeOrder} · ${state.starsCollected} stjerner`;
+            if (mission && !mission.complete) blockers.push(T`${mission.target - mission.current} missionsbelønninger`);
+            dom.resultProgress.textContent = T`${blockers.join(' + ')} til trin ${nextLevel.modeOrder} · ${state.starsCollected} stjerner`;
         } else {
-            dom.resultProgress.textContent = `${medalText} · ${state.starsCollected} stjerner samlet`;
+            dom.resultProgress.textContent = T`${medalText} · ${state.starsCollected} stjerner samlet`;
         }
-        if (state.worldBadge) dom.resultProgress.textContent += ` · MÆRKE: ${state.worldBadge}`;
+        if (state.worldBadge) dom.resultProgress.textContent += T` · MÆRKE: ${state.worldBadge}`;
         if (state.challenge) {
             const attempt = BertSocial.consumeChallengeAttempt(state.challenge.id || `${state.challenge.seed}-${state.challenge.playerId}`);
             const won = (state.score > state.challenge.score)
@@ -2565,8 +2568,8 @@
                 savedRun.unlockedHeroes.push('MechaBert');
             }
             dom.resultProgress.textContent = won
-                ? `DU VANDT DUELLEN · udfordr tilbage · ${state.starsCollected} stjerner`
-                : `${Math.max(0, 3 - attempt)} forsøg tilbage · slå ${state.challenge.score} point`;
+                ? T`DU VANDT DUELLEN · udfordr tilbage · ${state.starsCollected} stjerner`
+                : T`${Math.max(0, 3 - attempt)} forsøg tilbage · slå ${state.challenge.score} point`;
             BertSocial.submitChallengeAttempt(state.challenge.id, {
                 playerId: player.id,
                 playerName: player.name,
@@ -2623,22 +2626,22 @@
                 ? Math.max(0, Math.ceil(state.focusRemaining))
                 : Math.max(0, Math.ceil(state.powerupEndsAt - state.elapsed));
             const label = {
-                [POWERUP.FOCUS]: 'FOKUS', [POWERUP.SHIELD]: 'SKJOLD', [POWERUP.MAGNET]: 'MAGNET',
-                [POWERUP.HEAVY]: 'TUNG · STIGER LANGSOMT', [POWERUP.HYPER]: 'HYPERFART',
-                [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: 'FLAPPY-STYRING · TAP',
-                [POWERUP.REVERSE]: 'OMVENDT STYRING',
+                [POWERUP.FOCUS]: T('FOKUS'), [POWERUP.SHIELD]: T('SKJOLD'), [POWERUP.MAGNET]: T('MAGNET'),
+                [POWERUP.HEAVY]: T('TUNG · STIGER LANGSOMT'), [POWERUP.HYPER]: T('HYPERFART'),
+                [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: T('FLAPPY-STYRING · TAP'),
+                [POWERUP.REVERSE]: T('OMVENDT STYRING'),
             }[state.activePowerup] || state.activePowerup.toUpperCase();
             powerupText = state.activePowerup === POWERUP.FOCUS && state.focusPhase === 'countdown'
-                ? `FOKUS OM ${Math.max(1, Math.ceil(state.focusCountdown))}`
+                ? T`FOKUS OM ${Math.max(1, Math.ceil(state.focusCountdown))}`
                 : `${label} · ${remaining}s`;
             dom.powerup.classList.add('active');
         } else if (state.elapsed < state.invulnerableUntil) {
             powerupText = state.elapsed < state.rescueNoticeUntil
-                ? `${state.rescueNoticeText || 'REDNINGSLIV'} · ${state.rescueLives} FASTE LIV`
+                ? T`${state.rescueNoticeText || T('REDNINGSLIV')} · ${state.rescueLives} FASTE LIV`
                 : `BESKYTTET · ${Math.ceil(state.invulnerableUntil - state.elapsed)}s`;
             dom.powerup.classList.add('active');
         } else if (state.elapsed < state.guardNoticeUntil) {
-            powerupText = 'STREAK REDDET · GUARD BRUGT';
+            powerupText = T('STREAK REDDET · GUARD BRUGT');
             dom.powerup.classList.add('active');
         } else {
             dom.powerup.classList.remove('active');
@@ -2684,7 +2687,7 @@
         state.score = (state.relayBanked || 0) + result.score;
         state.bestStreak = Math.max(state.bestStreak, state.relayPassedTotal || 0);
         state.streak = state.relayPassedTotal || 0;
-        state.relayMessage = timedOut ? 'TIDEN UDE' : 'FORBI GULDPLADEN';
+        state.relayMessage = timedOut ? T('TIDEN UDE') : T('FORBI GULDPLADEN');
         state.relayFlashUntil = state.elapsed + 2;
         state.relayFinishDelay = result.hit ? 1.05 : 0.6;
         state.phase = 'relay-finish';
@@ -2729,8 +2732,8 @@
             state.streak = state.relayPassedTotal || 0;
             state.bestStreak = Math.max(state.bestStreak, state.streak);
             state.score = (state.relayBanked || 0) + state.relayGates.reduce((sum, entry) => sum + entry.score, 0);
-            const gateText = { perfect: 'RENT GENNEM', clean: 'GODT RAMT', edge: 'KANT', miss: 'FORBI' };
-            state.relayMessage = `PORT ${index + 1}/3 · ${gateText[result.quality] || 'FORBI'}`;
+            const gateText = { perfect: T('RENT GENNEM'), clean: T('GODT RAMT'), edge: T('KANT'), miss: T('FORBI') };
+            state.relayMessage = `PORT ${index + 1}/3 · ${gateText[result.quality] || T('FORBI')}`;
             state.relayFlashUntil = state.elapsed + 1.5;
             if (result.passed) {
                 playAudio('point');
@@ -3799,12 +3802,12 @@
             ctx.stroke();
             ctx.fillStyle = '#fff4d4';
             ctx.font = '900 16px "Bert Rounded", sans-serif';
-            ctx.fillText(obstacle.predator ? 'ROVFUGL BAGFRA' : 'FUGL BAGFRA', 27, y - 5);
+            ctx.fillText(obstacle.predator ? T('ROVFUGL BAGFRA') : T('FUGL BAGFRA'), 27, y - 5);
             ctx.fillStyle = '#f4bd67';
             ctx.font = '800 13px "Bert Rounded", sans-serif';
             ctx.fillText(obstacle.predator
-                ? `FØLGER DIG KORT · ${obstacle.warningRemaining.toFixed(1)}s`
-                : obstacle.pathTravel < 0 ? 'STIGER' : 'DYKKER', 27, y + 16);
+                ? T`FØLGER DIG KORT · ${obstacle.warningRemaining.toFixed(1)}s`
+                : obstacle.pathTravel < 0 ? T('STIGER') : T('DYKKER'), 27, y + 16);
             ctx.beginPath();
             ctx.moveTo(14 + panelWidth - 19, y);
             ctx.lineTo(14 + panelWidth - 34, y - 10);
@@ -3850,8 +3853,8 @@
             ctx.lineWidth = 6;
             ctx.strokeStyle = 'rgba(53, 79, 80, 0.9)';
             ctx.fillStyle = '#fff2b4';
-            ctx.strokeText('RAM GULDPLADEN', x, target.centerY + 130);
-            ctx.fillText('RAM GULDPLADEN', x, target.centerY + 130);
+            ctx.strokeText(T('RAM GULDPLADEN'), x, target.centerY + 130);
+            ctx.fillText(T('RAM GULDPLADEN'), x, target.centerY + 130);
         }
         ctx.restore();
     }
@@ -3893,7 +3896,7 @@
             const x = centerX + pose.worldDistance - state.worldDistance;
             if (x < -200 || x > VIEW.width + 200) return;
             const round = state.relayRoute.round || 1;
-            const label = state.relayGates[index]?.passed ? 'RAMT'
+            const label = state.relayGates[index]?.passed ? T('RAMT')
                 : round > 1 ? `RUNDE ${round} · PORT ${index + 1}/3` : `PORT ${index + 1}/3`;
             const labelY = pose.centerY + 179 * (gate.scale || 1);
             ctx.strokeText(label, x, labelY);
@@ -4099,7 +4102,7 @@
         const selected = dom.boardLevel.value || 'all';
         const mode = dom.boardMode.value;
         const candidates = UNITY_LEVELS.filter((level) => mode === 'all' || level.modeGroup === mode);
-        dom.boardLevel.replaceChildren(new Option('Alle baner', 'all'));
+        dom.boardLevel.replaceChildren(new Option(T('Alle baner'), 'all'));
         candidates.forEach((level) => dom.boardLevel.add(new Option(`${level.modeOrder}. ${level.name}`, String(level.id))));
         dom.boardLevel.value = candidates.some((level) => String(level.id) === selected) ? selected : 'all';
     }
@@ -4108,7 +4111,7 @@
         const filters = { period: dom.boardPeriod.value, mode: dom.boardMode.value, level: dom.boardLevel.value, metric: dom.boardMetric.value, scope: leaderboardScope };
         if (leaderboardScope === 'friends') filters.playerId = BertMeta.snapshot().player.id;
         const requestId = ++leaderboardRequestId;
-        dom.leaderboardStatus.textContent = 'HENTER RESULTATER …';
+        dom.leaderboardStatus.textContent = T('HENTER RESULTATER …');
         const result = await BertSocial.getLeaderboard(filters);
         if (requestId !== leaderboardRequestId) return;
         dom.leaderboardList.replaceChildren();
@@ -4127,14 +4130,14 @@
             dom.leaderboardList.appendChild(item);
         });
         dom.leaderboardStatus.textContent = result.offline
-            ? 'KUN DINE LOKALE RESULTATER · ONLINE SCOREBOARD ER IKKE TILGÆNGELIGT'
+            ? T('KUN DINE LOKALE RESULTATER · ONLINE SCOREBOARD ER IKKE TILGÆNGELIGT')
             : filters.scope === 'friends'
-                ? `VENNER FRA DUELLER · ${result.rivalsCount} RIVALER · ${result.rows.length} RESULTATER`
+                ? T`VENNER FRA DUELLER · ${result.rivalsCount} RIVALER · ${result.rows.length} RESULTATER`
                 : `GLOBALT · ${result.rows.length} RESULTATER`;
         if (filters.scope === 'friends' && !result.offline && result.rivalsCount === 0) {
-            dom.leaderboardStatus.textContent += ' · SPIL EN VENNEDUEL FOR AT FÅ EN RIVAL';
+            dom.leaderboardStatus.textContent += T(' · SPIL EN VENNEDUEL FOR AT FÅ EN RIVAL');
         } else if (!result.rows?.length) {
-            dom.leaderboardStatus.textContent += ' · FLYV EN TUR FOR AT SÆTTE FØRSTE SCORE';
+            dom.leaderboardStatus.textContent += T(' · FLYV EN TUR FOR AT SÆTTE FØRSTE SCORE');
         }
     }
 
@@ -4157,14 +4160,14 @@
             claim.type = 'button';
             claim.className = 'mission-claim';
             claim.disabled = !mission.complete || mission.claimed;
-            claim.textContent = mission.claimed ? 'HENTET' : mission.complete ? `HENT +${mission.reward}` : `+${mission.reward} FJER`;
+            claim.textContent = mission.claimed ? T('HENTET') : mission.complete ? `HENT +${mission.reward}` : `+${mission.reward} FJER`;
             claim.addEventListener('click', () => {
                 const result = BertMeta.claimMission(mission.id);
                 if (result.ok) {
                     BertMeta.haptic('reward');
                     window.BertApp?.showToast(result.unlockedHeroes.length
-                        ? `+${result.reward} fjer · ${result.unlockedHeroes.join(', ')} låst op`
-                        : `+${result.reward} fjer til reden`);
+                        ? T`+${result.reward} fjer · ${result.unlockedHeroes.join(', ')} låst op`
+                        : T`+${result.reward} fjer til reden`);
                 }
                 updateMetaMenu();
                 renderMissions();
@@ -4197,13 +4200,13 @@
             ghost: state.completedGhost,
         };
         const result = await BertSocial.shareChallenge(payload);
-        window.BertApp?.showToast(result.method === 'share' ? 'Udfordringen er klar' : result.method === 'clipboard' ? 'Udfordringslink kopieret' : 'Udfordringslink klar');
+        window.BertApp?.showToast(result.method === 'share' ? T('Udfordringen er klar') : result.method === 'clipboard' ? T('Udfordringslink kopieret') : T('Udfordringslink klar'));
     }
 
     function showIncomingChallenge(challenge) {
         state.pendingChallenge = challenge;
         const used = BertSocial.challengeAttempts(challenge.id || `${challenge.seed}-${challenge.playerId}`);
-        dom.challengeCopy.textContent = `${challenge.playerName || 'En ven'} fik ${challenge.score} point. Du har ${Math.max(0, 3 - used)} forsøg på den samme bane, og deres flyvning vises som en skygge.`;
+        dom.challengeCopy.textContent = T`${challenge.playerName || 'En ven'} fik ${challenge.score} point. Du har ${Math.max(0, 3 - used)} forsøg på den samme bane, og deres flyvning vises som en skygge.`;
         setVisible(dom.challengeModal, true);
     }
 
@@ -4211,12 +4214,12 @@
         const challenge = state.pendingChallenge;
         if (!challenge) return;
         if (!UNITY_LEVELS.some((level) => level.id === Number(challenge.levelId))) {
-            dom.challengeCopy.textContent = 'Denne bane kan ikke bruges til ranked vennesdueller.';
+            dom.challengeCopy.textContent = T('Denne bane kan ikke bruges til ranked vennesdueller.');
             return;
         }
         const used = BertSocial.challengeAttempts(challenge.id || `${challenge.seed}-${challenge.playerId}`);
         if (used >= 3) {
-            dom.challengeCopy.textContent = 'Alle tre forsøg er brugt. Bed din ven om en ny duel.';
+            dom.challengeCopy.textContent = T('Alle tre forsøg er brugt. Bed din ven om en ny duel.');
             return;
         }
         setVisible(dom.challengeModal, false);
@@ -4261,7 +4264,7 @@
             if (result.ok) {
                 BertMeta.setHero(inspectedHero);
                 BertMeta.haptic('upgrade');
-                window.BertApp?.showToast(`${result.option.name} låst op for ${result.spent} fjer`);
+                window.BertApp?.showToast(T`${result.option.name} låst op for ${result.spent} fjer`);
                 playAudio('pop');
             }
             updateMetaMenu();
@@ -4293,6 +4296,15 @@
         dom.settingMusic.addEventListener('change', () => applySetting('music', dom.settingMusic.checked));
         dom.settingSfx.addEventListener('change', () => applySetting('sfx', dom.settingSfx.checked));
         dom.settingHaptics.addEventListener('change', () => applySetting('haptics', dom.settingHaptics.checked));
+        const languageSelect = document.getElementById('setting-language');
+        if (languageSelect && window.BertI18n) {
+            languageSelect.value = window.BertI18n.choice;
+            languageSelect.addEventListener('change', () => {
+                window.BertI18n.setLanguage(languageSelect.value);
+                // Texts are set up once at load, so a reload is the clean way to switch.
+                window.location.reload();
+            });
+        }
         dom.settingLights.addEventListener('change', () => applySetting('lights', dom.settingLights.checked));
         document.getElementById('leaderboard-btn').addEventListener('click', openLeaderboard);
         document.getElementById('close-leaderboard').addEventListener('click', () => setVisible(dom.leaderboardModal, false));
@@ -4302,9 +4314,9 @@
                 other.setAttribute('aria-pressed', String(other === button));
             });
             const label = dom.leaderboardModal.querySelector('.edition-label');
-            label.textContent = leaderboardScope === 'friends' ? 'DINE VENNEDUELLER' : 'GLOBAL HIGHSCORE';
+            label.textContent = leaderboardScope === 'friends' ? T('DINE VENNEDUELLER') : T('GLOBAL HIGHSCORE');
             dom.leaderboardModal.querySelector('.ui-board-scope').textContent = leaderboardScope === 'friends'
-                ? 'VENNER' : 'VERDEN';
+                ? T('VENNER') : T('VERDEN');
             refreshLeaderboard();
         }));
         [dom.boardPeriod, dom.boardLevel, dom.boardMetric].forEach((select) => select.addEventListener('change', refreshLeaderboard));
@@ -4316,7 +4328,7 @@
         dom.rescueUpgrade.addEventListener('click', () => {
             const result = BertMeta.buyRescueLife();
             BertMeta.haptic(result.ok ? 'upgrade' : 'warning');
-            window.BertApp?.showToast(result.ok ? 'Nyt redningsliv låst op' : 'Du mangler fjer fra dagens missioner');
+            window.BertApp?.showToast(result.ok ? T('Nyt redningsliv låst op') : T('Du mangler fjer fra dagens missioner'));
             updateMetaMenu();
             renderMissions();
         });

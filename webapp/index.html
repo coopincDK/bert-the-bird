@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bert The Bird">
     <title>Bert The Bird – flyvespil og præcisionsverdener</title>
-    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-20">
+    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-21">
     <link rel="apple-touch-icon" href="icons/bert-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/bert-192.png">
-    <link rel="stylesheet" href="style.css?v=worlds-relay-20">
+    <link rel="stylesheet" href="style.css?v=worlds-relay-21">
 </head>
 <body>
     <main id="game-shell" aria-label="Bert The Bird">
@@ -232,6 +232,7 @@
                 <label><span>Lydeffekter</span><input id="setting-sfx" type="checkbox" checked></label>
                 <label><span>Haptisk feedback</span><input id="setting-haptics" type="checkbox" checked></label>
                 <label><span>Bevægelse i koncertlys</span><input id="setting-lights" type="checkbox" checked></label>
+                <label class="name-setting"><span>Sprog</span><select id="setting-language" aria-label="Sprog"><option value="auto">Automatisk (som telefonen)</option><option value="da">Dansk</option><option value="en">Engelsk</option></select></label>
                 <button id="close-settings" class="primary-menu-button" type="button">FÆRDIG</button>
             </div>
         </section>
@@ -364,25 +365,28 @@
 
         <div id="app-status" class="app-status" role="status" aria-live="polite"></div>
     </main>
-    <script src="app-shell.js?v=worlds-relay-20"></script>
-    <script src="unity-collision.js?v=worlds-relay-20"></script>
-    <script src="bert-physics.js?v=worlds-relay-20"></script>
-    <script src="bert-progression.js?v=worlds-relay-20"></script>
-    <script src="bert-tunnel.js?v=worlds-relay-20"></script>
-    <script src="bert-edm.js?v=worlds-relay-20"></script>
-    <script src="bert-bird-run.js?v=worlds-relay-20"></script>
-    <script src="bert-stormline.js?v=worlds-relay-20"></script>
-    <script src="bert-world-mastery.js?v=worlds-relay-20"></script>
-    <script src="bert-sky-relay.js?v=worlds-relay-20"></script>
-    <script src="bert-event-powerups.js?v=worlds-relay-20"></script>
-    <script src="bert-collectible-motion.js?v=worlds-relay-20"></script>
-    <script src="bert-haptics.js?v=worlds-relay-20"></script>
-    <script src="bert-hero-store.js?v=worlds-relay-20"></script>
-    <script src="bert-meta.js?v=worlds-relay-20"></script>
-    <script src="bert-social.js?v=worlds-relay-20"></script>
-    <script src="bert-focus-audio.js?v=worlds-relay-20"></script>
-    <script src="bert-star-audio.js?v=worlds-relay-20"></script>
-    <script src="bert-adventure.js?v=worlds-relay-20"></script>
-    <script src="unity-faithful.js?v=worlds-relay-20"></script>
+    <script src="bert-i18n.js?v=worlds-relay-21"></script>
+    <script src="lang-en.js?v=worlds-relay-21"></script>
+    <script>window.BertI18n.apply();</script>
+    <script src="app-shell.js?v=worlds-relay-21"></script>
+    <script src="unity-collision.js?v=worlds-relay-21"></script>
+    <script src="bert-physics.js?v=worlds-relay-21"></script>
+    <script src="bert-progression.js?v=worlds-relay-21"></script>
+    <script src="bert-tunnel.js?v=worlds-relay-21"></script>
+    <script src="bert-edm.js?v=worlds-relay-21"></script>
+    <script src="bert-bird-run.js?v=worlds-relay-21"></script>
+    <script src="bert-stormline.js?v=worlds-relay-21"></script>
+    <script src="bert-world-mastery.js?v=worlds-relay-21"></script>
+    <script src="bert-sky-relay.js?v=worlds-relay-21"></script>
+    <script src="bert-event-powerups.js?v=worlds-relay-21"></script>
+    <script src="bert-collectible-motion.js?v=worlds-relay-21"></script>
+    <script src="bert-haptics.js?v=worlds-relay-21"></script>
+    <script src="bert-hero-store.js?v=worlds-relay-21"></script>
+    <script src="bert-meta.js?v=worlds-relay-21"></script>
+    <script src="bert-social.js?v=worlds-relay-21"></script>
+    <script src="bert-focus-audio.js?v=worlds-relay-21"></script>
+    <script src="bert-star-audio.js?v=worlds-relay-21"></script>
+    <script src="bert-adventure.js?v=worlds-relay-21"></script>
+    <script src="unity-faithful.js?v=worlds-relay-21"></script>
 </body>
 </html>

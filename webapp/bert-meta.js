@@ -1,6 +1,9 @@
 /* Local-first progression and score history for Bert The Bird. */
 (() => {
     'use strict';
+    // Translation hook: Danish text is the key; BertI18n (when loaded) maps it to the chosen language.
+    const T = (typeof window !== 'undefined' && window.BertI18n) ? window.BertI18n.T
+        : (strings, ...values) => (Array.isArray(strings) ? strings.reduce((out, part, index) => out + part + (index < values.length ? values[index] : ''), '') : String(strings));
 
     const STORAGE_KEY = 'bertTheBird_meta_v1';
     const CONTINUE_SPIN_COST = 12;
@@ -217,7 +220,7 @@
     function dailyChallenge(date = new Date(), levelIds = [1]) {
         const key = dayKey(date);
         const seed = hashText(`bert-${key}`);
-        const routeNames = ['Stjerneregn', 'Præcisionsflyvning', 'Høj fart', 'Langtur', 'Mod vinden'];
+        const routeNames = ['Stjerneregn', T('Præcisionsflyvning'), T('Høj fart'), 'Langtur', T('Mod vinden')];
         const available = normalizedLevelIds(levelIds);
         const savedLevel = Number(data.dailyLevels[key]);
         const levelId = available.includes(savedLevel) ? savedLevel : available[seed % available.length];
@@ -301,10 +304,10 @@
         const claimed = data.missionClaims[key] || {};
         const dailyRouteComplete = Boolean(data.daily[key]);
         return [
-            { id: 'food', label: 'Saml 20 stjerner til reden', value: Math.min(stars, 20), target: 20, reward: 8, complete: stars >= 20, claimed: Boolean(claimed.food) },
-            { id: 'flight', label: 'Flyv samlet i 3 minutter', value: Math.min(Math.floor(seconds), 180), target: 180, reward: 12, complete: seconds >= 180, claimed: Boolean(claimed.flight) },
-            { id: 'streak', label: 'Nå en streak på 12', value: Math.min(streak, 12), target: 12, reward: 15, complete: streak >= 12, claimed: Boolean(claimed.streak) },
-            { id: 'route', label: 'Klar dagens rute', value: dailyRouteComplete ? 1 : 0, target: 1, reward: 10, complete: dailyRouteComplete, claimed: Boolean(claimed.route) },
+            { id: 'food', label: T('Saml 20 stjerner til reden'), value: Math.min(stars, 20), target: 20, reward: 8, complete: stars >= 20, claimed: Boolean(claimed.food) },
+            { id: 'flight', label: T('Flyv samlet i 3 minutter'), value: Math.min(Math.floor(seconds), 180), target: 180, reward: 12, complete: seconds >= 180, claimed: Boolean(claimed.flight) },
+            { id: 'streak', label: T('Nå en streak på 12'), value: Math.min(streak, 12), target: 12, reward: 15, complete: streak >= 12, claimed: Boolean(claimed.streak) },
+            { id: 'route', label: T('Klar dagens rute'), value: dailyRouteComplete ? 1 : 0, target: 1, reward: 10, complete: dailyRouteComplete, claimed: Boolean(claimed.route) },
         ];
     }
 
@@ -465,10 +468,10 @@
 
     function medalForScore(score) {
         const value = Math.max(0, Number(score) || 0);
-        if (value >= 100) return { id: 'gold', label: 'GULD', next: null };
-        if (value >= 50) return { id: 'silver', label: 'SØLV', next: 100 };
+        if (value >= 100) return { id: 'gold', label: T('GULD'), next: null };
+        if (value >= 50) return { id: 'silver', label: T('SØLV'), next: 100 };
         if (value >= 20) return { id: 'bronze', label: 'BRONZE', next: 50 };
-        return { id: 'flight', label: 'FLYV IGEN', next: 20 };
+        return { id: 'flight', label: T('FLYV IGEN'), next: 20 };
     }
 
     function haptic(pattern) {

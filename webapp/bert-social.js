@@ -1,6 +1,9 @@
 /* Global leaderboard adapter and shareable asynchronous friend challenges. */
 (() => {
     'use strict';
+    // Translation hook: Danish text is the key; BertI18n (when loaded) maps it to the chosen language.
+    const T = (typeof window !== 'undefined' && window.BertI18n) ? window.BertI18n.T
+        : (strings, ...values) => (Array.isArray(strings) ? strings.reduce((out, part, index) => out + part + (index < values.length ? values[index] : ''), '') : String(strings));
 
     const API_BASE = '';
 
@@ -101,7 +104,7 @@
         } catch (_) { /* Encoded link remains playable without a backend. */ }
         const shareData = {
             title: 'Bert The Bird — udfordring',
-            text: `${payload.playerName || 'En ven'} har udfordret dig til at slå ${payload.score} point. Du har tre forsøg.`,
+            text: T`${payload.playerName || 'En ven'} har udfordret dig til at slå ${payload.score} point. Du har tre forsøg.`,
             url,
         };
         if (navigator.share) {
