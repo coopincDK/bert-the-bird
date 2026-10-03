@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-15';
+    const BUILD_VERSION = 'worlds-relay-16';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -25,7 +25,7 @@
     // Focus starts instantly; its soundtrack is decoded at load time.
     const FOCUS_COUNTDOWN_SECONDS = 0;
     const FOCUS_ENTER_SECONDS = 0.65;
-    const GENERATED_HERO_IDS = new Set(['block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism']);
+    const GENERATED_HERO_IDS = new Set(['pingo', 'mogens', 'ninja', 'pakke', 'gold', 'epicMalthe', 'epicJohan', 'epicSos', 'epicThor', 'block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism']);
     const GENERATED_FLIGHT_SEQUENCE = Object.freeze([0, 2, 4, 2]);
     const GENERATED_ANIMATION_FPS = 6;
     const RESCUE_OUTCOMES = Object.freeze([
@@ -297,6 +297,8 @@
         eventHyper: 'assets/powerup-prototypes/hyper.webp',
         eventDouble: 'assets/powerup-prototypes/double.webp',
         eventFlap: 'assets/powerup-prototypes/flap.webp',
+        reversePickup: 'assets/powerup-prototypes/reverse.webp',
+        goldFeather: 'assets/powerup-prototypes/gold-feather.webp',
         rainbow: 'assets/unity/props/rainbow-normal.webp',
         star: 'assets/unity/collectibles/star.webp',
         blueGlow: 'assets/unity/powerups/blue-glow.webp',
@@ -351,7 +353,7 @@
         'star', 'blueGlow', 'whiteGlow', 'yellowGlow', 'lightning',
         'powerupWing', 'shieldPickup', 'magnetPickup', 'focusPickup', 'shieldCharge',
         'feather', 'shieldSplinter', 'shieldSplinterOrange',
-        'eventMetal', 'eventHyper', 'eventDouble', 'eventFlap',
+        'eventMetal', 'eventHyper', 'eventDouble', 'eventFlap', 'reversePickup', 'goldFeather',
     ];
     const LEVEL_ASSET_KEYS = Object.freeze({
         desert: ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'],
@@ -478,7 +480,16 @@
         phase: index * 1.13,
     }));
     let edmSmokeStamp = null;
-    const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [] };
+    const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [],
+        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [] };
+    // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
+    const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
+    const EPIC_HEROES = Object.freeze({
+        epicMalthe: { folder: 'epic-malthe', standIn: 'eagle' },
+        epicJohan: { folder: 'epic-johan', standIn: 'block' },
+        epicSos: { folder: 'epic-sos', standIn: 'sugar' },
+        epicThor: { folder: 'epic-thor', standIn: 'mecha' },
+    });
     const menuHeroArt = Object.freeze({
         bert: 'assets/unity/ui/menu-bird.webp',
         blue: 'assets/unity/bird-blue/fly-00.webp',
@@ -492,6 +503,15 @@
         moss: 'assets/mosshex/up.webp',
         ink: 'assets/inkbird/up.webp',
         prism: 'assets/prismwing/up.webp',
+        pingo: 'assets/pingo/up.webp',
+        mogens: 'assets/mogens/up.webp',
+        ninja: 'assets/ninjabert/up.webp',
+        pakke: 'assets/pakkeb/up.webp',
+        gold: 'assets/goldbert/up.webp',
+        epicMalthe: 'assets/skyclaw/up.webp',
+        epicJohan: 'assets/klodsbert/up.webp',
+        epicSos: 'assets/sugarrush/up.webp',
+        epicThor: 'assets/mechabert/up.webp',
     });
     const audio = Object.create(null);
     let currentLevel = UNITY_LEVELS[0];
@@ -703,6 +723,17 @@
         setGeneratedAnimation('moss', moss);
         setGeneratedAnimation('ink', ink);
         setGeneratedAnimation('prism', prism);
+        // Newer heroes load after the core set so they never delay the first flight.
+        Promise.all(Object.entries(EXTRA_HERO_FOLDERS).map(async ([hero, folder]) => {
+            try { setGeneratedAnimation(hero, await generatedFrames(folder)); } catch (_) { /* Falls back to Bert. */ }
+        }));
+        Object.entries(EPIC_HEROES).forEach(async ([hero, { folder, standIn }]) => {
+            try {
+                setGeneratedAnimation(hero, await generatedFrames(folder));
+            } catch (_) {
+                birdFrames[hero] = birdFrames[standIn];
+            }
+        });
 
         audio.point = await pointSoundLoading;
         audio.explosion = sound('assets/sounds/Sounds/Sfx/Explotion.mp3');
@@ -1131,6 +1162,8 @@
             const hero = catalog.find((entry) => entry.id === button.dataset.hero);
             if (!hero) return;
             const selected = button.dataset.hero === meta.hero;
+            button.classList.toggle('hidden', Boolean(hero.secret) && !hero.owned);
+            button.classList.toggle('epic', Boolean(hero.secret));
             button.classList.toggle('selected', selected);
             button.classList.toggle('locked', !hero.owned);
             button.classList.toggle('inspected', button.dataset.hero === inspectedHero && !selected);
@@ -1139,12 +1172,14 @@
                 ? `Vælg ${hero.name}, ${hero.source === 'feathers' ? 'købt' : 'låst op'}`
                 : `${hero.name} låst. ${hero.goal}. ${hero.current} af ${hero.target}. Alternativ pris ${hero.price} fjer.`);
             button.querySelector('small').textContent = hero.owned
-                ? hero.source === 'feathers' ? 'KØBT' : hero.source === 'legacy' ? 'BEHOLDT' : hero.id === 'bert' ? 'ORIGINAL' : 'VUNDET'
+                ? hero.source === 'feathers' ? 'KØBT' : hero.source === 'name' ? 'EPISK' : hero.source === 'legacy' ? 'BEHOLDT' : hero.id === 'bert' ? 'ORIGINAL' : 'VUNDET'
                 : `${hero.price} FJER`;
         });
         const active = catalog.find((hero) => hero.id === inspectedHero) || catalog[0];
         dom.heroDetailName.textContent = active.name.toUpperCase();
-        dom.heroDetailGoal.textContent = active.owned
+        dom.heroDetailGoal.textContent = active.secret && active.owned
+            ? active.id === meta.hero ? 'Episk helt · kun til dig · valgt' : 'Episk helt · kun til dig. Tryk for at vælge.'
+            : active.owned
             ? active.id === meta.hero ? 'Valgt og klar til at flyve' : 'Låst op. Tryk på figuren for at vælge.'
             : `${active.goal} · ${active.current}/${active.target} · ${Math.max(0, active.price - meta.feathers)} fjer mangler`;
         dom.heroBuy.classList.toggle('hidden', active.owned);
@@ -3300,6 +3335,14 @@
 
     function drawReversePickup(collectible) {
         const glowSize = 112;
+        if (assets.reversePickup?.naturalWidth) {
+            ctx.globalAlpha = 0.38 + Math.sin(collectible.spin * 2) * 0.08;
+            ctx.drawImage(assets.whiteGlow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
+            ctx.globalAlpha = 1;
+            ctx.rotate(Math.sin(collectible.spin * 1.4) * 0.2);
+            ctx.drawImage(assets.reversePickup, -38, -38, 76, 76);
+            return;
+        }
         ctx.globalAlpha = 0.4 + Math.sin(collectible.spin * 2) * 0.08;
         ctx.drawImage(assets.whiteGlow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
         ctx.globalAlpha = 1;
@@ -3336,7 +3379,8 @@
             ctx.drawImage(assets.whiteGlow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
             ctx.globalAlpha = 1;
             ctx.rotate(Math.sin(collectible.spin * 0.9) * 0.35);
-            if (assets.feather?.naturalWidth) ctx.drawImage(assets.feather, -30, -27, 60, 54);
+            if (assets.goldFeather?.naturalWidth) ctx.drawImage(assets.goldFeather, -34, -34, 68, 68);
+            else if (assets.feather?.naturalWidth) ctx.drawImage(assets.feather, -30, -27, 60, 54);
         } else if (collectible.kind === 'powerup') {
             const prototypeArt = {
                 [POWERUP.HEAVY]: 'eventMetal', [POWERUP.HYPER]: 'eventHyper',

@@ -15,7 +15,34 @@
         { id: 'moss', name: 'MossHex', price: 320, goal: 'Nå bronze i alle tre Classic-baner', target: 3 },
         { id: 'ink', name: 'InkBird', price: 240, goal: 'Vind bronze, sølv og guld', target: 3 },
         { id: 'prism', name: 'PrismWing', price: 480, goal: 'Nå bronze i alle ni baner', target: 9 },
+        { id: 'pingo', name: 'Pingo', price: 260, goal: 'Pingvin med jetpack · køb for fjer', target: 1 },
+        { id: 'mogens', name: 'Mågen Mogens', price: 280, goal: 'Sur havnemåge · køb for fjer', target: 1 },
+        { id: 'ninja', name: 'Ninja-Bert', price: 340, goal: 'Lydløs og hurtig · køb for fjer', target: 1 },
+        { id: 'pakke', name: 'Pakke-Bert', price: 300, goal: 'Har altid en pakke med · køb for fjer', target: 1 },
+        { id: 'gold', name: 'Guld-Bert', price: 1500, goal: 'Den sjældneste fugl · køb for fjer', target: 1 },
+        // Epic heroes: only for players with a specific pilot name. The names are
+        // stored as hashes, so they are not readable in the public source code.
+        { id: 'epicMalthe', name: 'Storm Royale', price: 0, goal: 'Hemmelig helt', target: 1, secret: true, nameHash: 3598967373 },
+        { id: 'epicJohan', name: 'Blok-Johan', price: 0, goal: 'Hemmelig helt', target: 1, secret: true, nameHash: 667591339 },
+        { id: 'epicSos', name: 'Prinsesse Søs', price: 0, goal: 'Hemmelig helt', target: 1, secret: true, nameHash: 1846338164 },
+        { id: 'epicThor', name: 'Thor Obby', price: 0, goal: 'Hemmelig helt', target: 1, secret: true, nameHash: 4206434765 },
     ]);
+    /** FNV-1a over the trimmed, lower-cased, NFC-normalised pilot name. */
+    function nameHash(name) {
+        const text = String(name || '').trim().normalize('NFC').toLowerCase();
+        let hash = 0x811c9dc5;
+        for (const character of text) {
+            hash ^= character.codePointAt(0);
+            hash = Math.imul(hash, 0x01000193) >>> 0;
+        }
+        return hash >>> 0;
+    }
+
+    function secretHeroesForName(name) {
+        const hash = nameHash(name);
+        return CATALOG.filter((hero) => hero.secret && hero.nameHash === hash).map((hero) => hero.id);
+    }
+
     const BY_ID = Object.freeze(Object.fromEntries(CATALOG.map((hero) => [hero.id, hero])));
 
     function missionDayStreak(claims) {
@@ -60,5 +87,5 @@
         return { ...hero, current: Math.min(hero.target, current), complete: current >= hero.target };
     }
 
-    window.BertHeroStore = Object.freeze({ catalog: CATALOG, byId: BY_ID, progress, missionDayStreak });
+    window.BertHeroStore = Object.freeze({ catalog: CATALOG, byId: BY_ID, progress, missionDayStreak, nameHash, secretHeroesForName });
 })();

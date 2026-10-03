@@ -25,7 +25,7 @@ required.update(f"assets/unity/bird-blue/fly-{index:02d}.webp" for index in rang
 required.update(f"assets/klodsbert/{pose}.webp" for pose in ("up", "mid", "glide", "dead"))
 for folder in ("brainbird", "skyclaw", "mechabert"):
     required.update(f"assets/{folder}/{pose}.webp" for pose in ("up", "mid", "glide", "dead"))
-for folder in ("noirwing", "bonebeak", "sugarrush", "mosshex", "inkbird", "prismwing"):
+for folder in ("noirwing", "bonebeak", "sugarrush", "mosshex", "inkbird", "prismwing", "pingo", "mogens", "ninjabert", "pakkeb", "goldbert"):
     required.update(f"assets/{folder}/{pose}.webp" for pose in ("up", "mid", "glide", "dead"))
 required.update(f"assets/unity/ui/previews/level-{level_id}.webp" for level_id in (1, 2, 3, 4, 5, 6, 7, 8, 9))
 required.update({

@@ -97,6 +97,7 @@
         return earned;
     }
     awardEarnedHeroes();
+    syncSecretHeroes();
     if (!data.player.id) {
         data.player.id = typeof crypto !== 'undefined' && crypto.randomUUID
             ? crypto.randomUUID()
@@ -111,6 +112,26 @@
     function snapshot() { return JSON.parse(JSON.stringify(data)); }
     function currentHero() { return data.hero; }
     function settingEnabled(name) { return Boolean(data.settings[name]); }
+    /** Secret heroes belong to a pilot name: granted when it matches, removed when it no longer does. */
+    function syncSecretHeroes() {
+        const store = window.BertHeroStore;
+        if (!store?.secretHeroesForName) return [];
+        const earned = new Set(store.secretHeroesForName(data.player.name));
+        const granted = [];
+        store.catalog.filter((hero) => hero.secret).forEach((hero) => {
+            if (earned.has(hero.id)) {
+                if (!data.ownedHeroes[hero.id]) {
+                    data.ownedHeroes[hero.id] = { source: 'name', at: new Date().toISOString() };
+                    granted.push(hero.id);
+                }
+            } else if (data.ownedHeroes[hero.id]) {
+                delete data.ownedHeroes[hero.id];
+                if (data.hero === hero.id) data.hero = 'bert';
+            }
+        });
+        return granted;
+    }
+
     function heroCatalog() {
         return window.BertHeroStore.catalog.map((hero) => ({
             ...window.BertHeroStore.progress(hero.id, data),
@@ -150,6 +171,9 @@
     function setPlayerName(name) {
         const cleaned = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24);
         data.player.name = cleaned || 'Pilot';
+        const granted = syncSecretHeroes();
+        // A newly matched epic hero is equipped right away, as a surprise.
+        if (granted.length) data.hero = granted[0];
         return save();
     }
 

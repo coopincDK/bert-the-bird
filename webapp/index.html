@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bert The Bird">
     <title>Bert The Bird – flyvespil og præcisionsverdener</title>
-    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-15">
+    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-16">
     <link rel="apple-touch-icon" href="icons/bert-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/bert-192.png">
-    <link rel="stylesheet" href="style.css?v=worlds-relay-15">
+    <link rel="stylesheet" href="style.css?v=worlds-relay-16">
 </head>
 <body>
     <main id="game-shell" aria-label="Bert The Bird">
@@ -91,7 +91,7 @@
                 <img id="selected-hero-image" src="assets/unity/bird/fly-04.webp" alt="Bert">
                 <span>VÆLG HELT</span>
                 <strong id="selected-hero-name">BERT</strong>
-                <small>ÅBN GARDEROBE · 12 HELTE</small>
+                <small>ÅBN GARDEROBE · 17 HELTE</small>
             </button>
         </section>
 
@@ -115,6 +115,15 @@
                     <button class="hero-option" data-hero="moss" type="button" role="option" aria-selected="false" aria-label="Vælg MossHex"><img src="assets/mosshex/glide.webp" alt="MossHex"><b>MOSSHEX</b><small>DARK MAGIC</small></button>
                     <button class="hero-option" data-hero="ink" type="button" role="option" aria-selected="false" aria-label="Vælg InkBird"><img src="assets/inkbird/glide.webp" alt="InkBird"><b>INKBIRD</b><small>RETRO INK</small></button>
                     <button class="hero-option" data-hero="prism" type="button" role="option" aria-selected="false" aria-label="Vælg PrismWing"><img src="assets/prismwing/glide.webp" alt="PrismWing"><b>PRISMWING</b><small>GLASS ART</small></button>
+                    <button class="hero-option" data-hero="pingo" type="button" role="option" aria-selected="false" aria-label="Vælg Pingo"><img src="assets/pingo/glide.webp" alt="Pingo"><b>PINGO</b><small>JETPACK</small></button>
+                    <button class="hero-option" data-hero="mogens" type="button" role="option" aria-selected="false" aria-label="Vælg Mågen Mogens"><img src="assets/mogens/glide.webp" alt="Mågen Mogens"><b>MÅGEN MOGENS</b><small>HAVNEN</small></button>
+                    <button class="hero-option" data-hero="ninja" type="button" role="option" aria-selected="false" aria-label="Vælg Ninja-Bert"><img src="assets/ninjabert/glide.webp" alt="Ninja-Bert"><b>NINJA-BERT</b><small>LYDLØS</small></button>
+                    <button class="hero-option" data-hero="pakke" type="button" role="option" aria-selected="false" aria-label="Vælg Pakke-Bert"><img src="assets/pakkeb/glide.webp" alt="Pakke-Bert"><b>PAKKE-BERT</b><small>LEVERING</small></button>
+                    <button class="hero-option" data-hero="gold" type="button" role="option" aria-selected="false" aria-label="Vælg Guld-Bert"><img src="assets/goldbert/glide.webp" alt="Guld-Bert"><b>GULD-BERT</b><small>SJÆLDEN</small></button>
+                    <button class="hero-option hidden epic" data-hero="epicMalthe" type="button" role="option" aria-selected="false" aria-label="Vælg Storm Royale"><img src="assets/skyclaw/glide.webp" alt="Storm Royale"><b>STORM ROYALE</b><small>EPISK</small></button>
+                    <button class="hero-option hidden epic" data-hero="epicJohan" type="button" role="option" aria-selected="false" aria-label="Vælg Blok-Johan"><img src="assets/klodsbert/glide.webp" alt="Blok-Johan"><b>BLOK-JOHAN</b><small>EPISK</small></button>
+                    <button class="hero-option hidden epic" data-hero="epicSos" type="button" role="option" aria-selected="false" aria-label="Vælg Prinsesse Søs"><img src="assets/sugarrush/glide.webp" alt="Prinsesse Søs"><b>PRINSESSE SØS</b><small>EPISK</small></button>
+                    <button class="hero-option hidden epic" data-hero="epicThor" type="button" role="option" aria-selected="false" aria-label="Vælg Thor Obby"><img src="assets/mechabert/glide.webp" alt="Thor Obby"><b>THOR OBBY</b><small>EPISK</small></button>
                 </div>
                 <div class="hero-wardrobe-detail" id="hero-wardrobe-detail" aria-live="polite">
                     <div><strong id="hero-detail-name">BERT</strong><span id="hero-detail-goal">Starthelt · Klar til at flyve</span></div>
@@ -342,24 +351,24 @@
 
         <div id="app-status" class="app-status" role="status" aria-live="polite"></div>
     </main>
-    <script src="app-shell.js?v=worlds-relay-15"></script>
-    <script src="unity-collision.js?v=worlds-relay-15"></script>
-    <script src="bert-physics.js?v=worlds-relay-15"></script>
-    <script src="bert-progression.js?v=worlds-relay-15"></script>
-    <script src="bert-tunnel.js?v=worlds-relay-15"></script>
-    <script src="bert-edm.js?v=worlds-relay-15"></script>
-    <script src="bert-bird-run.js?v=worlds-relay-15"></script>
-    <script src="bert-stormline.js?v=worlds-relay-15"></script>
-    <script src="bert-world-mastery.js?v=worlds-relay-15"></script>
-    <script src="bert-sky-relay.js?v=worlds-relay-15"></script>
-    <script src="bert-event-powerups.js?v=worlds-relay-15"></script>
-    <script src="bert-collectible-motion.js?v=worlds-relay-15"></script>
-    <script src="bert-haptics.js?v=worlds-relay-15"></script>
-    <script src="bert-hero-store.js?v=worlds-relay-15"></script>
-    <script src="bert-meta.js?v=worlds-relay-15"></script>
-    <script src="bert-social.js?v=worlds-relay-15"></script>
-    <script src="bert-focus-audio.js?v=worlds-relay-15"></script>
-    <script src="bert-star-audio.js?v=worlds-relay-15"></script>
-    <script src="unity-faithful.js?v=worlds-relay-15"></script>
+    <script src="app-shell.js?v=worlds-relay-16"></script>
+    <script src="unity-collision.js?v=worlds-relay-16"></script>
+    <script src="bert-physics.js?v=worlds-relay-16"></script>
+    <script src="bert-progression.js?v=worlds-relay-16"></script>
+    <script src="bert-tunnel.js?v=worlds-relay-16"></script>
+    <script src="bert-edm.js?v=worlds-relay-16"></script>
+    <script src="bert-bird-run.js?v=worlds-relay-16"></script>
+    <script src="bert-stormline.js?v=worlds-relay-16"></script>
+    <script src="bert-world-mastery.js?v=worlds-relay-16"></script>
+    <script src="bert-sky-relay.js?v=worlds-relay-16"></script>
+    <script src="bert-event-powerups.js?v=worlds-relay-16"></script>
+    <script src="bert-collectible-motion.js?v=worlds-relay-16"></script>
+    <script src="bert-haptics.js?v=worlds-relay-16"></script>
+    <script src="bert-hero-store.js?v=worlds-relay-16"></script>
+    <script src="bert-meta.js?v=worlds-relay-16"></script>
+    <script src="bert-social.js?v=worlds-relay-16"></script>
+    <script src="bert-focus-audio.js?v=worlds-relay-16"></script>
+    <script src="bert-star-audio.js?v=worlds-relay-16"></script>
+    <script src="unity-faithful.js?v=worlds-relay-16"></script>
 </body>
 </html>

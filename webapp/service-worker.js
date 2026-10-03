@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'bert-the-bird-worlds-relay-15';
+const CACHE_VERSION = 'bert-the-bird-worlds-relay-16';
 
 const frames = (folder, prefix, count) => Array.from(
     { length: count },
@@ -11,7 +11,7 @@ const BLOCK_BIRD_FRAMES = ['up', 'mid', 'glide', 'dead'].map((pose) => `./assets
 const CONCEPT_BIRD_FRAMES = ['brainbird', 'skyclaw', 'mechabert'].flatMap((folder) =>
     ['up', 'mid', 'glide', 'dead'].map((pose) => `./assets/${folder}/${pose}.webp`)
 );
-const FASHION_BIRD_FRAMES = ['noirwing', 'bonebeak', 'sugarrush', 'mosshex', 'inkbird', 'prismwing'].flatMap((folder) =>
+const FASHION_BIRD_FRAMES = ['noirwing', 'bonebeak', 'sugarrush', 'mosshex', 'inkbird', 'prismwing', 'pingo', 'mogens', 'ninjabert', 'pakkeb', 'goldbert'].flatMap((folder) =>
     ['up', 'mid', 'glide', 'dead'].map((pose) => `./assets/${folder}/${pose}.webp`)
 );
 const SPIDER_FRAMES = frames('props', 'spider-', 3);
@@ -29,27 +29,27 @@ const HAPPY_PIPE_ASSETS = HAPPY_PIPE_COLORS.flatMap((color) => [
 const APP_SHELL = [
     './',
     './index.html',
-    './style.css?v=worlds-relay-15',
-    './app-shell.js?v=worlds-relay-15',
-    './unity-collision.js?v=worlds-relay-15',
-    './bert-physics.js?v=worlds-relay-15',
-    './bert-progression.js?v=worlds-relay-15',
-    './bert-tunnel.js?v=worlds-relay-15',
-    './bert-edm.js?v=worlds-relay-15',
-    './bert-bird-run.js?v=worlds-relay-15',
-    './bert-stormline.js?v=worlds-relay-15',
-    './bert-world-mastery.js?v=worlds-relay-15',
-    './bert-sky-relay.js?v=worlds-relay-15',
-    './bert-event-powerups.js?v=worlds-relay-15',
-    './bert-collectible-motion.js?v=worlds-relay-15',
-    './bert-haptics.js?v=worlds-relay-15',
-    './bert-hero-store.js?v=worlds-relay-15',
-    './bert-meta.js?v=worlds-relay-15',
-    './bert-social.js?v=worlds-relay-15',
-    './bert-focus-audio.js?v=worlds-relay-15',
-    './bert-star-audio.js?v=worlds-relay-15',
-    './unity-faithful.js?v=worlds-relay-15',
-    './manifest.webmanifest?v=worlds-relay-15',
+    './style.css?v=worlds-relay-16',
+    './app-shell.js?v=worlds-relay-16',
+    './unity-collision.js?v=worlds-relay-16',
+    './bert-physics.js?v=worlds-relay-16',
+    './bert-progression.js?v=worlds-relay-16',
+    './bert-tunnel.js?v=worlds-relay-16',
+    './bert-edm.js?v=worlds-relay-16',
+    './bert-bird-run.js?v=worlds-relay-16',
+    './bert-stormline.js?v=worlds-relay-16',
+    './bert-world-mastery.js?v=worlds-relay-16',
+    './bert-sky-relay.js?v=worlds-relay-16',
+    './bert-event-powerups.js?v=worlds-relay-16',
+    './bert-collectible-motion.js?v=worlds-relay-16',
+    './bert-haptics.js?v=worlds-relay-16',
+    './bert-hero-store.js?v=worlds-relay-16',
+    './bert-meta.js?v=worlds-relay-16',
+    './bert-social.js?v=worlds-relay-16',
+    './bert-focus-audio.js?v=worlds-relay-16',
+    './bert-star-audio.js?v=worlds-relay-16',
+    './unity-faithful.js?v=worlds-relay-16',
+    './manifest.webmanifest?v=worlds-relay-16',
     './icons/bert-192.png',
     './icons/bert-512.png',
     './assets/unity/fonts/bert-display.woff2',

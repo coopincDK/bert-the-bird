@@ -2017,3 +2017,7 @@ body:not(.is-prewarm) .hud-level { opacity: 0; }
     .hud-stat span { font-size: 8px; }
     .hud-stat strong { font-size: 20px; }
 }
+
+/* Episke navnehelte: guldkant, så de føles særlige. */
+.hero-option.epic { border-color: #ffd34d; box-shadow: 0 0 0 2px rgba(255, 211, 77, .35), 0 0 14px rgba(255, 196, 0, .35); }
+.hero-option.epic small { color: #ffd34d; }
