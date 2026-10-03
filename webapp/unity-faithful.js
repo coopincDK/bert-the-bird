@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-23';
+    const BUILD_VERSION = 'worlds-relay-24';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1432,6 +1432,10 @@
         state.nextPowerupAt = currentLevel === STORMLINE_EVENT ? 8 : 15 + gameRandom() * 10;
         state.nextFeatherAt = 35 + gameRandom() * 25;
         state.lavaTop = LAVA_START;
+        state.gripUntil = 0;
+        state.nextCrystalAt = 7;
+        state.gust = null;
+        state.nextGustAt = 6;
         state.nextCoolingAt = 8;
         state.coolFlashUntil = 0;
         state.feathersPicked = 0;
@@ -1525,6 +1529,12 @@
                 ? T('MÅL: KOM FORBI EN BØLGE MED TRE BOLDE · VENSTRE OP · HØJRE NED')
             : currentLevel.kind === 'skyRelay'
                 ? T('FLYV GENNEM TRE SKY-PORTE · RAM GULDPLADEN · VENSTRE OP · HØJRE NED')
+            : currentLevel.kind === 'iceberg'
+                ? T('GLAT IS: STYR I GOD TID · SAML FROSTKRYSTALLER')
+            : currentLevel.kind === 'windfarm'
+                ? T('PAS PÅ VINDSTØD · PILENE VISER VEJEN')
+            : currentLevel.kind === 'volcano'
+                ? T('LAVAEN STIGER · SAML KØLESTEN')
             : currentLevel.kind === 'tunnel'
                 ? T`${currentLevel.cardText} · VENSTRE OP · HØJRE NED`
                 : T('VENSTRE SIDE = OP · HØJRE SIDE = NED');
@@ -1670,6 +1680,7 @@
             bird.velocity += (isReversed() ? -FLAPPY_GRAVITY : FLAPPY_GRAVITY) * delta;
             bird.velocity = isReversed() ? clamp(bird.velocity, -700, 620) : clamp(bird.velocity, -620, 700);
         } else {
+            const previousVelocity = bird.velocity;
             bird.velocity = BertPhysics.stepDefault(
                 bird.velocity,
                 isReversed() ? state.inputDown : state.inputUp,
@@ -1678,6 +1689,16 @@
                 delta,
                 state.activePowerup === POWERUP.HEAVY ? BertPhysics.HEAVY : BertPhysics.DEFAULT,
             );
+            // Isbjerget: on slippery ice Bert answers slowly and keeps gliding.
+            // A frost crystal gives normal grip for a short while.
+            if (currentLevel.kind === 'iceberg' && state.phase === 'playing' && state.elapsed >= (state.gripUntil || 0)) {
+                const grip = 1 - Math.exp(-delta * clamp(3.4 - state.difficulty * 0.5, 2.1, 3.4));
+                bird.velocity = previousVelocity + (bird.velocity - previousVelocity) * grip;
+            }
+        }
+        // Vindmøller: gusts push Bert up or down after a warning.
+        if (currentLevel.kind === 'windfarm' && state.phase === 'playing' && state.gust?.phase === 'blow') {
+            bird.velocity = clamp(bird.velocity + state.gust.dir * state.gust.force * delta, -700, 700);
         }
         if (currentLevel === STORMLINE_EVENT && state.phase === 'playing') {
             const wind = BertStormline.windCue(state.worldTime);
@@ -1894,6 +1915,12 @@
                     collectible.collected = true;
                     if (collectible.kind === 'powerup') activatePowerup(collectible.type);
                     else if (collectible.kind === 'feather') collectFeather(collectible);
+                    else if (collectible.kind === 'crystal') {
+                        state.gripUntil = state.elapsed + 5;
+                        playAudio('point');
+                        BertMeta.haptic('star');
+                        burst(collectible.x, collectible.y, '#d9fbff', 12);
+                    }
                     else if (collectible.kind === 'cool') {
                         state.lavaTop = Math.min(LAVA_START, state.lavaTop + 120);
                         playAudio('point');
@@ -2012,6 +2039,15 @@
             const group = BertEDM.createGroup(id, x, state.difficulty, gameRandom);
             obstacles.push(...group.obstacles);
             group.stars.forEach((star) => collectibles.push(makeCollectible(star.x, star.y)));
+            // Smoke cannons join after 15 s: a warned white jet from the floor or ceiling.
+            if (state.elapsed > 15 && gameRandom() < 0.35) {
+                const fromTop = gameRandom() < 0.5;
+                const jet = BertAdventure.columnAt('nightcity', id, x + 430, state.difficulty, gameRandom, {
+                    fromTop, palette: 'smoke', peak: fromTop ? randomBetween(300, 400) : randomBetween(300, 420),
+                });
+                jet.theme = 'nightcity';
+                obstacles.push(jet);
+            }
             return;
         }
         // Only every fourth Desert pair is narrow. The earliest two pairs stay generous.
@@ -2717,6 +2753,14 @@
             powerupText = `NIVEAU ${state.levelUpStage || 2}! · ${state.worldBadge}`;
             dom.powerup.classList.add('active');
         }
+        if (currentLevel.kind === 'iceberg' && state.elapsed < (state.gripUntil || 0) && !powerupText) {
+            powerupText = T`GODT GREB · ${Math.ceil(state.gripUntil - state.elapsed)}s`;
+            dom.powerup.classList.add('active');
+        }
+        if (currentLevel.kind === 'windfarm' && state.gust && !powerupText) {
+            powerupText = state.gust.dir < 0 ? T('VINDSTØD · OP') : T('VINDSTØD · NED');
+            dom.powerup.classList.add('active');
+        }
         if (state.elapsed < (state.coolFlashUntil || 0) && !powerupText) {
             powerupText = T('LAVAEN FALDER');
             dom.powerup.classList.add('active');
@@ -2882,6 +2926,7 @@
             }
             updateObjects(delta);
             updateVolcanoLava(delta);
+            updateIceAndWind(delta);
             updateHud();
             return;
         }
@@ -3377,6 +3422,21 @@
             ctx.restore();
         }
         if (o.behaviour === 'column') {
+            if (o.palette === 'smoke') {
+                const resting = o.fromTop ? o.topY <= o.lavaTop + 4 : o.topY >= o.lavaTop - 4;
+                if (resting) {
+                    const cx = o.x + o.size / 2;
+                    ctx.save();
+                    ctx.fillStyle = '#1b1f2e';
+                    ctx.strokeStyle = '#7cf3ff';
+                    ctx.lineWidth = 3;
+                    const ny = o.fromTop ? 0 : o.lavaTop - 34;
+                    ctx.fillRect(cx - 26, ny, 52, 34);
+                    ctx.strokeRect(cx - 26, ny, 52, 34);
+                    ctx.restore();
+                    return;
+                }
+            }
             drawLavaColumn(o);
             return;
         }
@@ -3450,7 +3510,11 @@
     }
 
     function drawLavaColumn(o) {
-        if (o.topY >= o.lavaTop - 4) return;
+        if (o.fromTop ? o.topY <= o.lavaTop + 4 : o.topY >= o.lavaTop - 4) return;
+        if (o.palette === 'smoke') {
+            drawSmokeJet(o);
+            return;
+        }
         const cx = o.x + o.size / 2;
         const w = o.columnWidth;
         const top = o.topY;
@@ -3490,6 +3554,42 @@
         ctx.restore();
     }
 
+    // Neon Encore: CO2/smoke cannons fire a white jet from the floor or ceiling.
+    function drawSmokeJet(o) {
+        const cx = o.x + o.size / 2;
+        const w = o.columnWidth;
+        const tip = o.topY;
+        const base = o.fromTop ? -20 : o.lavaTop + 20;
+        const dir = o.fromTop ? 1 : -1;
+        ctx.save();
+        const length = Math.abs(tip - base);
+        for (let i = 0; i < 9; i += 1) {
+            const f = i / 8;
+            const y = base + dir * length * f;
+            const r = w * (0.35 + f * 0.45) + Math.sin(state.worldTime * 9 + i) * 4;
+            ctx.globalAlpha = 0.55 + 0.35 * f;
+            const puff = ctx.createRadialGradient(cx, y, r * 0.2, cx, y, r);
+            puff.addColorStop(0, 'rgba(255,255,255,1)');
+            puff.addColorStop(1, 'rgba(200,230,255,0)');
+            ctx.fillStyle = puff;
+            ctx.beginPath();
+            ctx.arc(cx, y, r, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.globalAlpha = 0.95;
+        ctx.fillStyle = 'rgba(245, 252, 255, .92)';
+        ctx.fillRect(cx - w * 0.3, Math.min(base, tip), w * 0.6, length);
+        // The cannon nozzle itself.
+        ctx.globalAlpha = 1;
+        ctx.fillStyle = '#1b1f2e';
+        ctx.strokeStyle = '#7cf3ff';
+        ctx.lineWidth = 3;
+        const ny = o.fromTop ? 0 : o.lavaTop - 34;
+        ctx.fillRect(cx - 26, ny, 52, 34);
+        ctx.strokeRect(cx - 26, ny, 52, 34);
+        ctx.restore();
+    }
+
     // Vulkanen: the lava floor rises; cooling stones push it back down.
     const LAVA_START = 770;
     const LAVA_HIGHEST = 440;
@@ -3508,6 +3608,88 @@
         if (!DEBUG_NOCLIP && state.elapsed >= state.invulnerableUntil && collider.y + collider.radius * 0.6 > state.lavaTop + 8) {
             triggerDeath({ kind: 'lava-floor', id: -1, x: 0, y: state.lavaTop, width: VIEW.width, height: 100 });
         }
+    }
+
+    function updateIceAndWind(delta) {
+        if (state.phase !== 'playing') return;
+        if (currentLevel.kind === 'iceberg' && state.elapsed >= state.nextCrystalAt) {
+            const y = randomBetween(170, 560);
+            collectibles.push({ x: VIEW.width + 140, y, width: 70, height: 70, kind: 'crystal', spin: 0, age: 0, collected: false });
+            state.nextCrystalAt = state.elapsed + 11 + gameRandom() * 6;
+        }
+        if (currentLevel.kind !== 'windfarm') return;
+        const gust = state.gust;
+        if (!gust) {
+            if (state.elapsed >= state.nextGustAt) {
+                state.gust = { phase: 'warn', timer: 0, dir: gameRandom() < 0.5 ? -1 : 1,
+                    force: clamp(900 + state.difficulty * 250, 900, 1500), length: clamp(1.4 + state.difficulty * 0.3, 1.4, 2.4) };
+            }
+            return;
+        }
+        gust.timer += delta;
+        if (gust.phase === 'warn' && gust.timer >= 1.2) { gust.phase = 'blow'; gust.timer = 0; }
+        else if (gust.phase === 'blow' && gust.timer >= gust.length) {
+            state.gust = null;
+            state.nextGustAt = state.elapsed + clamp(7.5 - state.difficulty * 1.2, 3.5, 7.5) + gameRandom() * 2.5;
+        }
+    }
+
+    function drawWindGust() {
+        const gust = state.gust;
+        if (currentLevel.kind !== 'windfarm' || !gust || !['playing', 'prewarm'].includes(state.phase)) return;
+        const warn = gust.phase === 'warn';
+        ctx.save();
+        ctx.globalAlpha = warn ? 0.35 + 0.35 * Math.abs(Math.sin(state.worldTime * 8)) : 0.75;
+        ctx.strokeStyle = '#ffffff';
+        ctx.fillStyle = '#ffffff';
+        ctx.lineWidth = warn ? 8 : 6;
+        ctx.lineCap = 'round';
+        const travel = (state.worldTime * (warn ? 120 : 520)) % 260;
+        for (let row = 0; row < 4; row += 1) {
+            for (let col = -1; col < Math.ceil(VIEW.width / 320) + 1; col += 1) {
+                const x = col * 320 + (row % 2) * 160;
+                const y = 140 + row * 140 + (gust.dir > 0 ? travel : -travel) % 140;
+                ctx.beginPath();
+                ctx.moveTo(x, y);
+                ctx.quadraticCurveTo(x + 60, y + gust.dir * 30, x + 110, y + gust.dir * 70);
+                ctx.stroke();
+                // Arrow head shows which way the wind will push.
+                ctx.beginPath();
+                ctx.moveTo(x + 110, y + gust.dir * 70);
+                ctx.lineTo(x + 86, y + gust.dir * 52);
+                ctx.lineTo(x + 116, y + gust.dir * 44);
+                ctx.closePath();
+                ctx.fill();
+            }
+        }
+        ctx.restore();
+    }
+
+    function drawFrostCrystal(collectible) {
+        ctx.save();
+        ctx.translate(collectible.x, collectible.y);
+        const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 50);
+        glow.addColorStop(0, 'rgba(190, 250, 255, .9)');
+        glow.addColorStop(1, 'rgba(190, 250, 255, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath();
+        ctx.arc(0, 0, 50, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.rotate(collectible.spin * 0.4);
+        ctx.strokeStyle = '#1b4f6b';
+        ctx.lineWidth = 9;
+        ctx.lineCap = 'round';
+        for (let i = 0; i < 3; i += 1) {
+            const a = i * Math.PI / 3;
+            ctx.beginPath(); ctx.moveTo(Math.cos(a) * -26, Math.sin(a) * -26); ctx.lineTo(Math.cos(a) * 26, Math.sin(a) * 26); ctx.stroke();
+        }
+        ctx.strokeStyle = '#d9fbff';
+        ctx.lineWidth = 5;
+        for (let i = 0; i < 3; i += 1) {
+            const a = i * Math.PI / 3;
+            ctx.beginPath(); ctx.moveTo(Math.cos(a) * -24, Math.sin(a) * -24); ctx.lineTo(Math.cos(a) * 24, Math.sin(a) * 24); ctx.stroke();
+        }
+        ctx.restore();
     }
 
     function drawLavaFloor() {
@@ -3804,6 +3986,11 @@
         if (collectible.kind === 'cool') {
             ctx.restore();
             drawCoolingStone(collectible);
+            return;
+        }
+        if (collectible.kind === 'crystal') {
+            ctx.restore();
+            drawFrostCrystal(collectible);
             return;
         }
         if (collectible.kind === 'feather') {
@@ -4137,6 +4324,7 @@
         drawRelayNearEdge();
         drawRelayLabels();
         drawLavaFloor();
+        drawWindGust();
         drawNightDarkness();
         drawParticles();
         // The shallow top/bottom set pieces are *in front* of Bert, not just

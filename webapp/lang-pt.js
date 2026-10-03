@@ -414,4 +414,10 @@ window.BertI18n.register('pt', {
     'SØLV I {0}': 'PRATA EM {0}',
     'Få sølv (50 point) i {0} for at åbne {1}.': 'Consiga prata (50 pontos) em {0} para abrir {1}.',
     'LAVAEN FALDER': 'A LAVA BAIXA',
+    'GODT GREB · {0}s': 'BOA ADERÊNCIA · {0}s',
+    'VINDSTØD · OP': 'RAJADA · CIMA',
+    'VINDSTØD · NED': 'RAJADA · BAIXO',
+    'GLAT IS: STYR I GOD TID · SAML FROSTKRYSTALLER': 'GELO ESCORREGADIO: ANTECIPE · PEGUE CRISTAIS DE GELO',
+    'PAS PÅ VINDSTØD · PILENE VISER VEJEN': 'CUIDADO COM AS RAJADAS · AS SETAS MOSTRAM',
+    'LAVAEN STIGER · SAML KØLESTEN': 'A LAVA ESTÁ SUBINDO · PEGUE PEDRAS FRIAS',
 });

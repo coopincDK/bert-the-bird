@@ -414,4 +414,10 @@ window.BertI18n.register('sv', {
     'SØLV I {0}': 'SILVER I {0}',
     'Få sølv (50 point) i {0} for at åbne {1}.': 'Ta silver (50 poäng) i {0} för att öppna {1}.',
     'LAVAEN FALDER': 'LAVAN SJUNKER',
+    'GODT GREB · {0}s': 'BRA GREPP · {0}s',
+    'VINDSTØD · OP': 'VINDBY · UPP',
+    'VINDSTØD · NED': 'VINDBY · NED',
+    'GLAT IS: STYR I GOD TID · SAML FROSTKRYSTALLER': 'HALT IS: STYR I GOD TID · SAMLA FROSTKRISTALLER',
+    'PAS PÅ VINDSTØD · PILENE VISER VEJEN': 'AKTA VINDBYARNA · PILARNA VISAR VÄGEN',
+    'LAVAEN STIGER · SAML KØLESTEN': 'LAVAN STIGER · SAMLA KYLSTENAR',
 });

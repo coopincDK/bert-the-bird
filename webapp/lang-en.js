@@ -436,4 +436,10 @@ window.BertI18n.register('en', {
     'SØLV I {0}': 'SILVER IN {0}',
     'Få sølv (50 point) i {0} for at åbne {1}.': 'Get silver (50 points) in {0} to open {1}.',
     'LAVAEN FALDER': 'THE LAVA SINKS',
+    'GODT GREB · {0}s': 'GOOD GRIP · {0}s',
+    'VINDSTØD · OP': 'GUST · UP',
+    'VINDSTØD · NED': 'GUST · DOWN',
+    'GLAT IS: STYR I GOD TID · SAML FROSTKRYSTALLER': 'SLIPPERY ICE: STEER EARLY · COLLECT FROST CRYSTALS',
+    'PAS PÅ VINDSTØD · PILENE VISER VEJEN': 'WATCH THE GUSTS · THE ARROWS SHOW THE WAY',
+    'LAVAEN STIGER · SAML KØLESTEN': 'THE LAVA IS RISING · COLLECT COOLING STONES',
 });

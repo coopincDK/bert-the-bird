@@ -414,4 +414,10 @@ window.BertI18n.register('fr', {
     'SØLV I {0}': 'ARGENT DANS {0}',
     'Få sølv (50 point) i {0} for at åbne {1}.': 'Obtiens l’argent (50 points) dans {0} pour ouvrir {1}.',
     'LAVAEN FALDER': 'LA LAVE DESCEND',
+    'GODT GREB · {0}s': 'BONNE PRISE · {0}s',
+    'VINDSTØD · OP': 'RAFALE · HAUT',
+    'VINDSTØD · NED': 'RAFALE · BAS',
+    'GLAT IS: STYR I GOD TID · SAML FROSTKRYSTALLER': 'GLACE GLISSANTE : ANTICIPE · RAMASSE LES CRISTAUX DE GIVRE',
+    'PAS PÅ VINDSTØD · PILENE VISER VEJEN': 'ATTENTION AUX RAFALES · LES FLÈCHES MONTRENT LE SENS',
+    'LAVAEN STIGER · SAML KØLESTEN': 'LA LAVE MONTE · RAMASSE LES PIERRES FROIDES',
 });

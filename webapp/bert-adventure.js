@@ -211,11 +211,13 @@
     }
 
     /** A lava column: rests in the lava, warns, then shoots up almost to the top. */
-    function columnAt(theme, id, x, difficulty, random) {
+    function columnAt(theme, id, x, difficulty, random, options = {}) {
         const o = base('lava-spout', theme, id, x, 260);
         o.behaviour = 'column';
+        o.fromTop = Boolean(options.fromTop);
+        o.palette = options.palette || 'lava';
         o.columnWidth = lerp(70, 90, random());
-        o.peakTop = lerp(70, 150, random());
+        o.peakTop = options.peak ?? lerp(70, 150, random());
         o.cycle = clamp(3.0 - 0.35 * difficulty, 1.9, 3.0);
         o.cycleOffset = random() * o.cycle;
         o.topY = GROUND;
@@ -309,7 +311,8 @@
         } else if (o.behaviour === 'spin') {
             o.angle += o.spinSpeed * delta;
         } else if (o.behaviour === 'column') {
-            o.lavaTop = env.lavaTop ?? GROUND;
+            // Base edge: the lava surface, the floor, or the ceiling for jets from above.
+            o.lavaTop = o.fromTop ? -40 : (env.lavaTop ?? GROUND);
             const t = (o.age + o.cycleOffset) % o.cycle;
             const warnStart = o.cycle - 0.8;
             const up = 0.25;
@@ -319,7 +322,7 @@
             else if (t < up + hold + 0.4) o.topY = lerp(o.peakTop, o.lavaTop, (t - up - hold) / 0.4);
             else o.topY = o.lavaTop;
             o.warn = t >= warnStart ? clamp((t - warnStart) / 0.6, 0, 1) : 0;
-            o.harmful = o.topY < o.lavaTop - 24;
+            o.harmful = o.fromTop ? o.topY > o.lavaTop + 24 : o.topY < o.lavaTop - 24;
         } else if (o.behaviour === 'bomb') {
             const lavaTop = env.lavaTop ?? GROUND;
             if (o.phase === 'idle') {
@@ -352,7 +355,7 @@
         const scale = o.size / ART;
         if (o.type === 'ice-stalactite') return { x: o.x + 256 * scale, y: Math.max(20, o.y + 70 * scale), radius: 70 * scale + 20 };
         if (o.type === 'diving-gull') return { x: o.x + 256 * scale, y: o.y + 250 * scale, radius: 120 * scale + 20 };
-        if (o.behaviour === 'column') return { x: o.x + o.size / 2, y: (o.lavaTop ?? GROUND) - 10, radius: o.columnWidth + 20 };
+        if (o.behaviour === 'column') return { x: o.x + o.size / 2, y: o.fromTop ? 30 : (o.lavaTop ?? GROUND) - 10, radius: o.columnWidth + 20 };
         if (o.behaviour === 'bomb') return { x: o.x + o.size / 2, y: (o.lavaTop ?? GROUND) - 10, radius: o.size * 0.55 };
         if (o.type === 'lava-spout' || o.type === 'lava-bubble') return { x: o.x + 256 * scale, y: GROUND - 8, radius: 110 * scale + 24 };
         return null;
@@ -366,6 +369,9 @@
         if (o.behaviour === 'column') {
             const cx = o.x + o.size / 2;
             const w = o.columnWidth;
+            if (o.fromTop) {
+                return [box(cx - w * 0.42, o.lavaTop, w * 0.84, Math.max(0, o.topY - o.lavaTop - w * 0.3)), circle(cx, o.topY - w * 0.35, w * 0.45)];
+            }
             return [box(cx - w * 0.42, o.topY + w * 0.3, w * 0.84, Math.max(0, o.lavaTop - o.topY)), circle(cx, o.topY + w * 0.35, w * 0.45)];
         }
         if (o.behaviour === 'bomb') {
@@ -463,7 +469,7 @@
     function isTheme(kind) { return THEMES.includes(kind); }
 
     const api = Object.freeze({
-        THEMES, TYPES, GROUND, WARN_COLOR, isTheme, createEncounter, advance, shapes, warningSpot, rotatePoint,
+        THEMES, TYPES, GROUND, WARN_COLOR, isTheme, createEncounter, columnAt, advance, shapes, warningSpot, rotatePoint,
     });
     if (typeof window !== 'undefined') window.BertAdventure = api;
     if (typeof module !== 'undefined' && module.exports) module.exports = api;

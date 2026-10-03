@@ -414,4 +414,10 @@ window.BertI18n.register('de', {
     'SØLV I {0}': 'SILBER IN {0}',
     'Få sølv (50 point) i {0} for at åbne {1}.': 'Hol Silber (50 Punkte) in {0}, um {1} zu öffnen.',
     'LAVAEN FALDER': 'DIE LAVA SINKT',
+    'GODT GREB · {0}s': 'GUTER GRIFF · {0}s',
+    'VINDSTØD · OP': 'BÖE · HOCH',
+    'VINDSTØD · NED': 'BÖE · RUNTER',
+    'GLAT IS: STYR I GOD TID · SAML FROSTKRYSTALLER': 'GLATTES EIS: FRÜH LENKEN · FROSTKRISTALLE SAMMELN',
+    'PAS PÅ VINDSTØD · PILENE VISER VEJEN': 'ACHTUNG BÖEN · DIE PFEILE ZEIGEN DIE RICHTUNG',
+    'LAVAEN STIGER · SAML KØLESTEN': 'DIE LAVA STEIGT · KÜHLSTEINE SAMMELN',
 });

@@ -414,4 +414,10 @@ window.BertI18n.register('es', {
     'SØLV I {0}': 'PLATA EN {0}',
     'Få sølv (50 point) i {0} for at åbne {1}.': 'Consigue plata (50 puntos) en {0} para abrir {1}.',
     'LAVAEN FALDER': 'LA LAVA BAJA',
+    'GODT GREB · {0}s': 'BUEN AGARRE · {0}s',
+    'VINDSTØD · OP': 'RÁFAGA · ARRIBA',
+    'VINDSTØD · NED': 'RÁFAGA · ABAJO',
+    'GLAT IS: STYR I GOD TID · SAML FROSTKRYSTALLER': 'HIELO RESBALADIZO: GIRA CON TIEMPO · RECOGE CRISTALES DE ESCARCHA',
+    'PAS PÅ VINDSTØD · PILENE VISER VEJEN': 'CUIDADO CON LAS RÁFAGAS · LAS FLECHAS INDICAN',
+    'LAVAEN STIGER · SAML KØLESTEN': 'LA LAVA SUBE · RECOGE PIEDRAS FRÍAS',
 });
