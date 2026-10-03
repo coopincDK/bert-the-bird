@@ -430,4 +430,5 @@ window.BertI18n.register('en', {
     '{0} FJER': '{0} FEATHERS',
     'TAP FOR AT FLYVE': 'TAP TO FLY',
     'Dig': 'You',
+    'Slå din vens score på præcis samme bane. Du har tre forsøg, og deres spøgelsesflyvning følger dig.': "Beat your friend's score on exactly the same level. You have three attempts, and their ghost flight follows you.",
 });

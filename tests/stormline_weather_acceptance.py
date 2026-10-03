@@ -11,7 +11,7 @@ from playwright.async_api import async_playwright
 
 PROJECT = Path(__file__).resolve().parents[1]
 OUTPUT = PROJECT.parent / 'qa-stormline-weather'
-BUILD = 'worlds-relay-21'
+BUILD = 'worlds-relay-22'
 HAZARDS = ('storm-sail', 'wind-umbrella', 'wind-branch', 'wind-sign', 'wind-car')
 
 

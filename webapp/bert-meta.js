@@ -138,15 +138,15 @@
     function heroCatalog() {
         return window.BertHeroStore.catalog.map((hero) => ({
             ...window.BertHeroStore.progress(hero.id, data),
-            owned: Boolean(data.ownedHeroes[hero.id]),
-            source: data.ownedHeroes[hero.id]?.source || null,
+            owned: Boolean(data.ownedHeroes[hero.id]) || hasTestAccess(),
+            source: data.ownedHeroes[hero.id]?.source || (hasTestAccess() ? 'test' : null),
             balance: data.feathers,
         }));
     }
 
     function setHero(hero) {
         if (!Object.prototype.hasOwnProperty.call(window.BertHeroStore.byId, hero)) hero = 'bert';
-        if (!Object.prototype.hasOwnProperty.call(data.ownedHeroes, hero)) return snapshot();
+        if (!Object.prototype.hasOwnProperty.call(data.ownedHeroes, hero) && !hasTestAccess()) return snapshot();
         data.hero = hero;
         return save();
     }
@@ -175,12 +175,18 @@
         const cleaned = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24);
         data.player.name = cleaned;
         const granted = syncSecretHeroes();
+        if (!hasTestAccess() && !data.ownedHeroes[data.hero]) data.hero = 'bert';
         // A newly matched epic hero is equipped right away, as a surprise.
         if (granted.length) data.hero = granted[0];
         return save();
     }
 
     /** 'Pilot' was the old placeholder; it never counts as a chosen name. */
+    /** The pilot name "test" opens every level and every hero, for trying things out. */
+    function hasTestAccess() {
+        return String(data.player.name || '').trim().toLowerCase() === 'test';
+    }
+
     function hasPlayerName() {
         const name = String(data.player.name || '').trim();
         return name.length > 0 && name.toLowerCase() !== 'pilot';
@@ -484,7 +490,7 @@
     window.BertHaptics?.setEnabled(data.settings.haptics);
     save();
     window.BertMeta = Object.freeze({
-        addFeathers, hasPlayerName,
+        addFeathers, hasPlayerName, hasTestAccess,
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,
         continueSpinOffer, buyContinueSpin, settleContinueSpin,

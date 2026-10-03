@@ -7,7 +7,9 @@
     'use strict';
 
     const STORAGE_KEY = 'bertTheBird_language';
-    const SUPPORTED = ['da', 'en'];
+    const SUPPORTED = ['da', 'en', 'nb', 'sv', 'de', 'es', 'fr', 'pt'];
+    // Norwegian comes as nb/nn/no on devices.
+    const ALIASES = { no: 'nb', nn: 'nb' };
     const DICT = { da: {}, en: {} };
 
     function storedChoice() {
@@ -15,10 +17,11 @@
     }
 
     function detect(choice = storedChoice()) {
-        if (SUPPORTED.includes(choice)) return choice;
+        if (SUPPORTED.includes(ALIASES[choice] || choice)) return ALIASES[choice] || choice;
         const candidates = (typeof navigator !== 'undefined' && (navigator.languages?.length ? navigator.languages : [navigator.language])) || [];
         for (const tag of candidates) {
-            const code = String(tag || '').toLowerCase().split('-')[0];
+            const raw = String(tag || '').toLowerCase().split('-')[0];
+            const code = ALIASES[raw] || raw;
             if (SUPPORTED.includes(code)) return code;
         }
         return 'en';
@@ -29,6 +32,8 @@
     function lookup(key) {
         const table = DICT[lang];
         if (table && Object.prototype.hasOwnProperty.call(table, key)) return table[key];
+        // A gap in another language falls back to English before Danish.
+        if (lang !== 'da' && lang !== 'en' && Object.prototype.hasOwnProperty.call(DICT.en, key)) return DICT.en[key];
         return key;
     }
 

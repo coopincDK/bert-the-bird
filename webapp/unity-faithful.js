@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-21';
+    const BUILD_VERSION = 'worlds-relay-22';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1080,7 +1080,11 @@
             try { localStorage.setItem(migrationKey, JSON.stringify(grandfatheredLevelIds)); }
             catch (_) { /* Private mode stays playable. */ }
         }
-        return BertMeta.progressionState(UNITY_LEVELS, bestScores, { grandfatheredLevelIds });
+        const progression = BertMeta.progressionState(UNITY_LEVELS, bestScores, { grandfatheredLevelIds });
+        if (BertMeta.hasTestAccess?.()) {
+            Object.values(progression).forEach((status) => { status.unlocked = true; status.requirement = null; status.progress = 1; });
+        }
+        return progression;
     }
 
     function closeLockedLevel() {
@@ -4279,6 +4283,15 @@
         document.getElementById('settings-btn').addEventListener('click', openSettings);
         document.getElementById('pause-settings-btn').addEventListener('click', openSettings);
         document.getElementById('close-settings').addEventListener('click', closeSettings);
+        // On phones the keyboard covers most of the landscape screen: lift the
+        // open dialog to the top while a text field has focus.
+        [dom.firstNameInput, dom.playerName].forEach((input) => {
+            input.addEventListener('focus', () => {
+                document.body.classList.add('keyboard-open');
+                setTimeout(() => input.scrollIntoView({ block: 'center', behavior: 'smooth' }), 120);
+            });
+            input.addEventListener('blur', () => document.body.classList.remove('keyboard-open'));
+        });
         dom.firstNameInput.addEventListener('input', () => {
             dom.saveFirstName.disabled = !dom.firstNameInput.value.trim();
         });
