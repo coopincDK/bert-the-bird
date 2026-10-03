@@ -33,6 +33,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | `assets/music/tunnel.mp3` | "Tunnel" (uploadet fil) | 3. okt. 2026 | De tre Tunnel-baner |
 | `assets/music/edm.mp3` | "EDM" (uploadet fil) | 3. okt. 2026 | Neon Encore |
 | `assets/music/focus.mp3` | "Focus" (uploadet fil) | 3. okt. 2026 | Fokus-tilstand (slowmotion) |
+| `assets/music/iceberg.mp3` | "Iceberg" (uploadet fil) | 3. okt. 2026 | Isbjerget |
 
 ## Musik – mangler stadig at blive skiftet
 
