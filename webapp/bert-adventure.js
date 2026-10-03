@@ -28,7 +28,16 @@
         'rotor': { art: 'advRotor', bbox: [32, 38, 479, 473], anchor: 'spin' },
         'buoy-chain': { art: 'advBuoys', bbox: [32, 178, 479, 333], anchor: 'bottom' },
         'service-platform': { art: 'advPlatform', bbox: [33, 81, 477, 430], anchor: 'bottom' },
+        'icicles': { art: 'advIcicles', bbox: [42, 53, 470, 458], anchor: 'top' },
+        'ice-floe': { art: 'advFloe', bbox: [40, 95, 472, 416], anchor: 'bottom' },
+        'antenna': { art: 'advAntenna', bbox: [206, 40, 305, 471], anchor: 'bottom' },
+        'cable-lamps': { art: 'advCableLamps', bbox: [40, 187, 472, 320], anchor: 'top' },
+        'neon-fish': { art: 'advNeonFish', bbox: [48, 94, 465, 412], anchor: 'swing' },
+        'neon-bolt': { art: 'advNeonBolt', bbox: [144, 41, 368, 471], anchor: 'swing' },
+        'kite': { art: 'advKite', bbox: [47, 41, 464, 473], anchor: 'air' },
     });
+    // Where the two chains of a hanging sign meet the art (x in 512 px art).
+    const CHAIN_X = Object.freeze({ signboard: [140, 372], 'neon-fish': [150, 360], 'neon-bolt': [195, 320] });
 
     const WARN_COLOR = Object.freeze({
         iceberg: '#bff6ff', harbor: '#ffd36b', nightcity: '#ffb36b', volcano: '#ffb347', windfarm: '#fff6a8',
@@ -104,8 +113,10 @@
                 obstacles.push(o);
                 star = { x: x + o.size * 0.5, y: lerp(470, 560, random()) };
             } else if (pick < 0.75) {
-                obstacles.push(topAt('ice-shelf', theme, id, x, gapTop, 300, 420));
-                obstacles.push(bottomAt('ice-spikes', theme, id, x + 40, gapBottom, 240, 340));
+                const topType = random() < 0.5 ? 'ice-shelf' : 'icicles';
+                const bottomType = random() < 0.5 ? 'ice-spikes' : 'ice-floe';
+                obstacles.push(topAt(topType, theme, id, x, gapTop, 300, 420));
+                obstacles.push(bottomAt(bottomType, theme, id, x + 40, gapBottom, 240, 380));
                 star = { x: x + 190, y: gapTop + gap / 2 };
             } else {
                 const spikes = bottomAt('ice-spikes', theme, id, x, Math.max(gapBottom, 470), 240, 340);
@@ -134,7 +145,11 @@
                 star = { x: x + 130, y: 430 };
             }
         } else if (theme === 'nightcity') {
-            if (pick < 0.45) {
+            if (pick < 0.2) {
+                obstacles.push(bottomAt('antenna', theme, id, x, gapBottom - 30, 300, 480));
+                obstacles.push(topAt('cable-lamps', theme, id, x + 40, Math.max(120, gapTop), 300, 360));
+                star = { x: x + 200, y: gapTop + gap / 2 };
+            } else if (pick < 0.45) {
                 obstacles.push(bottomAt('water-tank', theme, id, x, gapBottom, 300, 470));
                 const sign = swingAt('signboard', theme, id, x + 20, Math.max(110, gapTop), d * 0.6, random);
                 obstacles.push(sign);
@@ -162,7 +177,17 @@
             if (pick < 0.45) {
                 obstacles.push(rotorAt(theme, id, x, lerp(300, 440, random()), d, random));
                 star = { x: x + 470, y: lerp(200, 520, random()) };
-            } else if (pick < 0.75) {
+            } else if (pick < 0.6) {
+                const kite = base('kite', theme, id, x, lerp(230, 270, random()));
+                kite.behaviour = 'kite';
+                kite.baseY = lerp(90, 330, random());
+                kite.y = kite.baseY;
+                kite.bob = lerp(60, 110, random());
+                kite.bobSpeed = clamp(1.1 + 0.25 * d, 1.1, 2.2);
+                kite.phaseOffset = random() * Math.PI * 2;
+                obstacles.push(kite);
+                star = { x: x + 360, y: lerp(200, 520, random()) };
+            } else if (pick < 0.78) {
                 obstacles.push(bottomAt('service-platform', theme, id, x, Math.max(gapBottom, 430), 300, 440));
                 obstacles.push(bottomAt('buoy-chain', theme, id, x + 340, 620, 250, 300));
                 star = { x: x + 180, y: Math.max(gapBottom, 430) - 120 };
@@ -176,7 +201,8 @@
     }
 
     function swingAt(type, theme, id, x, lowest, difficulty, random) {
-        const sign = type === 'signboard';
+        if (type === 'signboard') type = ['signboard', 'neon-fish', 'neon-bolt'][Math.floor(random() * 3)];
+        const sign = type !== 'crane-hook';
         const size = sign ? lerp(200, 240, random()) : lerp(230, 270, random());
         const o = base(type, theme, id, x, size);
         // The pivot sits above the screen; the cable reaches down to the art.
@@ -359,6 +385,9 @@
                 o.offset = o.shift * (t * t * (3 - 2 * t));
                 if (t >= 1) o.phase = 'done';
             }
+        } else if (o.behaviour === 'kite') {
+            o.y = o.baseY + Math.sin(o.age * o.bobSpeed + o.phaseOffset) * o.bob;
+            o.angle = Math.sin(o.age * o.bobSpeed * 1.3 + o.phaseOffset) * 0.12;
         } else if (o.behaviour === 'flock') {
             o.x -= o.extraSpeed * delta;
             if (distance > -60) {
@@ -461,6 +490,36 @@
             return [box(a.x, a.y, 390 * s, 96 * s), box(b.x, b.y, 110 * s, 180 * s),
                 box(left.x, left.y, 85 * s, 90 * s), box(right.x, right.y, 85 * s, 80 * s)];
         }
+        case 'icicles': {
+            const band = p(50, 55);
+            const spike = (ax, tipY, t) => segment(o.x + ax * s, o.y + 105 * s, o.x + ax * s, o.y + tipY * s, t * s);
+            return [box(band.x, band.y, 410 * s, 55 * s), spike(128, 340, 22), spike(256, 415, 26), spike(384, 212, 20),
+                spike(224, 218, 16), spike(288, 296, 16), spike(96, 190, 14), spike(416, 165, 14)];
+        }
+        case 'ice-floe': {
+            const slab = p(62, 222);
+            const peak = p(256, 150);
+            return [box(slab.x, slab.y, 388 * s, 175 * s), circle(peak.x, peak.y, 48 * s)];
+        }
+        case 'antenna': {
+            const top = p(256, 60);
+            const foot = p(222, 432);
+            return [segment(top.x, top.y, top.x, o.y + 465 * s, 20 * s), box(foot.x, foot.y, 68 * s, 38 * s)];
+        }
+        case 'cable-lamps': {
+            const l = p(64, 210);
+            const m = p(256, 255);
+            const r = p(448, 210);
+            const b1 = p(128, 285);
+            const b2 = p(256, 303);
+            const b3 = p(384, 285);
+            return [segment(l.x, l.y, m.x, m.y, 12 * s), segment(m.x, m.y, r.x, r.y, 12 * s),
+                circle(b1.x, b1.y, 18 * s), circle(b2.x, b2.y, 18 * s), circle(b3.x, b3.y, 18 * s)];
+        }
+        case 'kite': {
+            const c = rotatePoint(o.x + 355 * s, o.y + 165 * s, o.x + 256 * s, o.y + 256 * s, o.angle);
+            return [circle(c.x, c.y, 92 * s)];
+        }
         case 'rolling-parcel': {
             const c = p(256, 256);
             return [circle(c.x, c.y, 120 * s)];
@@ -502,6 +561,8 @@
             return [circle(c.x, c.y, 95 * s)];
         }
         case 'crane-hook':
+        case 'neon-fish':
+        case 'neon-bolt':
         case 'signboard': {
             const pivot = { x: o.pivotX, y: o.pivotY };
             const offsetY = o.pivotY + o.length;
@@ -512,9 +573,15 @@
                 const hook = local(258, 395);
                 return [circle(block.x, block.y, 64 * s), circle(hook.x, hook.y, 72 * s)];
             }
-            const left = local(70, 330);
-            const right = local(442, 330);
-            return [segment(left.x, left.y, right.x, right.y, 70 * s)];
+            if (o.type === 'neon-bolt') {
+                const top = local(215, 90);
+                const bottom = local(250, 440);
+                return [segment(top.x, top.y, bottom.x, bottom.y, 46 * s)];
+            }
+            const y = o.type === 'neon-fish' ? 320 : 330;
+            const left = local(o.type === 'neon-fish' ? 80 : 70, y);
+            const right = local(o.type === 'neon-fish' ? 440 : 442, y);
+            return [segment(left.x, left.y, right.x, right.y, (o.type === 'neon-fish' ? 72 : 70) * s)];
         }
         case 'rotor': {
             const hub = { x: o.x + o.hubAx * s, y: o.y + o.hubAy * s };
@@ -535,7 +602,7 @@
     function isTheme(kind) { return THEMES.includes(kind); }
 
     const api = Object.freeze({
-        THEMES, TYPES, GROUND, WARN_COLOR, isTheme, createEncounter, columnAt, advance, shapes, warningSpot, rotatePoint,
+        THEMES, TYPES, CHAIN_X, GROUND, WARN_COLOR, isTheme, createEncounter, columnAt, advance, shapes, warningSpot, rotatePoint,
     });
     if (typeof window !== 'undefined') window.BertAdventure = api;
     if (typeof module !== 'undefined' && module.exports) module.exports = api;

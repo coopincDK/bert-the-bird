@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-26';
+    const BUILD_VERSION = 'worlds-relay-27';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -235,14 +235,26 @@
 
     // Five adventure worlds, always open. Endless like every other level.
     const ADVENTURE_ART = Object.freeze({
-        iceberg: { name: T('Isbjerget'), card: T('ISTAPPER & SPIDSER'), obstacles: { advIceStalactite: 'falling-stalactite', advIceShelf: 'cracking-ice-shelf', advIceSpikes: 'ice-spike-cluster' } },
-        harbor: { name: T('Havnen'), card: T('KRANER & MÅGER'), obstacles: { advCraneHook: 'crane-hook', advGull: 'diving-gull', advParcel: 'rolling-parcel' } },
-        nightcity: { name: T('Nattebyen'), card: T('MØRKE & SKILTE'), obstacles: { advWaterTank: 'lit-water-tank', advVent: 'rooftop-vent', advSignboard: 'swaying-signboard' } },
-        volcano: { name: T('Vulkanen'), card: T('LAVA & BOBLER'), obstacles: { advLavaLedge: 'cracked-lava-ledge', advLavaBubble: 'lava-bubble', advLavaSpout: 'lava-spout' } },
-        windfarm: { name: T('Vindmøller'), card: T('ROTORER & BØJER'), obstacles: { advRotor: 'rotor-gate', advBuoys: 'buoy-chain', advPlatform: 'service-platform' } },
+        iceberg: { name: T('Isbjerget'), card: T('ISTAPPER & SPIDSER'), obstacles: { advIceStalactite: 'falling-stalactite', advIceShelf: 'cracking-ice-shelf', advIceSpikes: 'ice-spike-cluster',
+            advIcicles: 'icicle-cluster', advFloe: 'ice-floe', iceCrystal: 'frost-crystal', iceFrost: 'bert-frost', iceSkid: 'ice-skid' } },
+        harbor: { name: T('Havnen'), card: T('KRANER & MÅGER'), obstacles: { advCraneHook: 'crane-hook', advGull: 'diving-gull', advParcel: 'rolling-parcel',
+            harContainer0: 'container-red', harContainer1: 'container-blue', harContainer2: 'container-green', harLamp: 'crane-lamp',
+            harGull1: 'gull-1', harGull2: 'gull-2', harGull3: 'gull-3' } },
+        nightcity: { name: T('Nattebyen'), card: T('MØRKE & SKILTE'), obstacles: { advWaterTank: 'lit-water-tank', advVent: 'rooftop-vent', advSignboard: 'swaying-signboard',
+            advAntenna: 'antenna-mast', advCableLamps: 'cable-lamps', advNeonFish: 'neon-sign-fish', advNeonBolt: 'neon-sign-bolt',
+            nightLantern1: 'lantern-1', nightLantern2: 'lantern-2', nightMoth: 'moth' } },
+        volcano: { name: T('Vulkanen'), card: T('LAVA & BOBLER'), obstacles: { advLavaLedge: 'cracked-lava-ledge', advLavaBubble: 'lava-bubble', advLavaSpout: 'lava-spout',
+            volcSurface1: 'lava-surface-1', volcSurface2: 'lava-surface-2', volcColumn1: 'lava-column-1', volcColumn2: 'lava-column-2',
+            volcCooling: 'cooling-stone', volcBomb: 'lava-bomb', volcSmoke: 'smoke-trail', volcVent: 'vent-crack' } },
+        windfarm: { name: T('Vindmøller'), card: T('ROTORER & BØJER'), obstacles: { advRotor: 'rotor-gate', advBuoys: 'buoy-chain', advPlatform: 'service-platform',
+            windArrowUp: 'wind-arrow-up', windArrowDown: 'wind-arrow-down', windStreak: 'wind-streak', windNacelle: 'nacelle', advKite: 'kite' } },
+        poop: { name: T('Fugleklat'), card: T('SPIS & KLAT'), obstacles: {
+            poopBerry: 'food-berry', poopCrumb: 'food-crumb', poopFries: 'food-fries', poopDrop: 'poop-drop',
+            poopSplat1: 'poop-splat-1', poopSplat2: 'poop-splat-2', poopCar: 'target-car', poopCabrio: 'target-cabrio',
+            poopIcecream: 'target-icecream', poopStatue: 'target-statue' } },
     });
     // bg1 ends just inside bg2's solid band, so no seam shows between them.
-    const ADVENTURE_BG1_Y = Object.freeze({ iceberg: 310, harbor: 335, nightcity: 350, volcano: 361, windfarm: 238 });
+    const ADVENTURE_BG1_Y = Object.freeze({ iceberg: 310, harbor: 335, nightcity: 350, volcano: 361, windfarm: 238, poop: 250 });
     const adventureLayers = (theme) => [
         { image: `${theme}Sky`, y: 0, height: 720, factor: 0.03 },
         { image: `${theme}Bg1`, y: ADVENTURE_BG1_Y[theme], height: 190, factor: 0.06 },
@@ -251,7 +263,7 @@
         { image: `${theme}Fg`, y: 545, height: 200, factor: 0.55 },
     ];
     // Fugleklat: a sixth adventure world. Until its own art arrives it borrows the Flappy town.
-    const ADVENTURE_INFO = Object.freeze({ ...ADVENTURE_ART, poop: { name: T('Fugleklat'), card: T('SPIS & KLAT'), obstacles: {} } });
+    const ADVENTURE_INFO = ADVENTURE_ART;
     const ADVENTURE_LEVELS = Object.freeze(['iceberg', 'harbor', 'nightcity', 'volcano', 'windfarm', 'poop'].map((theme, index) => Object.freeze({
         id: 20 + index, modeGroup: 'adventure', modeOrder: index + 1, unlockScore: 0,
         name: ADVENTURE_INFO[theme].name, sourceName: ADVENTURE_INFO[theme].name, cardText: ADVENTURE_INFO[theme].card,
@@ -261,12 +273,7 @@
             { duration: 35, speed: 1.25, difficulty: 0.8 }, { duration: 40, speed: 1.6, difficulty: 1.0 },
             { duration: 60, speed: 2.0, difficulty: 1.3 }, { duration: 150, speed: 2.7, difficulty: 1.8 },
         ],
-        layers: theme === 'poop' ? [
-            { image: 'flappySky', y: 0, height: 720, factor: 0.03 },
-            { image: 'flappyBg', y: 206, height: 150, factor: 0.07 },
-            { image: 'flappyMg', y: 412, height: 198, factor: 0.12 },
-            { image: 'flappyFg', y: 546, height: 174, factor: 1.00 },
-        ] : adventureLayers(theme),
+        layers: adventureLayers(theme),
     })));
     const isAdventureLevel = (level = currentLevel) => level?.modeGroup === 'adventure';
     // Eventyr opens with bronze on all nine base levels; inside, each level
@@ -440,7 +447,6 @@
         stormline: ['stormSky', 'stormSail', 'stormSock', 'stormUmbrella', 'stormBranch',
             'stormSign', 'stormCar'],
         skyRelay: ['happySky', 'happyMg', 'relayGate', 'relayGateFront', 'relayChime'],
-        poop: ['flappySky', 'flappyBg', 'flappyMg', 'flappyFg'],
         ...Object.fromEntries(Object.entries(ADVENTURE_ART).map(([theme, art]) => [theme,
             [`${theme}Sky`, `${theme}Bg1`, `${theme}Bg2`, `${theme}Mg`, `${theme}Fg`, ...Object.keys(art.obstacles)]])),
         tunnel: ['tunnelSky', 'tunnelBg1', 'tunnelBg2', 'tunnelMg', 'tunnelFg'],
@@ -570,10 +576,10 @@
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
     const EPIC_HEROES = Object.freeze({
-        epicMalthe: { folder: 'epic-malthe', standIn: 'eagle' },
-        epicJohan: { folder: 'epic-johan', standIn: 'block' },
-        epicSos: { folder: 'epic-sos', standIn: 'sugar' },
-        epicThor: { folder: 'epic-thor', standIn: 'mecha' },
+        epicMalthe: { folder: null, standIn: 'eagle' },
+        epicJohan: { folder: null, standIn: 'block' },
+        epicSos: { folder: null, standIn: 'sugar' },
+        epicThor: { folder: null, standIn: 'mecha' },
         epicFan: { folder: 'fanbert', standIn: 'bert' },
         epicCoop: { folder: 'coopinc', standIn: 'bert' },
     });
@@ -816,7 +822,9 @@
         Promise.all(Object.entries(EXTRA_HERO_FOLDERS).map(async ([hero, folder]) => {
             try { setGeneratedAnimation(hero, await generatedFrames(folder)); } catch (_) { /* Falls back to Bert. */ }
         }));
+        // folder null = own art not delivered yet: borrow the stand-in without a failed request.
         Object.entries(EPIC_HEROES).forEach(async ([hero, { folder, standIn }]) => {
+            if (!folder) { birdFrames[hero] = birdFrames[standIn]; return; }
             try {
                 setGeneratedAnimation(hero, await generatedFrames(folder));
             } catch (_) {
@@ -1262,8 +1270,14 @@
             const status = adventureStatus(level);
             const card = dom.levelGrid.querySelector(`[data-level-id="${level.id}"]`);
             card?.classList.toggle('locked', !status.unlocked);
-            if (lock) lock.textContent = !status.unlocked ? `🔒 ${status.short}`
-                : level.modeGroup === 'event' ? (earnedBadges[level.id] ? T('MÆRKE VUNDET') : T('TESTBANE')) : T('NY BANE');
+            if (lock) {
+                if (!status.unlocked) {
+                    lock.innerHTML = '<img class="lock-icon" src="assets/adventure/ui/lock.webp" alt="">';
+                    lock.append(document.createTextNode(status.short));
+                } else {
+                    lock.textContent = level.modeGroup === 'event' ? (earnedBadges[level.id] ? T('MÆRKE VUNDET') : T('TESTBANE')) : T('NY BANE');
+                }
+            }
             const fill = document.getElementById(`level-unlock-fill-${level.id}`);
             if (fill) fill.style.width = '100%';
         });
@@ -1273,9 +1287,13 @@
                 const copy = tab.querySelector('small');
                 const open = adventureOpen();
                 tab.classList.toggle('locked-tab', !open);
-                if (copy) copy.textContent = open
-                    ? T`${ADVENTURE_LEVELS.length + EVENT_LEVELS.length} BANER · ${modeHelp.adventure}`
-                    : `🔒 ${T`${baseBronzeCount()}/${UNITY_LEVELS.length} BRONZE`}`;
+                if (copy) {
+                    if (open) copy.textContent = T`${ADVENTURE_LEVELS.length + EVENT_LEVELS.length} BANER · ${modeHelp.adventure}`;
+                    else {
+                        copy.innerHTML = '<img class="lock-icon" src="assets/adventure/ui/lock.webp" alt="">';
+                        copy.append(document.createTextNode(T`${baseBronzeCount()}/${UNITY_LEVELS.length} BRONZE`));
+                    }
+                }
                 return;
             }
             const levels = UNITY_LEVELS.filter((level) => level.modeGroup === tab.dataset.mode);
@@ -2055,11 +2073,11 @@
     const POOP_GROUND = 660;
     const POOP_MAX = 6;
     const TARGET_TYPES = Object.freeze({
-        car: { width: 190, height: 92, value: 1, drive: [40, 120] },
-        cabrio: { width: 190, height: 80, value: 2, drive: [60, 140] },
+        car: { width: 190, height: 100, value: 1, drive: [40, 120] },
+        cabrio: { width: 190, height: 94, value: 2, drive: [60, 140] },
         gold: { width: 200, height: 90, value: 3, drive: [140, 220] },
         statue: { width: 110, height: 190, value: 1, drive: [0, 0] },
-        icecream: { width: 90, height: 160, value: 2, drive: [0, 30] },
+        icecream: { width: 116, height: 150, value: 2, drive: [0, 30] },
         umbrella: { width: 120, height: 170, value: 2, drive: [0, 25] },
     });
     function spawnPoopEncounter(x, id) {
@@ -2163,7 +2181,9 @@
     function drawPoopWorld() {
         if (currentLevel.kind !== 'poop' || !['prewarm', 'playing', 'dead'].includes(state.phase)) return;
         ctx.save();
+        const dropArt = assets.poopDrop?.naturalWidth ? assets.poopDrop : null;
         state.poops.forEach((poop) => {
+            if (dropArt) { ctx.drawImage(dropArt, poop.x - 16, poop.y - 18, 32, 32); return; }
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = '#5b6470';
             ctx.lineWidth = 3;
@@ -2173,8 +2193,10 @@
             ctx.fillStyle = '#cfd6de';
             ctx.beginPath(); ctx.arc(poop.x - 3, poop.y - 4, 4, 0, Math.PI * 2); ctx.fill();
         });
-        state.splats.forEach((splat) => {
+        state.splats.forEach((splat, splatIndex) => {
             ctx.globalAlpha = Math.max(0, 1 - splat.age / 2.5);
+            const splatArt = assets[splatIndex % 2 ? 'poopSplat2' : 'poopSplat1'];
+            if (splatArt?.naturalWidth) { ctx.drawImage(splatArt, splat.x - 28, splat.y - 24, 56, 48); return; }
             ctx.fillStyle = '#ffffff';
             ctx.strokeStyle = '#7b8490';
             ctx.lineWidth = 3;
@@ -2206,7 +2228,20 @@
         ctx.restore();
     }
 
+    // Target art: content boxes measured on the 512 px sprites (car/cabrio bottoms at y≈369/362).
+    const TARGET_ART = Object.freeze({
+        car: { key: 'poopCar', box: [40, 143, 472, 369] },
+        cabrio: { key: 'poopCabrio', box: [40, 149, 472, 362] },
+        icecream: { key: 'poopIcecream', box: [89, 41, 422, 471] },
+        statue: { key: 'poopStatue', box: [135, 41, 377, 471] },
+    });
     function drawTarget(target) {
+        const art = TARGET_ART[target.type];
+        if (art && assets[art.key]?.naturalWidth) {
+            const [x0, y0, x1, y1] = art.box;
+            ctx.drawImage(assets[art.key], x0, y0, x1 - x0, y1 - y0, target.x, target.y, target.width, target.height);
+            return;
+        }
         ctx.save();
         const x = target.x;
         const y = target.y;
@@ -3689,6 +3724,12 @@
         const image = assets[o.art];
         const scale = o.size / 512;
         const spot = BertAdventure.warningSpot(o);
+        if (spot && o.warn > 0 && (o.behaviour === 'column' || o.behaviour === 'bomb') && !o.fromTop && assets.volcVent?.naturalWidth && currentLevel.kind === 'volcano') {
+            ctx.save();
+            ctx.globalAlpha = Math.min(1, o.warn * 1.5);
+            ctx.drawImage(assets.volcVent, spot.x - 110, spot.y - 22, 220, 55);
+            ctx.restore();
+        }
         if (spot && o.warn > 0) {
             // A calm, growing glow: never a flash, always before the hazard moves.
             ctx.save();
@@ -3714,6 +3755,29 @@
         }
         if (o.behaviour === 'stack') {
             drawContainerStack(o);
+            return;
+        }
+        if (o.behaviour === 'flock' && assets.harGull1?.naturalWidth) {
+            const frame = assets[`harGull${1 + (Math.floor(o.age * 10) % 3)}`];
+            ctx.save();
+            ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
+            ctx.rotate(o.angle);
+            ctx.drawImage(frame, -o.size / 2, -o.size / 2, o.size, o.size);
+            ctx.restore();
+            return;
+        }
+        if (o.behaviour === 'kite') {
+            if (!image?.naturalWidth) return;
+            ctx.save();
+            const s = o.size / 512;
+            // The kite line runs down to the sea, drawn but harmless.
+            ctx.strokeStyle = 'rgba(40, 40, 50, .7)';
+            ctx.lineWidth = 2;
+            ctx.beginPath(); ctx.moveTo(o.x + 384 * s, o.y + 458 * s); ctx.lineTo(o.x + 330 * s, BertAdventure.GROUND + 40); ctx.stroke();
+            ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
+            ctx.rotate(o.angle);
+            ctx.drawImage(image, -o.size / 2, -o.size / 2, o.size, o.size);
+            ctx.restore();
             return;
         }
         if (o.behaviour === 'flock') {
@@ -3749,6 +3813,19 @@
         if (o.behaviour === 'bomb') {
             if (o.phase !== 'fly') return;
             ctx.save();
+            if (assets.volcSmoke?.naturalWidth) {
+                ctx.globalAlpha = 0.75;
+                const trailX = o.x + o.size * 0.75;
+                const trailY = o.y + o.size * (o.vy > 0 ? 0.1 : 0.7);
+                ctx.drawImage(assets.volcSmoke, trailX - o.size * 0.2, trailY - o.size * 0.35, o.size * 0.95, o.size * 0.95);
+                ctx.globalAlpha = 1;
+                ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
+                ctx.rotate(o.angle);
+                const bombArt = assets.volcBomb?.naturalWidth ? assets.volcBomb : image;
+                if (bombArt?.naturalWidth) ctx.drawImage(bombArt, -o.size / 2, -o.size / 2, o.size, o.size);
+                ctx.restore();
+                return;
+            }
             // Smoke trail behind the bomb, then the bomb itself.
             for (let i = 1; i <= 4; i += 1) {
                 ctx.globalAlpha = 0.18 * (5 - i) / 4;
@@ -3778,9 +3855,10 @@
             ctx.strokeStyle = 'rgba(40, 44, 52, 0.92)';
             ctx.lineWidth = 5;
             ctx.beginPath();
-            if (o.type === 'signboard') {
-                ctx.moveTo(0, 0); ctx.lineTo(-o.pivotOffset + 140 * scale, o.length);
-                ctx.moveTo(0, 0); ctx.lineTo(-o.pivotOffset + 372 * scale, o.length);
+            const chains = BertAdventure.CHAIN_X[o.type];
+            if (chains) {
+                ctx.moveTo(0, 0); ctx.lineTo(-o.pivotOffset + chains[0] * scale, o.length);
+                ctx.moveTo(0, 0); ctx.lineTo(-o.pivotOffset + chains[1] * scale, o.length);
             } else {
                 ctx.moveTo(0, 0); ctx.lineTo(0, o.length + 4);
             }
@@ -3802,9 +3880,21 @@
             ctx.lineTo(hubX - 13, BertAdventure.GROUND + 40);
             ctx.closePath();
             ctx.fill();
+            if (assets.windNacelle?.naturalWidth) {
+                ctx.drawImage(assets.windNacelle, hubX - 18, hubY - 26, 104, 52);
+            }
             ctx.translate(hubX, hubY);
             ctx.rotate(o.angle);
             ctx.drawImage(image, -o.hubAx * scale, -o.hubAy * scale, o.size, o.size);
+        } else if (o.type === 'cable-lamps') {
+            const s = o.size / 512;
+            ctx.strokeStyle = 'rgba(30, 34, 50, .9)';
+            ctx.lineWidth = 4;
+            ctx.beginPath();
+            ctx.moveTo(o.x + 64 * s, -10); ctx.lineTo(o.x + 64 * s, o.y + 205 * s);
+            ctx.moveTo(o.x + 448 * s, -10); ctx.lineTo(o.x + 448 * s, o.y + 205 * s);
+            ctx.stroke();
+            ctx.drawImage(image, o.x, o.y, o.size, o.size);
         } else if (o.angle) {
             ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
             ctx.rotate(o.angle);
@@ -3819,6 +3909,18 @@
         if (o.fromTop ? o.topY <= o.lavaTop + 4 : o.topY >= o.lavaTop - 4) return;
         if (o.palette === 'smoke') {
             drawSmokeJet(o);
+            return;
+        }
+        const columnArt = assets[Math.floor(state.worldTime * 8) % 2 ? 'volcColumn2' : 'volcColumn1'];
+        if (columnArt?.naturalWidth) {
+            // Source column content: x 23–233, y 190–833 of the 256×1024 art.
+            const cx = o.x + o.size / 2;
+            const drawWidth = o.columnWidth * 1.45;
+            const top = o.topY - o.columnWidth * 0.25;
+            const bottom = o.lavaTop + 30;
+            ctx.save();
+            ctx.drawImage(columnArt, 23, 190, 210, 643, cx - drawWidth / 2, top, drawWidth, bottom - top);
+            ctx.restore();
             return;
         }
         const cx = o.x + o.size / 2;
@@ -3865,6 +3967,27 @@
         const edge = o.gapTop + o.offset;
         const h = 104;
         ctx.save();
+        const containerArt = (index) => assets[`harContainer${index}`];
+        if (containerArt(0)?.naturalWidth) {
+            // Container content: x 39–473, y 62–193 of the 512×256 art.
+            const boxHeight = (o.width - 8) * 131 / 434;
+            const art = (y, colorIndex) => ctx.drawImage(containerArt(colorIndex), 39, 62, 434, 131, o.x + 4, y, o.width - 8, boxHeight);
+            if (o.stackTop) {
+                let index = 0;
+                for (let y = edge - boxHeight; y > -boxHeight; y -= boxHeight - 2) art(y, o.colors[index++ % o.colors.length]);
+            } else {
+                let index = 0;
+                for (let y = edge + o.gap; y < VIEW.height + boxHeight; y += boxHeight - 2) art(y, o.colors[index++ % o.colors.length]);
+                if (o.phase !== 'done' && assets.harLamp?.naturalWidth) {
+                    const on = (o.phase === 'warn' || o.phase === 'move') && Math.sin(state.worldTime * 22) > 0;
+                    ctx.globalAlpha = on ? 1 : 0.55;
+                    ctx.drawImage(assets.harLamp, o.x + o.width - 54, edge + o.gap - 44, 44, 44);
+                    ctx.globalAlpha = 1;
+                }
+            }
+            ctx.restore();
+            return;
+        }
         const drawBox = (y, colorIndex) => {
             const [main, dark] = CONTAINER_COLORS[colorIndex];
             ctx.fillStyle = main;
@@ -3990,6 +4113,25 @@
         const gust = state.gust;
         if (currentLevel.kind !== 'windfarm' || !gust || !['playing', 'prewarm'].includes(state.phase)) return;
         const warn = gust.phase === 'warn';
+        const arrowArt = assets[gust.dir < 0 ? 'windArrowUp' : 'windArrowDown'];
+        if (arrowArt?.naturalWidth) {
+            ctx.save();
+            ctx.globalAlpha = warn ? 0.45 + 0.4 * Math.abs(Math.sin(state.worldTime * 8)) : 0.85;
+            const travel = (state.worldTime * (warn ? 90 : 420)) % 340;
+            for (let row = 0; row < 3; row += 1) {
+                for (let col = -1; col < Math.ceil(VIEW.width / 340) + 1; col += 1) {
+                    const x = col * 340 + (row % 2) * 170 - travel;
+                    const y = 120 + row * 170;
+                    ctx.drawImage(arrowArt, x, y, 220, 110);
+                }
+            }
+            if (!warn && assets.windStreak?.naturalWidth) {
+                ctx.globalAlpha = 0.7;
+                ctx.drawImage(assets.windStreak, bird.x - 70, bird.y + BIRD.height * 0.2, 110, 110);
+            }
+            ctx.restore();
+            return;
+        }
         ctx.save();
         ctx.globalAlpha = warn ? 0.35 + 0.35 * Math.abs(Math.sin(state.worldTime * 8)) : 0.75;
         ctx.strokeStyle = '#ffffff';
@@ -4018,6 +4160,19 @@
     }
 
     function drawFrostCrystal(collectible) {
+        if (assets.iceCrystal?.naturalWidth) {
+            ctx.save();
+            ctx.translate(collectible.x, collectible.y);
+            const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 52);
+            glow.addColorStop(0, 'rgba(190, 250, 255, .85)');
+            glow.addColorStop(1, 'rgba(190, 250, 255, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(0, 0, 52, 0, Math.PI * 2); ctx.fill();
+            ctx.rotate(collectible.spin * 0.3);
+            ctx.drawImage(assets.iceCrystal, -38, -38, 76, 76);
+            ctx.restore();
+            return;
+        }
         ctx.save();
         ctx.translate(collectible.x, collectible.y);
         const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 50);
@@ -4048,6 +4203,17 @@
         if (currentLevel.kind !== 'volcano' || !['prewarm', 'playing', 'dead'].includes(state.phase)) return;
         const top = state.lavaTop;
         if (top >= VIEW.height + 20) return;
+        const surface = assets[Math.floor(state.worldTime * 4) % 2 ? 'volcSurface2' : 'volcSurface1'];
+        if (surface?.naturalWidth) {
+            // The surface art's glowing edge starts 70 px down; below it, solid deep lava.
+            ctx.save();
+            ctx.fillStyle = '#7a1606';
+            ctx.fillRect(0, top + 120, VIEW.width, VIEW.height - top);
+            const offset = (state.worldDistance * 0.9) % 1280;
+            for (let x = -offset; x < VIEW.width; x += 1280) ctx.drawImage(surface, x, top - 70, 1280, 200);
+            ctx.restore();
+            return;
+        }
         ctx.save();
         const gradient = ctx.createLinearGradient(0, top - 10, 0, VIEW.height);
         gradient.addColorStop(0, '#ffe36b');
@@ -4072,6 +4238,19 @@
     }
 
     function drawCoolingStone(collectible) {
+        if (assets.volcCooling?.naturalWidth) {
+            ctx.save();
+            ctx.translate(collectible.x, collectible.y);
+            const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 54);
+            glow.addColorStop(0, 'rgba(160, 240, 255, .7)');
+            glow.addColorStop(1, 'rgba(160, 240, 255, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(0, 0, 54, 0, Math.PI * 2); ctx.fill();
+            ctx.rotate(Math.sin(collectible.spin) * 0.25);
+            ctx.drawImage(assets.volcCooling, -40, -40, 80, 80);
+            ctx.restore();
+            return;
+        }
         ctx.save();
         ctx.translate(collectible.x, collectible.y);
         const glow = ctx.createRadialGradient(0, 0, 4, 0, 0, 52);
@@ -4150,6 +4329,19 @@
     }
 
     function drawLantern(collectible) {
+        const lanternArt = assets[Math.floor(state.worldTime * 6) % 2 ? 'nightLantern2' : 'nightLantern1'];
+        if (lanternArt?.naturalWidth) {
+            ctx.save();
+            ctx.translate(collectible.x, collectible.y + Math.sin(collectible.spin) * 4);
+            const glow = ctx.createRadialGradient(0, 0, 6, 0, 0, 70);
+            glow.addColorStop(0, 'rgba(255, 220, 120, .9)');
+            glow.addColorStop(1, 'rgba(255, 200, 90, 0)');
+            ctx.fillStyle = glow;
+            ctx.beginPath(); ctx.arc(0, 0, 70, 0, Math.PI * 2); ctx.fill();
+            ctx.drawImage(lanternArt, -36, -38, 72, 76);
+            ctx.restore();
+            return;
+        }
         ctx.save();
         ctx.translate(collectible.x, collectible.y + Math.sin(collectible.spin) * 4);
         const glow = ctx.createRadialGradient(0, 0, 6, 0, 0, 64);
@@ -4410,6 +4602,12 @@
         }
         if (collectible.kind === 'food') {
             ctx.rotate(Math.sin(collectible.spin) * 0.25);
+            const foodArt = assets[{ fries: 'poopFries', berry: 'poopBerry', crumb: 'poopCrumb' }[collectible.food]];
+            if (foodArt?.naturalWidth) {
+                ctx.drawImage(foodArt, -34, -34, 68, 68);
+                ctx.restore();
+                return;
+            }
             ctx.lineWidth = 3;
             ctx.strokeStyle = '#2a1a10';
             if (collectible.food === 'fries') {
@@ -4586,6 +4784,11 @@
         }
         if (state.elapsed < state.invulnerableUntil && Math.floor(state.worldTime * 12) % 2 === 0) ctx.globalAlpha = 0.45;
         drawHeroAnimation(hero, bird.animationTime, dead, -BIRD.width / 2, -BIRD.height / 2, BIRD.width, BIRD.height);
+        // Isbjerget: a frosty rim while the ice is slippery (no grip crystal active).
+        if (currentLevel.kind === 'iceberg' && !dead && state.phase === 'playing' && state.elapsed >= (state.gripUntil || 0) && assets.iceFrost?.naturalWidth) {
+            ctx.globalAlpha = 0.85;
+            ctx.drawImage(assets.iceFrost, -BIRD.width * 0.62, -BIRD.height * 0.62, BIRD.width * 1.24, BIRD.height * 1.24);
+        }
         ctx.restore();
     }
 

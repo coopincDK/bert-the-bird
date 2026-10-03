@@ -2068,3 +2068,5 @@ body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 .poop-button strong { position: absolute; right: -4px; top: -4px; min-width: 28px; height: 28px; border-radius: 14px; background: #1b2230; color: #fff; font: 900 15px/28px 'Bert Rounded', sans-serif; }
 .poop-button.empty { opacity: .45; }
 .poop-button:active { transform: scale(.94); }
+
+.lock-icon { width: 1.35em; height: 1.35em; vertical-align: -0.3em; margin-right: 3px; object-fit: contain; }
