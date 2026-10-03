@@ -2056,3 +2056,15 @@ body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 .mode-tab.locked-tab small { color: #ffd34d; }
 .level-card.shake { animation: card-shake .4s ease; }
 @keyframes card-shake { 0%,100% { transform: translateX(0); } 20%,60% { transform: translateX(-6px); } 40%,80% { transform: translateX(6px); } }
+
+/* Fugleklat: klat-knappen nederst i højre hjørne, så den ikke dækker målene. */
+.poop-button {
+    position: absolute; right: max(18px, env(safe-area-inset-right)); bottom: max(18px, env(safe-area-inset-bottom));
+    z-index: 12; width: 84px; height: 84px; border-radius: 50%; pointer-events: auto;
+    border: 3px solid #fff; background: radial-gradient(circle at 35% 30%, #ffffff, #c9d6e2 70%);
+    box-shadow: 0 5px 0 rgba(0,0,0,.3); display: grid; place-items: center; cursor: pointer;
+}
+.poop-button span { font-size: 38px; line-height: 1; }
+.poop-button strong { position: absolute; right: -4px; top: -4px; min-width: 28px; height: 28px; border-radius: 14px; background: #1b2230; color: #fff; font: 900 15px/28px 'Bert Rounded', sans-serif; }
+.poop-button.empty { opacity: .45; }
+.poop-button:active { transform: scale(.94); }

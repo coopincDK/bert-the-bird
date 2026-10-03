@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-25';
+    const BUILD_VERSION = 'worlds-relay-26';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -250,16 +250,23 @@
         { image: `${theme}Mg`, y: 470, height: 200, factor: 0.18 },
         { image: `${theme}Fg`, y: 545, height: 200, factor: 0.55 },
     ];
-    const ADVENTURE_LEVELS = Object.freeze(['iceberg', 'harbor', 'nightcity', 'volcano', 'windfarm'].map((theme, index) => Object.freeze({
+    // Fugleklat: a sixth adventure world. Until its own art arrives it borrows the Flappy town.
+    const ADVENTURE_INFO = Object.freeze({ ...ADVENTURE_ART, poop: { name: T('Fugleklat'), card: T('SPIS & KLAT'), obstacles: {} } });
+    const ADVENTURE_LEVELS = Object.freeze(['iceberg', 'harbor', 'nightcity', 'volcano', 'windfarm', 'poop'].map((theme, index) => Object.freeze({
         id: 20 + index, modeGroup: 'adventure', modeOrder: index + 1, unlockScore: 0,
-        name: ADVENTURE_ART[theme].name, sourceName: ADVENTURE_ART[theme].name, cardText: ADVENTURE_ART[theme].card,
+        name: ADVENTURE_INFO[theme].name, sourceName: ADVENTURE_INFO[theme].name, cardText: ADVENTURE_INFO[theme].card,
         mode: MODE.DEFAULT, startSpeed: 0.8, kind: theme, variant: theme, spacing: 820,
         stages: [
             { duration: 0.5, speed: 0.8, difficulty: 0.4 }, { duration: 30, speed: 1.0, difficulty: 0.6 },
             { duration: 35, speed: 1.25, difficulty: 0.8 }, { duration: 40, speed: 1.6, difficulty: 1.0 },
             { duration: 60, speed: 2.0, difficulty: 1.3 }, { duration: 150, speed: 2.7, difficulty: 1.8 },
         ],
-        layers: adventureLayers(theme),
+        layers: theme === 'poop' ? [
+            { image: 'flappySky', y: 0, height: 720, factor: 0.03 },
+            { image: 'flappyBg', y: 206, height: 150, factor: 0.07 },
+            { image: 'flappyMg', y: 412, height: 198, factor: 0.12 },
+            { image: 'flappyFg', y: 546, height: 174, factor: 1.00 },
+        ] : adventureLayers(theme),
     })));
     const isAdventureLevel = (level = currentLevel) => level?.modeGroup === 'adventure';
     // Eventyr opens with bronze on all nine base levels; inside, each level
@@ -287,10 +294,10 @@
     // The four test worlds live in the Eventyr tab too, after the five new levels.
     const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT]);
     const EVENT_CARD = Object.freeze({
-        11: { name: 'Bird Run', card: T('FUGLE & ROVFUGL'), order: 6 },
-        10: { name: 'Neon Encore', card: T('RIGGE & BOLDE'), order: 7 },
-        12: { name: 'Stormline', card: T('VIND & GENSTANDE'), order: 8 },
-        13: { name: 'Sky Relay', card: T('PORTE & KLOKKE'), order: 9 },
+        11: { name: 'Bird Run', card: T('FUGLE & ROVFUGL'), order: 7 },
+        10: { name: 'Neon Encore', card: T('RIGGE & BOLDE'), order: 8 },
+        12: { name: 'Stormline', card: T('VIND & GENSTANDE'), order: 9 },
+        13: { name: 'Sky Relay', card: T('PORTE & KLOKKE'), order: 10 },
     });
 
     function isEventLevel(level = currentLevel) {
@@ -433,6 +440,7 @@
         stormline: ['stormSky', 'stormSail', 'stormSock', 'stormUmbrella', 'stormBranch',
             'stormSign', 'stormCar'],
         skyRelay: ['happySky', 'happyMg', 'relayGate', 'relayGateFront', 'relayChime'],
+        poop: ['flappySky', 'flappyBg', 'flappyMg', 'flappyFg'],
         ...Object.fromEntries(Object.entries(ADVENTURE_ART).map(([theme, art]) => [theme,
             [`${theme}Sky`, `${theme}Bg1`, `${theme}Bg2`, `${theme}Mg`, `${theme}Fg`, ...Object.keys(art.obstacles)]])),
         tunnel: ['tunnelSky', 'tunnelBg1', 'tunnelBg2', 'tunnelMg', 'tunnelFg'],
@@ -531,6 +539,7 @@
         rescueEnd: document.getElementById('rescue-end-btn'),
         challengeModal: document.getElementById('challenge-modal'),
         nameModal: document.getElementById('name-modal'),
+        poopButton: document.getElementById('poop-btn'),
         firstNameInput: document.getElementById('first-name-input'),
         saveFirstName: document.getElementById('save-first-name'),
         challengeCopy: document.getElementById('challenge-copy'),
@@ -1434,6 +1443,13 @@
         state.lavaTop = LAVA_START;
         state.gripUntil = 0;
         state.light = 1;
+        state.poopMeter = 2;
+        state.poops = [];
+        state.splats = [];
+        state.poopCooldown = 0;
+        state.poopMessage = '';
+        state.poopMessageUntil = 0;
+        updatePoopButton();
         state.nextLanternAt = 5;
         state.nextCrystalAt = 7;
         state.gust = null;
@@ -1539,6 +1555,8 @@
                 ? T('LAVAEN STIGER · SAML KØLESTEN')
             : currentLevel.kind === 'nightcity'
                 ? T('LYSET SLUKKER LANGSOMT · SAML LANTERNER')
+            : currentLevel.kind === 'poop'
+                ? T('SPIS MAD · TRYK 💩 FOR AT RAMME MÅL NEDENUNDER')
             : currentLevel.kind === 'harbor'
                 ? T('CONTAINERNE FLYTTER SIG · PAS PÅ MÅGERNE')
             : currentLevel.kind === 'tunnel'
@@ -1921,6 +1939,12 @@
                     collectible.collected = true;
                     if (collectible.kind === 'powerup') activatePowerup(collectible.type);
                     else if (collectible.kind === 'feather') collectFeather(collectible);
+                    else if (collectible.kind === 'food') {
+                        state.poopMeter = Math.min(POOP_MAX, (state.poopMeter || 0) + collectible.value);
+                        playAudio('point');
+                        burst(collectible.x, collectible.y, '#ffe39a', 6);
+                        updatePoopButton();
+                    }
                     else if (collectible.kind === 'lantern') {
                         state.light = Math.min(1, (state.light ?? 0) + 0.38);
                         playAudio('point');
@@ -2025,9 +2049,262 @@
         return Math.max(base - 240, base - state.elapsed * 3);
     }
 
+    // ---------- Fugleklat ----------
+    // Eat food to fill the klat meter, drop klatter on targets below. Hits in a
+    // row build the streak exactly like stars; a klat that hits the street breaks it.
+    const POOP_GROUND = 660;
+    const POOP_MAX = 6;
+    const TARGET_TYPES = Object.freeze({
+        car: { width: 190, height: 92, value: 1, drive: [40, 120] },
+        cabrio: { width: 190, height: 80, value: 2, drive: [60, 140] },
+        gold: { width: 200, height: 90, value: 3, drive: [140, 220] },
+        statue: { width: 110, height: 190, value: 1, drive: [0, 0] },
+        icecream: { width: 90, height: 160, value: 2, drive: [0, 30] },
+        umbrella: { width: 120, height: 170, value: 2, drive: [0, 25] },
+    });
+    function spawnPoopEncounter(x, id) {
+        const roll = gameRandom();
+        const pick = roll < 0.05 + Math.min(0.06, state.difficulty * 0.02) ? 'gold'
+            : ['car', 'car', 'cabrio', 'statue', 'icecream', 'umbrella'][Math.floor(gameRandom() * 6)];
+        const spec = TARGET_TYPES[pick];
+        obstacles.push({ kind: 'target', type: pick, id, x, y: POOP_GROUND + 30 - spec.height, width: spec.width, height: spec.height,
+            value: spec.value, harmful: false, age: 0, drive: randomBetween(spec.drive[0], spec.drive[1]),
+            umbrellaPhase: gameRandom() * 3, hit: false });
+        if (state.elapsed > 4 && gameRandom() < 0.55) {
+            const lamp = gameRandom() < 0.5;
+            if (lamp) {
+                const top = randomBetween(360, 470);
+                obstacles.push({ kind: 'poop-hazard', type: 'lamp', id, x: x + 330, y: top, width: 40, height: VIEW.height - top + 40, harmful: true, age: 0 });
+            } else {
+                const h = randomBetween(150, 240);
+                obstacles.push({ kind: 'poop-hazard', type: 'laundry', id, x: x + 300, y: 0, width: 260, height: h, harmful: true, age: 0 });
+            }
+        }
+        const foods = 1 + Math.floor(gameRandom() * 2);
+        for (let index = 0; index < foods; index += 1) {
+            const fries = gameRandom() < 0.25;
+            collectibles.push({ x: x + 120 + index * 170, y: randomBetween(150, 380), width: 64, height: 64,
+                kind: 'food', food: fries ? 'fries' : gameRandom() < 0.5 ? 'berry' : 'crumb', value: fries ? 2 : 1, spin: 0, age: 0, collected: false });
+        }
+    }
+
+    function dropPoop() {
+        if (currentLevel.kind !== 'poop' || state.phase !== 'playing' || state.poopMeter < 1) return;
+        if (state.poopCooldown > state.elapsed) return;
+        state.poopMeter -= 1;
+        state.poopCooldown = state.elapsed + 0.22;
+        state.poops.push({ x: bird.x + BIRD.width * 0.42, y: bird.y + BIRD.height * 0.78, vy: Math.max(0, bird.velocity * 0.25) + 120 });
+        playAudio('pop');
+        BertMeta.haptic('star');
+        updatePoopButton();
+    }
+
+    function updatePoopButton() {
+        if (!dom.poopButton) return;
+        const show = currentLevel.kind === 'poop' && ['prewarm', 'playing'].includes(state.phase);
+        setVisible(dom.poopButton, show);
+        dom.poopButton.classList.toggle('empty', (state.poopMeter || 0) < 1);
+        const count = dom.poopButton.querySelector('strong');
+        if (count) count.textContent = String(state.poopMeter || 0);
+    }
+
+    function umbrellaOpen(target) {
+        return target.type === 'umbrella' && Math.sin(target.age * 2.2 + target.umbrellaPhase) > -0.1;
+    }
+
+    function updatePoop(delta, scroll) {
+        if (currentLevel.kind !== 'poop') return;
+        obstacles.forEach((obstacle) => {
+            if (obstacle.kind === 'target') obstacle.x -= obstacle.drive * delta;
+        });
+        for (let index = state.poops.length - 1; index >= 0; index -= 1) {
+            const poop = state.poops[index];
+            poop.vy += 1500 * delta;
+            poop.y += poop.vy * delta;
+            let landed = false;
+            for (const target of obstacles) {
+                if (target.kind !== 'target' || target.hit) continue;
+                const hitTop = target.type === 'icecream' ? target.y : target.y + 6;
+                const inside = poop.x > target.x + 8 && poop.x < target.x + target.width - 8 && poop.y > hitTop && poop.y < target.y + target.height * 0.6;
+                if (!inside) continue;
+                landed = true;
+                if (umbrellaOpen(target)) {
+                    state.splats.push({ x: poop.x, y: poop.y, age: 0, bounce: true });
+                    breakStreak();
+                    state.poopMessage = T('PARAPLYEN REDDEDE DEM');
+                    state.poopMessageUntil = state.elapsed + 1.2;
+                    break;
+                }
+                target.hit = true;
+                state.streak += 1;
+                state.bestStreak = Math.max(state.bestStreak, state.streak);
+                state.score += BertEventPowerups.score(state.streak * target.value, state.activePowerup);
+                state.starsCollected += target.value;
+                state.splats.push({ x: poop.x, y: poop.y, age: 0, target });
+                burst(poop.x, poop.y, '#ffffff', 10);
+                playAudio('point');
+                BertMeta.haptic('reward');
+                state.poopMessage = target.type === 'gold' ? T('GULDBIL! ×3') : `${T('PLASK!')} +${state.streak * target.value}`;
+                state.poopMessageUntil = state.elapsed + 1.1;
+                break;
+            }
+            if (!landed && poop.y >= POOP_GROUND + 20) {
+                landed = true;
+                state.splats.push({ x: poop.x, y: POOP_GROUND + 20, age: 0 });
+                breakStreak();
+            }
+            if (landed) state.poops.splice(index, 1);
+        }
+        state.splats.forEach((splat) => { splat.age += delta; splat.x -= scroll; if (splat.target) splat.x -= splat.target.drive * delta; });
+        state.splats = state.splats.filter((splat) => splat.age < 2.5 && splat.x > -60);
+        updatePoopButton();
+    }
+
+    function drawPoopWorld() {
+        if (currentLevel.kind !== 'poop' || !['prewarm', 'playing', 'dead'].includes(state.phase)) return;
+        ctx.save();
+        state.poops.forEach((poop) => {
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#5b6470';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.ellipse(poop.x, poop.y, 10, 13, 0, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+            ctx.fillStyle = '#cfd6de';
+            ctx.beginPath(); ctx.arc(poop.x - 3, poop.y - 4, 4, 0, Math.PI * 2); ctx.fill();
+        });
+        state.splats.forEach((splat) => {
+            ctx.globalAlpha = Math.max(0, 1 - splat.age / 2.5);
+            ctx.fillStyle = '#ffffff';
+            ctx.strokeStyle = '#7b8490';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            for (let i = 0; i < 10; i += 1) {
+                const a = (i / 10) * Math.PI * 2;
+                const r = i % 2 ? 11 : 20;
+                ctx.lineTo(splat.x + Math.cos(a) * r, splat.y + Math.sin(a) * r * 0.6);
+            }
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+        });
+        ctx.globalAlpha = 1;
+        // Klat meter under the pause button.
+        ctx.fillStyle = 'rgba(8, 16, 30, .78)';
+        ctx.fillRect(24, 112, 186, 26);
+        for (let i = 0; i < POOP_MAX; i += 1) {
+            ctx.fillStyle = i < state.poopMeter ? '#ffffff' : 'rgba(255,255,255,.18)';
+            ctx.beginPath(); ctx.ellipse(42 + i * 29, 125, 9, 10, 0, 0, Math.PI * 2); ctx.fill();
+        }
+        if (state.elapsed < (state.poopMessageUntil || 0) && state.poopMessage) {
+            ctx.font = '900 34px "Bert Rounded", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.lineWidth = 7;
+            ctx.strokeStyle = 'rgba(20, 30, 50, .9)';
+            ctx.fillStyle = '#fff6b0';
+            ctx.strokeText(state.poopMessage, VIEW.width / 2, 170);
+            ctx.fillText(state.poopMessage, VIEW.width / 2, 170);
+        }
+        ctx.restore();
+    }
+
+    function drawTarget(target) {
+        ctx.save();
+        const x = target.x;
+        const y = target.y;
+        const w = target.width;
+        const h = target.height;
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#1b2230';
+        if (['car', 'cabrio', 'gold'].includes(target.type)) {
+            const body = target.type === 'gold' ? '#f5c33b' : target.type === 'cabrio' ? '#6fb7e8' : '#d94a3a';
+            ctx.fillStyle = body;
+            ctx.beginPath();
+            ctx.moveTo(x + 6, y + h - 26);
+            ctx.lineTo(x + 6, y + h * 0.45);
+            ctx.lineTo(x + w * 0.22, y + h * 0.42);
+            if (target.type === 'cabrio') { ctx.lineTo(x + w * 0.38, y + h * 0.18); ctx.lineTo(x + w * 0.42, y + h * 0.42); }
+            else { ctx.lineTo(x + w * 0.32, y + 4); ctx.lineTo(x + w * 0.7, y + 4); ctx.lineTo(x + w * 0.82, y + h * 0.42); }
+            ctx.lineTo(x + w - 6, y + h * 0.48);
+            ctx.lineTo(x + w - 6, y + h - 26);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            if (target.type !== 'cabrio') {
+                ctx.fillStyle = '#bfe6ff';
+                ctx.fillRect(x + w * 0.36, y + 12, w * 0.3, h * 0.26);
+                ctx.strokeRect(x + w * 0.36, y + 12, w * 0.3, h * 0.26);
+            }
+            ctx.fillStyle = '#20242c';
+            [x + w * 0.24, x + w * 0.76].forEach((wx) => { ctx.beginPath(); ctx.arc(wx, y + h - 22, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+            if (target.type === 'gold') {
+                ctx.fillStyle = '#fff6c0';
+                for (let i = 0; i < 3; i += 1) {
+                    const a = state.worldTime * 3 + i * 2;
+                    ctx.beginPath(); ctx.arc(x + w / 2 + Math.cos(a) * w * 0.4, y + Math.sin(a) * 18, 4, 0, Math.PI * 2); ctx.fill();
+                }
+            }
+        } else if (target.type === 'statue') {
+            ctx.fillStyle = '#9aa3ad';
+            ctx.fillRect(x + 10, y + h - 60, w - 20, 60); ctx.strokeRect(x + 10, y + h - 60, w - 20, 60);
+            ctx.fillStyle = '#b07a3e';
+            ctx.beginPath(); ctx.arc(x + w / 2, y + 26, 22, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.fillRect(x + w / 2 - 22, y + 46, 44, h - 110); ctx.strokeRect(x + w / 2 - 22, y + 46, 44, h - 110);
+        } else {
+            // A person: tourist with ice cream, or someone with an umbrella.
+            ctx.fillStyle = target.type === 'icecream' ? '#f29c52' : '#4f6fb3';
+            ctx.fillRect(x + w / 2 - 22, y + 62, 44, h - 62); ctx.strokeRect(x + w / 2 - 22, y + 62, 44, h - 62);
+            ctx.fillStyle = '#f2c9a0';
+            ctx.beginPath(); ctx.arc(x + w / 2, y + 46, 18, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            if (target.type === 'icecream') {
+                ctx.fillStyle = '#e8b766';
+                ctx.beginPath(); ctx.moveTo(x + w / 2 + 26, y + 40); ctx.lineTo(x + w / 2 + 38, y + 2 + 40); ctx.lineTo(x + w / 2 + 14, y + 42); ctx.closePath();
+                ctx.fillStyle = '#ffb6d0';
+                ctx.beginPath(); ctx.arc(x + w / 2 + 26, y + 18, 14, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#e8b766';
+                ctx.beginPath(); ctx.moveTo(x + w / 2 + 14, y + 28); ctx.lineTo(x + w / 2 + 38, y + 28); ctx.lineTo(x + w / 2 + 26, y + 60); ctx.closePath(); ctx.fill(); ctx.stroke();
+            } else {
+                const open = umbrellaOpen(target);
+                ctx.fillStyle = '#e04f7a';
+                ctx.beginPath();
+                if (open) { ctx.arc(x + w / 2, y + 30, 58, Math.PI, 0); ctx.closePath(); }
+                else { ctx.moveTo(x + w / 2 - 8, y - 6); ctx.lineTo(x + w / 2 + 8, y - 6); ctx.lineTo(x + w / 2 + 3, y + 40); ctx.lineTo(x + w / 2 - 3, y + 40); ctx.closePath(); }
+                ctx.fill(); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(x + w / 2, y + 30); ctx.lineTo(x + w / 2, y + 80); ctx.stroke();
+            }
+        }
+        ctx.restore();
+    }
+
+    function drawPoopHazard(hazard) {
+        ctx.save();
+        ctx.lineWidth = 4;
+        ctx.strokeStyle = '#1b2230';
+        if (hazard.type === 'lamp') {
+            ctx.fillStyle = '#3d4655';
+            ctx.fillRect(hazard.x + 12, hazard.y + 30, 16, hazard.height); ctx.strokeRect(hazard.x + 12, hazard.y + 30, 16, hazard.height);
+            ctx.fillStyle = '#ffe28a';
+            ctx.beginPath(); ctx.arc(hazard.x + 20, hazard.y + 22, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        } else {
+            ctx.strokeStyle = '#2b2b2b';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(hazard.x - 30, 10); ctx.quadraticCurveTo(hazard.x + hazard.width / 2, 60, hazard.x + hazard.width + 30, 10); ctx.stroke();
+            const colors = ['#ffffff', '#5cc3ff', '#ff8fb1', '#ffe066'];
+            for (let i = 0; i < 4; i += 1) {
+                const cx = hazard.x + 20 + i * 60;
+                ctx.fillStyle = colors[i];
+                ctx.strokeStyle = '#1b2230';
+                ctx.lineWidth = 3;
+                ctx.fillRect(cx, 36, 44, hazard.height - 40);
+                ctx.strokeRect(cx, 36, 44, hazard.height - 40);
+            }
+        }
+        ctx.restore();
+    }
+
     function spawnObstacle() {
         const x = VIEW.width + 120;
         const id = state.obstacleId++;
+        if (currentLevel.kind === 'poop') {
+            spawnPoopEncounter(x, id);
+            return;
+        }
         if (BertAdventure.isTheme(currentLevel.kind)) {
             const encounter = BertAdventure.createEncounter(currentLevel.kind, id, x, gameRandom, state.difficulty);
             obstacles.push(...encounter.obstacles);
@@ -2940,6 +3217,7 @@
             updateVolcanoLava(delta);
             updateIceAndWind(delta);
             updateNightLight(delta);
+            updatePoop(delta, BertProgression.scrollPixelsPerSecond(state.speed) * delta);
             updateHud();
             return;
         }
@@ -3865,9 +4143,9 @@
         collectibles.filter((item) => item.kind === 'lantern').forEach(drawLantern);
         // Light meter under the pause button.
         ctx.fillStyle = 'rgba(8, 16, 30, .75)';
-        ctx.fillRect(24, 74, 168, 18);
+        ctx.fillRect(24, 112, 168, 18);
         ctx.fillStyle = light > 0.3 ? '#ffd56b' : '#ff8a4a';
-        ctx.fillRect(27, 77, 162 * light, 12);
+        ctx.fillRect(27, 115, 162 * light, 12);
         ctx.restore();
     }
 
@@ -3895,6 +4173,8 @@
     }
 
     function drawObstacle(obstacle) {
+        if (obstacle.kind === 'target') { drawTarget(obstacle); return; }
+        if (obstacle.kind === 'poop-hazard') { drawPoopHazard(obstacle); return; }
         if (obstacle.kind === 'adventure') {
             if (!(state.phase === 'dead' && obstacle.id === state.deathObstacleId && obstacle.type === state.deathObstacleType)) drawAdventureObstacle(obstacle);
             return;
@@ -4126,6 +4406,29 @@
         if (collectible.kind === 'lantern') {
             ctx.restore();
             drawLantern(collectible);
+            return;
+        }
+        if (collectible.kind === 'food') {
+            ctx.rotate(Math.sin(collectible.spin) * 0.25);
+            ctx.lineWidth = 3;
+            ctx.strokeStyle = '#2a1a10';
+            if (collectible.food === 'fries') {
+                ctx.fillStyle = '#ffd34a';
+                for (let i = -2; i <= 2; i += 1) { ctx.fillRect(i * 7 - 3, -26 + Math.abs(i) * 3, 6, 22); }
+                ctx.fillStyle = '#e8463a';
+                ctx.beginPath(); ctx.moveTo(-20, -6); ctx.lineTo(20, -6); ctx.lineTo(14, 24); ctx.lineTo(-14, 24); ctx.closePath(); ctx.fill(); ctx.stroke();
+            } else if (collectible.food === 'berry') {
+                ctx.fillStyle = '#d6203b';
+                [[-9, 4], [9, 4], [0, -9]].forEach(([bx, by]) => { ctx.beginPath(); ctx.arc(bx, by, 11, 0, Math.PI * 2); ctx.fill(); ctx.stroke(); });
+                ctx.fillStyle = '#3c9a3c';
+                ctx.beginPath(); ctx.ellipse(6, -20, 9, 4, -0.5, 0, Math.PI * 2); ctx.fill();
+            } else {
+                ctx.fillStyle = '#d9a45a';
+                ctx.beginPath(); ctx.ellipse(0, 0, 20, 14, 0.3, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.fillStyle = '#f3dca8';
+                ctx.beginPath(); ctx.ellipse(-3, -2, 10, 6, 0.3, 0, Math.PI * 2); ctx.fill();
+            }
+            ctx.restore();
             return;
         }
         if (collectible.kind === 'feather') {
@@ -4459,6 +4762,7 @@
         drawRelayNearEdge();
         drawRelayLabels();
         drawLavaFloor();
+        drawPoopWorld();
         drawWindGust();
         drawNightDarkness();
         drawParticles();
@@ -4829,6 +5133,12 @@
             });
             input.addEventListener('blur', () => document.body.classList.remove('keyboard-open'));
         });
+        dom.poopButton?.addEventListener('pointerdown', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            if (state.phase === 'prewarm') beginRun();
+            dropPoop();
+        });
         dom.firstNameInput.addEventListener('input', () => {
             dom.saveFirstName.disabled = !dom.firstNameInput.value.trim();
         });
@@ -4994,6 +5304,11 @@
                 return;
             }
             if (state.phase !== 'playing') return;
+            if (currentLevel.kind === 'poop' && (event.key === ' ' || event.key === 'x' || event.key === 'X')) {
+                event.preventDefault();
+                dropPoop();
+                return;
+            }
             if (usingFlapControl() && (event.key === ' ' || dir === 'up')) {
                 event.preventDefault();
                 flap();
