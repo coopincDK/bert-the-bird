@@ -9,8 +9,11 @@
 (() => {
     'use strict';
 
-    const VIEW = { width: 1280, height: 720 };
-    const BUILD_VERSION = 'worlds-relay-7';
+    const VIEW = { width: 1280, height: 720, margin: 0 };
+    const BASE_WIDTH = 1280;
+    const MAX_ASPECT = 21 / 9;
+    const BASE_BIRD_X = 185;
+    const BUILD_VERSION = 'worlds-relay-8';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -802,8 +805,18 @@
         const viewportHeight = Math.max(1, viewport?.height || window.innerHeight);
         const viewportLeft = viewport?.offsetLeft || 0;
         const viewportTop = viewport?.offsetTop || 0;
-        const stageWidth = Math.min(viewportWidth, viewportHeight * 16 / 9);
+        // Spilfladen er mindst 16:9 og må fylde ud til 21:9 på brede telefoner.
+        // Ekstra bredde lægges som margen i begge sider; Bert og spillogikken er uændret.
+        const stageWidth = Math.min(viewportWidth, viewportHeight * MAX_ASPECT);
         const stageHeight = Math.min(viewportHeight, viewportWidth * 9 / 16);
+        const logicalWidth = clamp(Math.round(VIEW.height * stageWidth / stageHeight), BASE_WIDTH, Math.round(VIEW.height * MAX_ASPECT));
+        if (logicalWidth !== VIEW.width) {
+            const previousBirdX = BIRD.x;
+            VIEW.width = logicalWidth;
+            VIEW.margin = logicalWidth - BASE_WIDTH;
+            BIRD.x = BASE_BIRD_X + VIEW.margin / 2;
+            bird.x += BIRD.x - previousBirdX;
+        }
         Object.assign(dom.shell.style, {
             position: 'fixed',
             left: `${viewportLeft + (viewportWidth - stageWidth) / 2}px`,
