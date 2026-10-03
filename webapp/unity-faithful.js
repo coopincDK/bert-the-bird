@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-14';
+    const BUILD_VERSION = 'worlds-relay-15';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -42,7 +42,10 @@
 
     const MODE = Object.freeze({ DEFAULT: 'default', FLAPPY: 'flappy' });
     const POWERUP = Object.freeze({ SHIELD: 'Shield', MAGNET: 'Magnet', FOCUS: 'Focus', GUARD: 'Guard',
-        HEAVY: 'Heavy', HYPER: 'Hyper', DOUBLE: 'Double', FLAP: 'Flap' });
+        HEAVY: 'Heavy', HYPER: 'Hyper', DOUBLE: 'Double', FLAP: 'Flap', REVERSE: 'Reverse' });
+    // Omvendt styring: op er ned, og i flappy-styring flyver Bert på hovedet.
+    const REVERSE_SECONDS = 7;
+    const isReversed = () => state.activePowerup === POWERUP.REVERSE;
     function focusSpeed(speed, mode = currentLevel.mode) {
         // Flappy begins below the Classic minimum: Focus must never speed it up.
         const minimum = mode === MODE.FLAPPY ? 0.28 : FOCUS_MIN_SPEED;
@@ -523,7 +526,7 @@
         highscore: 0,
         activePowerup: null,
         powerupEndsAt: 0,
-        powerupReadyAt: { Shield: 0, Magnet: 0, Focus: 0, Guard: 0, Heavy: 0, Hyper: 0, Double: 0, Flap: 0 },
+        powerupReadyAt: { Shield: 0, Magnet: 0, Focus: 0, Guard: 0, Heavy: 0, Hyper: 0, Double: 0, Flap: 0, Reverse: 0 },
         eventPickupIndex: 0,
         shieldCharges: 0,
         streakGuardCharges: 0,
@@ -1253,7 +1256,7 @@
         state.highscore = loadHighscore(currentLevel.id);
         state.activePowerup = null;
         state.powerupEndsAt = 0;
-        state.powerupReadyAt = { Shield: 0, Magnet: 0, Focus: 0, Guard: 0, Heavy: 0, Hyper: 0, Double: 0, Flap: 0 };
+        state.powerupReadyAt = { Shield: 0, Magnet: 0, Focus: 0, Guard: 0, Heavy: 0, Hyper: 0, Double: 0, Flap: 0, Reverse: 0 };
         state.eventPickupIndex = 0;
         state.shieldCharges = 0;
         state.streakGuardCharges = 0;
@@ -1474,13 +1477,13 @@
                     ? lerp(0.4, 1, focusProgress)
                     : 1;
         if (BertEventPowerups.isFlap(currentLevel.mode, state.activePowerup)) {
-            bird.velocity += FLAPPY_GRAVITY * delta;
-            bird.velocity = clamp(bird.velocity, -620, 700);
+            bird.velocity += (isReversed() ? -FLAPPY_GRAVITY : FLAPPY_GRAVITY) * delta;
+            bird.velocity = isReversed() ? clamp(bird.velocity, -700, 620) : clamp(bird.velocity, -620, 700);
         } else {
             bird.velocity = BertPhysics.stepDefault(
                 bird.velocity,
-                state.inputUp,
-                state.inputDown,
+                isReversed() ? state.inputDown : state.inputUp,
+                isReversed() ? state.inputUp : state.inputDown,
                 state.inputStrength,
                 delta,
                 state.activePowerup === POWERUP.HEAVY ? BertPhysics.HEAVY : BertPhysics.DEFAULT,
@@ -1911,7 +1914,7 @@
             : [POWERUP.SHIELD, POWERUP.MAGNET, POWERUP.FOCUS,
                 // Mixed blessings: Tung and Flappy-styring make it harder,
                 // Hyperfart is risky, Point x2 is a bonus. From 20 s in.
-                ...(state.elapsed >= 20 ? [POWERUP.HEAVY, POWERUP.HYPER, POWERUP.DOUBLE,
+                ...(state.elapsed >= 20 ? [POWERUP.HEAVY, POWERUP.HYPER, POWERUP.DOUBLE, POWERUP.REVERSE,
                     ...(currentLevel.mode === MODE.FLAPPY ? [] : [POWERUP.FLAP])] : [])]
                 .filter((type) => (state.powerupReadyAt[type] ?? 0) <= state.elapsed);
         const guardAvailable = !experimental && state.elapsed >= 30 && state.streakGuardCharges === 0 && state.powerupReadyAt.Guard <= state.elapsed;
@@ -2020,6 +2023,7 @@
         }
         state.activePowerup = type;
         const duration = type === POWERUP.FOCUS ? FOCUS_DURATION_SECONDS
+            : type === POWERUP.REVERSE ? REVERSE_SECONDS
             : BertEventPowerups.DURATION[type] || 10;
         state.powerupEndsAt = state.elapsed + duration + (type === POWERUP.FOCUS ? FOCUS_COUNTDOWN_SECONDS : 0);
         state.powerupReadyAt[type] = state.elapsed + 60;
@@ -2038,14 +2042,14 @@
             state.focusCountdown = FOCUS_COUNTDOWN_SECONDS;
             state.focusRemaining = duration;
             primeFocusAudio();
-        } else if (BertEventPowerups.isPrototype(type)) {
+        } else if (BertEventPowerups.isPrototype(type) || type === POWERUP.REVERSE) {
             playAudio('pop');
             if (type === POWERUP.FLAP) {
                 bird.velocity = Math.min(bird.velocity, -250);
             }
         }
         const powerupNames = { [POWERUP.SHIELD]: 'SKJOLD', [POWERUP.MAGNET]: 'MAGNET',
-            [POWERUP.HEAVY]: 'TUNG', [POWERUP.HYPER]: 'HYPERFART', [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: 'FLAPPY-STYRING' };
+            [POWERUP.HEAVY]: 'TUNG', [POWERUP.HYPER]: 'HYPERFART', [POWERUP.REVERSE]: 'OMVENDT STYRING', [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: 'FLAPPY-STYRING' };
         dom.powerup.textContent = type === POWERUP.FOCUS ? 'FOKUS' : `${powerupNames[type] || type.toUpperCase()} · ${duration}s`;
         dom.powerup.classList.add('active');
         burst(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2, type === POWERUP.SHIELD ? '#65d8ff' : '#ffd93b', 16);
@@ -2471,6 +2475,7 @@
                 [POWERUP.FOCUS]: 'FOKUS', [POWERUP.SHIELD]: 'SKJOLD', [POWERUP.MAGNET]: 'MAGNET',
                 [POWERUP.HEAVY]: 'TUNG · STIGER LANGSOMT', [POWERUP.HYPER]: 'HYPERFART',
                 [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: 'FLAPPY-STYRING · TAP',
+                [POWERUP.REVERSE]: 'OMVENDT STYRING',
             }[state.activePowerup] || state.activePowerup.toUpperCase();
             powerupText = state.activePowerup === POWERUP.FOCUS && state.focusPhase === 'countdown'
                 ? `FOKUS OM ${Math.max(1, Math.ceil(state.focusCountdown))}`
@@ -3293,6 +3298,35 @@
         }
     }
 
+    function drawReversePickup(collectible) {
+        const glowSize = 112;
+        ctx.globalAlpha = 0.4 + Math.sin(collectible.spin * 2) * 0.08;
+        ctx.drawImage(assets.whiteGlow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
+        ctx.globalAlpha = 1;
+        ctx.rotate(Math.sin(collectible.spin * 1.4) * 0.25);
+        ctx.fillStyle = '#7b3fd6';
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 5;
+        ctx.beginPath();
+        ctx.arc(0, 0, 31, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.stroke();
+        // Two opposed arrows: up becomes down.
+        ctx.fillStyle = '#ffffff';
+        [[-11, -1], [11, 1]].forEach(([x, dir]) => {
+            ctx.beginPath();
+            ctx.moveTo(x, -18 * dir);
+            ctx.lineTo(x + 10, -5 * dir);
+            ctx.lineTo(x + 4, -5 * dir);
+            ctx.lineTo(x + 4, 17 * dir);
+            ctx.lineTo(x - 4, 17 * dir);
+            ctx.lineTo(x - 4, -5 * dir);
+            ctx.lineTo(x - 10, -5 * dir);
+            ctx.closePath();
+            ctx.fill();
+        });
+    }
+
     function drawCollectible(collectible) {
         ctx.save();
         ctx.translate(collectible.x, collectible.y);
@@ -3308,6 +3342,11 @@
                 [POWERUP.HEAVY]: 'eventMetal', [POWERUP.HYPER]: 'eventHyper',
                 [POWERUP.DOUBLE]: 'eventDouble', [POWERUP.FLAP]: 'eventFlap',
             }[collectible.type];
+            if (collectible.type === POWERUP.REVERSE) {
+                drawReversePickup(collectible);
+                ctx.restore();
+                return;
+            }
             const body = prototypeArt ? assets[prototypeArt] : collectible.type === POWERUP.GUARD
                 ? assets.shieldCharge
                 : collectible.type === POWERUP.SHIELD
@@ -3435,7 +3474,14 @@
         const hero = BertMeta.currentHero();
         ctx.save();
         ctx.translate(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2);
-        ctx.rotate((bird.rotation * Math.PI) / 180);
+        // Reversed controls show Bert on his head, so the twist is readable at a glance.
+        const upsideDown = isReversed() && !dead;
+        if (upsideDown) {
+            ctx.scale(1, -1);
+            ctx.rotate((-bird.rotation * Math.PI) / 180);
+        } else {
+            ctx.rotate((bird.rotation * Math.PI) / 180);
+        }
         if (state.elapsed < state.invulnerableUntil && Math.floor(state.worldTime * 12) % 2 === 0) ctx.globalAlpha = 0.45;
         drawHeroAnimation(hero, bird.animationTime, dead, -BIRD.width / 2, -BIRD.height / 2, BIRD.width, BIRD.height);
         ctx.restore();
@@ -3710,8 +3756,8 @@
     }
 
     function flap() {
-        bird.velocity = -560;
-        bird.rotation = -22;
+        bird.velocity = isReversed() ? 560 : -560;
+        bird.rotation = isReversed() ? 22 : -22;
     }
 
     function usingFlapControl() {
