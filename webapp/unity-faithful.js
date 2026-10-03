@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-28';
+    const BUILD_VERSION = 'worlds-relay-29';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -787,7 +787,7 @@
 
     async function loadAssets() {
         const focusSoundLoading = window.BertFocusAudio.create('assets/unity/audio/chopin.mp3');
-        const pointSoundLoading = window.BertStarAudio.create('assets/sounds/Sounds/Sfx/COIN 1.mp3');
+        const pointSoundLoading = window.BertStarAudio.create('assets/sfx/coin.mp3');
         await ensureAssetKeys(BASE_ASSET_KEYS);
         warmStarGlow();
         const generatedFrames = (folder) => Promise.all(['up', 'mid', 'glide', 'dead'].map((pose) => image(`assets/${folder}/${pose}.webp`)));
@@ -835,8 +835,8 @@
         });
 
         audio.point = await pointSoundLoading;
-        audio.explosion = sound('assets/sounds/Sounds/Sfx/Explotion.mp3');
-        audio.pop = sound('assets/sounds/Sounds/GUI/Pop.mp3');
+        audio.explosion = sound('assets/sfx/explosion.mp3');
+        audio.pop = sound('assets/sfx/pop.mp3');
         audio.music = sound('assets/unity/audio/level-1.mp3', 'none');
         audio.music.loop = true;
         audio.music.volume = 0.32;
@@ -852,14 +852,21 @@
         audio.focus = await focusSoundLoading;
         audio.focus.loop = true;
         audio.focus.volume = 0;
-        audio.magnetUp = sound('assets/unity/audio/magnet-up.mp3');
-        audio.magnetRunning = sound('assets/unity/audio/magnet-running.mp3');
+        audio.magnetUp = sound('assets/sfx/magnet-up.mp3');
+        audio.magnetRunning = sound('assets/sfx/magnet-running.mp3');
         audio.magnetRunning.loop = true;
         audio.magnetRunning.volume = 0.34;
-        audio.magnetDown = sound('assets/unity/audio/magnet-down.mp3');
-        audio.shieldOn = sound('assets/unity/audio/shield-on.mp3');
-        audio.shieldBreak = sound('assets/unity/audio/shield-break.mp3');
-        audio.shieldOff = sound('assets/unity/audio/shield-off.mp3');
+        audio.magnetDown = sound('assets/sfx/magnet-down.mp3');
+        audio.shieldOn = sound('assets/sfx/shield-on.mp3');
+        audio.shieldBreak = sound('assets/sfx/shield-break.mp3');
+        audio.shieldOff = sound('assets/sfx/shield-off.mp3');
+        // Original sound effects made for this game (tools/make_sfx.py).
+        audio.splat = sound('assets/sfx/splat.mp3');
+        audio.drop = sound('assets/sfx/drop.mp3');
+        audio.lava = sound('assets/sfx/lava.mp3');
+        audio.whoosh = sound('assets/sfx/whoosh.mp3');
+        audio.wind = sound('assets/sfx/wind.mp3');
+        audio.crack = sound('assets/sfx/crack.mp3');
     }
 
     function primeFocusAudio() {
@@ -1880,11 +1887,19 @@
             } else if (BertStormline.isHazard(obstacle)) {
                 BertStormline.advance(obstacle, delta, scroll, BertStormline.windCue(state.worldTime));
             } else if (obstacle.kind === 'adventure') {
+                const before = { phase: obstacle.phase, harmful: obstacle.harmful };
                 BertAdventure.advance(obstacle, delta, {
                     scroll, speed: scroll / Math.max(delta, 1e-6),
                     birdX: bird.x + BIRD.width / 2, birdY: bird.y + BIRD.height / 2, time: state.worldTime,
                     lavaTop: currentLevel.kind === 'volcano' ? state.lavaTop : undefined,
                 });
+                // Sound cues follow the hazards' own state changes.
+                if (interactive && obstacle.x < VIEW.width + 60) {
+                    if (obstacle.behaviour === 'column' && obstacle.harmful && !before.harmful) playAudio(obstacle.palette === 'smoke' ? 'whoosh' : 'lava');
+                    if ((obstacle.behaviour === 'meteor' || obstacle.behaviour === 'bomb') && obstacle.phase === 'fly' && before.phase !== 'fly') playAudio('whoosh');
+                    if (obstacle.behaviour === 'drop' && obstacle.phase === 'warn' && before.phase !== 'warn') playAudio('crack');
+                    if (obstacle.behaviour === 'stack' && obstacle.phase === 'move' && before.phase !== 'move') playAudio('pop');
+                }
             } else if (obstacle.kind === 'edm-crowd-ball') {
                 BertEDM.advanceCrowdBall(obstacle, delta, scroll, bird.x + BIRD.width,
                     VIEW.width, gameRandom,
@@ -2117,7 +2132,7 @@
         state.poopMeter -= 1;
         state.poopCooldown = state.elapsed + 0.22;
         state.poops.push({ x: bird.x + BIRD.width * 0.42, y: bird.y + BIRD.height * 0.78, vy: Math.max(0, bird.velocity * 0.25) + 120 });
-        playAudio('pop');
+        playAudio('drop');
         BertMeta.haptic('star');
         updatePoopButton();
     }
@@ -2165,6 +2180,7 @@
                 state.starsCollected += target.value;
                 state.splats.push({ x: poop.x, y: poop.y, age: 0, target });
                 burst(poop.x, poop.y, '#ffffff', 10);
+                playAudio('splat');
                 playAudio('point');
                 BertMeta.haptic('reward');
                 state.poopMessage = target.type === 'gold' ? T('GULDBIL! ×3') : `${T('PLASK!')} +${state.streak * target.value}`;
@@ -2174,6 +2190,7 @@
             if (!landed && poop.y >= POOP_GROUND + 20) {
                 landed = true;
                 state.splats.push({ x: poop.x, y: POOP_GROUND + 20, age: 0 });
+                playAudio('splat');
                 breakStreak();
             }
             if (landed) state.poops.splice(index, 1);
@@ -4138,7 +4155,7 @@
             return;
         }
         gust.timer += delta;
-        if (gust.phase === 'warn' && gust.timer >= 1.2) { gust.phase = 'blow'; gust.timer = 0; }
+        if (gust.phase === 'warn' && gust.timer >= 1.2) { gust.phase = 'blow'; gust.timer = 0; playAudio('wind'); }
         else if (gust.phase === 'blow' && gust.timer >= gust.length) {
             state.gust = null;
             state.nextGustAt = state.elapsed + clamp(7.5 - state.difficulty * 1.2, 3.5, 7.5) + gameRandom() * 2.5;
