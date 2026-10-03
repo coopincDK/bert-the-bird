@@ -21,13 +21,20 @@ Alle lydeffekter er syntetiseret af `tools/make_sfx.py` (ingen samples, ingen tr
 
 De gamle lydeffekter med ukendt kilde (fra Unity 2014 og en lydpakke) er slettet.
 
-## Musik – skal skiftes til Artlist AI-musik
+## Musik – egen AI-musik (Suno Pro)
+
+Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (årsabonnement) og downloadet fra kontoen, så retten til kommerciel brug gælder (Suno Terms of Service: Pro/Premier får rettighederne overdraget; siden 3. sep. 2026 gælder det downloadede numre).
+
+| Fil | Nummer på Suno | Lavet | Bruges til |
+| --- | --- | --- | --- |
+| `assets/music/menu.mp3` | "Menu", https://suno.com/song/77fb60ae-602b-49e7-85d5-ace3e7756d7f | 3. okt. 2026 | Hovedmenu |
+
+## Musik – mangler stadig at blive skiftet
 
 Artlists katalog (stockmusik og -lydeffekter) må **ikke** bruges i spillet med Max Pro-licensen (Artlist support, 3. okt. 2026: kræver en særlig Business-licens). Musik, SmartPack selv genererer med Artlists AI-værktøj, er dækket af Artlists Terms of Use afsnit 14.9 (rettighederne overdrages, kommerciel brug ikke begrænset).
 
 | Nuværende fil | Kilde | Status |
 | --- | --- | --- |
-| `assets/unity/audio/menu.mp3` | Unity 2014, ukendt ophav | Skiftes til AI-musik |
 | `assets/unity/audio/level-1.mp3` | Unity 2014, ukendt ophav | Skiftes til AI-musik |
 | `assets/unity/audio/tunnel.mp3` | Unity 2014, ukendt ophav | Skiftes til AI-musik |
 | `assets/edm/neon-encore.mp3` | Manus-perioden, ukendt kilde | Skiftes til AI-musik |
