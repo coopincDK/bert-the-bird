@@ -86,14 +86,26 @@
                 y: obstacle.y + (obstacle.top ? 1 - normalizedY : normalizedY) * obstacle.height,
             };
         });
-        return points.slice(0, -1).map((point, index) => ({
+        // Outer edge from Unity, plus an inner edge so the whole painted band is
+        // solid (the band is ~19 % of the arch height thick).
+        const band = 0.19;
+        const centerX = obstacle.x + obstacle.width / 2;
+        const baseY = obstacle.top ? obstacle.y : obstacle.y + obstacle.height;
+        const kx = 1 - (2 * band * obstacle.height) / Math.max(1, obstacle.width);
+        const inner = points.map((point) => ({
+            x: centerX + (point.x - centerX) * kx,
+            y: baseY + (point.y - baseY) * (1 - band),
+        }));
+        const thickness = Math.max(3, obstacle.height * 0.03);
+        const toSegments = (list) => list.slice(0, -1).map((point, index) => ({
             type: 'segment',
             x1: point.x,
             y1: point.y,
-            x2: points[index + 1].x,
-            y2: points[index + 1].y,
-            thickness: 3,
+            x2: list[index + 1].x,
+            y2: list[index + 1].y,
+            thickness,
         }));
+        return [...toSegments(points), ...toSegments(inner)];
     }
 
     function obstacleShapes(obstacle) {

@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-43';
+    const BUILD_VERSION = 'worlds-relay-44';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2089,7 +2089,9 @@
                     && item.x > rewardClearX);
         }
         const spawnX = VIEW.width + 120;
-        const rightmostGroupX = obstacles.reduce((rightmost, obstacle) => Math.max(rightmost, obstacle.x), -Infinity);
+        // A wide rainbow counts with most of its width, so the next obstacle never lands inside it.
+        const rightmostGroupX = obstacles.reduce((rightmost, obstacle) => Math.max(rightmost,
+            obstacle.x + (obstacle.kind === 'happy-rainbow' ? obstacle.width - 220 : 0)), -Infinity);
         if (!Number.isFinite(rightmostGroupX)) return true;
         return spawnX - rightmostGroupX >= state.spawnSpacing;
     }
@@ -2551,12 +2553,14 @@
                 collectibles.push(makeCollectible(x + width / 2, baseGapTop + pipeGap * (risk ? 0.25 : 0.5), risk));
                 return;
             }
+            // Unity size: the rainbow sprite is 9.19 × 4.33 world units (≈660 × 312 px),
+            // a big arch rising from the clouds or hanging from the sky.
             const top = gameRandom() > 0.5;
-            const width = randomBetween(190, 285);
+            const width = randomBetween(540, 720);
             const height = width * (433 / 919);
-            const y = top ? randomBetween(28, 155) : randomBetween(475, 590);
+            const y = top ? randomBetween(-height * 0.32, -height * 0.08) : randomBetween(690 - height, 690 - height * 0.78);
             obstacles.push({ x, y, width, height, kind: 'happy-rainbow', harmful: true, top, age: 0, bob: 0, id });
-            collectibles.push(makeCollectible(x + width / 2, top ? y + 155 : y - 60));
+            collectibles.push(makeCollectible(x + width / 2, top ? y + height + 70 : y - 70));
         }
     }
 
