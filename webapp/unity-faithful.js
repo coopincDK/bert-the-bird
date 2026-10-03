@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-34';
+    const BUILD_VERSION = 'worlds-relay-35';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -786,7 +786,7 @@
     }
 
     async function loadAssets() {
-        const focusSoundLoading = window.BertFocusAudio.create('assets/unity/audio/chopin.mp3');
+        const focusSoundLoading = window.BertFocusAudio.create('assets/music/focus.mp3');
         const pointSoundLoading = window.BertStarAudio.create('assets/sfx/coin.mp3');
         await ensureAssetKeys(BASE_ASSET_KEYS);
         warmStarGlow();
