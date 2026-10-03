@@ -28,7 +28,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | Fil | Nummer på Suno | Lavet | Bruges til |
 | --- | --- | --- | --- |
 | `assets/music/menu.mp3` | "Menu", https://suno.com/song/77fb60ae-602b-49e7-85d5-ace3e7756d7f | 3. okt. 2026 | Hovedmenu |
-| `assets/music/classic.mp3` | "Classic" (uploadet fil) | 3. okt. 2026 | Desert, Jungle, Happy Sky og banerne uden eget nummer endnu |
+| `assets/music/classic.mp3` | "Classic", https://suno.com/song/3598a404-9757-409a-92a0-9e6e0cf7b9b5 | 3. okt. 2026 | Desert, Jungle, Happy Sky og banerne uden eget nummer endnu |
 | `assets/music/flappy.mp3` | "Flappy", https://suno.com/song/2a8224e2-1694-4f93-9e59-f34dea80de59 | 3. okt. 2026 | De tre Flappy-baner |
 | `assets/music/tunnel.mp3` | "Tunnel", https://suno.com/song/c76881a1-d238-40dc-bcb2-f7f3b8012425 | 3. okt. 2026 | De tre Tunnel-baner |
 | `assets/music/edm.mp3` | "EDM", https://suno.com/song/5711d0a3-f25b-4e60-9eac-2ea4c1da7dbf | 3. okt. 2026 | Neon Encore |
