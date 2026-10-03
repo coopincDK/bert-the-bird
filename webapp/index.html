@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bert The Bird">
     <title>Bert The Bird – flyvespil og præcisionsverdener</title>
-    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-8">
+    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-9">
     <link rel="apple-touch-icon" href="icons/bert-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/bert-192.png">
-    <link rel="stylesheet" href="style.css?v=worlds-relay-8">
+    <link rel="stylesheet" href="style.css?v=worlds-relay-9">
 </head>
 <body>
     <main id="game-shell" aria-label="Bert The Bird">
@@ -34,11 +34,11 @@
             </button>
             <div class="hud-strip">
                 <div class="hud-stat"><span>Score</span><strong id="score">0</strong></div>
-                <div class="hud-stat hud-streak"><span>Streak</span><strong id="streak">x0</strong><span id="streak-guard" class="streak-guard hidden" aria-label="Streak Guard klar: redder én mistet stjerne"><img src="assets/unity/powerups/shield-charge.png" alt="">×1</span></div>
+                <div class="hud-stat hud-streak"><span>Streak</span><strong id="streak">x0</strong><span id="streak-guard" class="streak-guard hidden" aria-label="Streak Guard klar: redder én mistet stjerne"><img src="assets/unity/powerups/shield-charge.webp" alt="">×1</span></div>
                 <div class="hud-stat"><span>Tid</span><strong id="time">0:00</strong></div>
             </div>
             <div id="hud-level" class="hud-level">LEVEL 1 · DESERT</div>
-            <div id="hud-lives" class="hud-lives hidden" aria-label="Redningsliv tilbage"><img src="assets/unity/particles/feather.png" alt="">×<strong>0</strong></div>
+            <div id="hud-lives" class="hud-lives hidden" aria-label="Redningsliv tilbage"><img src="assets/unity/particles/feather.webp" alt="">×<strong>0</strong></div>
             <div id="tap-hint" class="tap-hint">TRYK FOR AT STARTE</div>
             <div id="powerup" class="powerup" aria-live="polite"></div>
             <div id="touch-guide" class="touch-guide" aria-hidden="true">
@@ -49,19 +49,19 @@
 
         <section id="main-menu" class="main-menu" aria-labelledby="main-title">
             <h1 id="main-title" class="sr-only">Bert The Bird</h1>
-            <img class="game-title" src="assets/unity/ui/game-title.png" alt="Bert The Bird">
-            <img id="menu-bird" class="menu-bird" data-hero="bert" src="assets/unity/ui/menu-bird.png" alt="Bert flyver">
-            <button id="settings-btn" class="round-menu-button" type="button" aria-label="Åbn indstillinger"><img src="assets/unity/ui/menu-settings.png" alt="Settings"></button>
-            <button id="leaderboard-btn" class="leaderboard-button" type="button" aria-label="Åbn highscore"><img src="assets/unity/ui/menu-leaderboards.png" alt="Highscore"></button>
-            <button id="missions-btn" class="missions-button" type="button" aria-label="Åbn dagens missioner"><img src="assets/unity/ui/chest.png" alt="Missioner"><span>MISSIONER</span></button>
+            <img class="game-title" src="assets/unity/ui/game-title.webp" alt="Bert The Bird">
+            <img id="menu-bird" class="menu-bird" data-hero="bert" src="assets/unity/ui/menu-bird.webp" alt="Bert flyver">
+            <button id="settings-btn" class="round-menu-button" type="button" aria-label="Åbn indstillinger"><img src="assets/unity/ui/menu-settings.webp" alt="Settings"></button>
+            <button id="leaderboard-btn" class="leaderboard-button" type="button" aria-label="Åbn highscore"><img src="assets/unity/ui/menu-leaderboards.webp" alt="Highscore"></button>
+            <button id="missions-btn" class="missions-button" type="button" aria-label="Åbn dagens missioner"><img src="assets/unity/ui/chest.webp" alt="Missioner"><span>MISSIONER</span></button>
 
             <div class="menu-actions">
                 <p class="edition-label">3 SPILFORMER · 9 BANER</p>
                 <button id="play-btn" class="unity-button play-button" type="button" aria-label="Vælg bane">
-                    <img src="assets/unity/ui/menu-play.png" alt="Play">
+                    <img src="assets/unity/ui/menu-play.webp" alt="Play">
                 </button>
                 <button id="quick-play-btn" class="unity-button quick-play-button" type="button" aria-label="Start Quick Flight">
-                    <img src="assets/unity/ui/menu-quick-play.png" alt="Quick Play">
+                    <img src="assets/unity/ui/menu-quick-play.webp" alt="Quick Play">
                 </button>
                 <button id="install-btn" class="install-button" type="button">
                     <span class="install-mark" aria-hidden="true">↓</span>
@@ -71,13 +71,13 @@
             </div>
 
             <aside class="menu-record" aria-label="Personlig highscore">
-                <img src="assets/unity/ui/crown.png" alt="" aria-hidden="true">
+                <img src="assets/unity/ui/crown.webp" alt="" aria-hidden="true">
                 <div>
                     <span>PERSONLIG REKORD</span>
                     <strong id="menu-highscore">0</strong>
                     <small id="menu-best-level">Ingen rekord endnu</small>
                 </div>
-                <div class="record-total"><img src="assets/unity/ui/menu-star.png" alt=""><strong id="total-stars">0</strong></div>
+                <div class="record-total"><img src="assets/unity/ui/menu-star.webp" alt=""><strong id="total-stars">0</strong></div>
             </aside>
 
             <button id="daily-btn" class="daily-card" type="button">
@@ -88,7 +88,7 @@
             </button>
 
             <button id="hero-selector" class="hero-selector" type="button" aria-haspopup="dialog" aria-controls="hero-modal">
-                <img id="selected-hero-image" src="assets/unity/bird/fly-04.png" alt="Bert">
+                <img id="selected-hero-image" src="assets/unity/bird/fly-04.webp" alt="Bert">
                 <span>VÆLG HELT</span>
                 <strong id="selected-hero-name">BERT</strong>
                 <small>ÅBN GARDEROBE · 12 HELTE</small>
@@ -103,30 +103,30 @@
                 </header>
                 <p class="hero-wardrobe-note">Alle helte har samme fart og collider. Vind dem i spillet, eller spar fjer sammen.</p>
                 <div id="hero-grid" class="hero-grid" role="listbox" aria-label="Tilgængelige helte">
-                    <button class="hero-option selected" data-hero="bert" type="button" role="option" aria-selected="true" aria-label="Vælg Bert"><img src="assets/unity/bird/fly-04.png" alt="Bert"><b>BERT</b><small>ORIGINAL</small></button>
-                    <button class="hero-option" data-hero="blue" type="button" role="option" aria-selected="false" aria-label="Vælg BlueBert"><img src="assets/unity/bird-blue/fly-04.png" alt="BlueBert"><b>BLUEBERT</b><small>ORIGINAL</small></button>
-                    <button class="hero-option" data-hero="block" type="button" role="option" aria-selected="false" aria-label="Vælg BrickBird"><img src="assets/klodsbert/glide.png" alt="BrickBird"><b>BRICKBIRD</b><small>TOYBOX</small></button>
-                    <button class="hero-option" data-hero="brain" type="button" role="option" aria-selected="false" aria-label="Vælg BrainBird"><img src="assets/brainbird/glide.png" alt="BrainBird"><b>BRAINBIRD</b><small>MEME</small></button>
-                    <button class="hero-option" data-hero="eagle" type="button" role="option" aria-selected="false" aria-label="Vælg SkyClaw"><img src="assets/skyclaw/glide.png" alt="SkyClaw"><b>SKYCLAW</b><small>WILD</small></button>
-                    <button class="hero-option" data-hero="mecha" type="button" role="option" aria-selected="false" aria-label="Vælg MechaBert"><img src="assets/mechabert/glide.png" alt="MechaBert"><b>MECHABERT</b><small>TECH</small></button>
-                    <button class="hero-option" data-hero="noir" type="button" role="option" aria-selected="false" aria-label="Vælg NoirWing"><img src="assets/noirwing/glide.png" alt="NoirWing"><b>NOIRWING</b><small>RUNWAY</small></button>
-                    <button class="hero-option" data-hero="vulture" type="button" role="option" aria-selected="false" aria-label="Vælg BoneBeak"><img src="assets/bonebeak/glide.png" alt="BoneBeak"><b>BONEBEAK</b><small>SCAVENGER</small></button>
-                    <button class="hero-option" data-hero="sugar" type="button" role="option" aria-selected="false" aria-label="Vælg SugarRush"><img src="assets/sugarrush/glide.png" alt="SugarRush"><b>SUGARRUSH</b><small>CANDY POP</small></button>
-                    <button class="hero-option" data-hero="moss" type="button" role="option" aria-selected="false" aria-label="Vælg MossHex"><img src="assets/mosshex/glide.png" alt="MossHex"><b>MOSSHEX</b><small>DARK MAGIC</small></button>
-                    <button class="hero-option" data-hero="ink" type="button" role="option" aria-selected="false" aria-label="Vælg InkBird"><img src="assets/inkbird/glide.png" alt="InkBird"><b>INKBIRD</b><small>RETRO INK</small></button>
-                    <button class="hero-option" data-hero="prism" type="button" role="option" aria-selected="false" aria-label="Vælg PrismWing"><img src="assets/prismwing/glide.png" alt="PrismWing"><b>PRISMWING</b><small>GLASS ART</small></button>
+                    <button class="hero-option selected" data-hero="bert" type="button" role="option" aria-selected="true" aria-label="Vælg Bert"><img src="assets/unity/bird/fly-04.webp" alt="Bert"><b>BERT</b><small>ORIGINAL</small></button>
+                    <button class="hero-option" data-hero="blue" type="button" role="option" aria-selected="false" aria-label="Vælg BlueBert"><img src="assets/unity/bird-blue/fly-04.webp" alt="BlueBert"><b>BLUEBERT</b><small>ORIGINAL</small></button>
+                    <button class="hero-option" data-hero="block" type="button" role="option" aria-selected="false" aria-label="Vælg BrickBird"><img src="assets/klodsbert/glide.webp" alt="BrickBird"><b>BRICKBIRD</b><small>TOYBOX</small></button>
+                    <button class="hero-option" data-hero="brain" type="button" role="option" aria-selected="false" aria-label="Vælg BrainBird"><img src="assets/brainbird/glide.webp" alt="BrainBird"><b>BRAINBIRD</b><small>MEME</small></button>
+                    <button class="hero-option" data-hero="eagle" type="button" role="option" aria-selected="false" aria-label="Vælg SkyClaw"><img src="assets/skyclaw/glide.webp" alt="SkyClaw"><b>SKYCLAW</b><small>WILD</small></button>
+                    <button class="hero-option" data-hero="mecha" type="button" role="option" aria-selected="false" aria-label="Vælg MechaBert"><img src="assets/mechabert/glide.webp" alt="MechaBert"><b>MECHABERT</b><small>TECH</small></button>
+                    <button class="hero-option" data-hero="noir" type="button" role="option" aria-selected="false" aria-label="Vælg NoirWing"><img src="assets/noirwing/glide.webp" alt="NoirWing"><b>NOIRWING</b><small>RUNWAY</small></button>
+                    <button class="hero-option" data-hero="vulture" type="button" role="option" aria-selected="false" aria-label="Vælg BoneBeak"><img src="assets/bonebeak/glide.webp" alt="BoneBeak"><b>BONEBEAK</b><small>SCAVENGER</small></button>
+                    <button class="hero-option" data-hero="sugar" type="button" role="option" aria-selected="false" aria-label="Vælg SugarRush"><img src="assets/sugarrush/glide.webp" alt="SugarRush"><b>SUGARRUSH</b><small>CANDY POP</small></button>
+                    <button class="hero-option" data-hero="moss" type="button" role="option" aria-selected="false" aria-label="Vælg MossHex"><img src="assets/mosshex/glide.webp" alt="MossHex"><b>MOSSHEX</b><small>DARK MAGIC</small></button>
+                    <button class="hero-option" data-hero="ink" type="button" role="option" aria-selected="false" aria-label="Vælg InkBird"><img src="assets/inkbird/glide.webp" alt="InkBird"><b>INKBIRD</b><small>RETRO INK</small></button>
+                    <button class="hero-option" data-hero="prism" type="button" role="option" aria-selected="false" aria-label="Vælg PrismWing"><img src="assets/prismwing/glide.webp" alt="PrismWing"><b>PRISMWING</b><small>GLASS ART</small></button>
                 </div>
                 <div class="hero-wardrobe-detail" id="hero-wardrobe-detail" aria-live="polite">
                     <div><strong id="hero-detail-name">BERT</strong><span id="hero-detail-goal">Starthelt · Klar til at flyve</span></div>
                     <div class="hero-shop-actions"><button id="hero-buy-btn" type="button" class="hero-buy hidden">KØB</button><button id="hero-cancel-buy" type="button" class="hero-cancel hidden">FORTRYD</button></div>
                 </div>
-                <div class="hero-wardrobe-footer"><span class="hero-wallet"><img src="assets/unity/particles/feather.png" alt=""> <b id="hero-feathers">0</b> FJER · PRIMÆRT VINDES I SPILLET</span><button id="confirm-hero" class="primary-menu-button" type="button">FÆRDIG</button></div>
+                <div class="hero-wardrobe-footer"><span class="hero-wallet"><img src="assets/unity/particles/feather.webp" alt=""> <b id="hero-feathers">0</b> FJER · PRIMÆRT VINDES I SPILLET</span><button id="confirm-hero" class="primary-menu-button" type="button">FÆRDIG</button></div>
             </div>
         </section>
 
         <section id="level-menu" class="level-menu hidden" aria-label="Vælg level">
             <header class="level-header">
-                <img src="assets/unity/ui/game-title.png" alt="Bert The Bird">
+                <img src="assets/unity/ui/game-title.webp" alt="Bert The Bird">
                 <div><p>HVORDAN VIL DU FLYVE?</p><h2>VÆLG SPILTYPE</h2></div>
             </header>
             <nav class="mode-tabs" role="tablist" aria-label="Vælg spiltype">
@@ -161,7 +161,7 @@
                     <b aria-hidden="true">SPIL →</b>
                 </button>
             </div>
-            <button id="back-to-main" class="text-button level-back-button" type="button"><img src="assets/unity/ui/level-main-menu.png" alt="Main menu"></button>
+            <button id="back-to-main" class="text-button level-back-button" type="button"><img src="assets/unity/ui/level-main-menu.webp" alt="Main menu"></button>
         </section>
 
         <section id="game-over" class="game-over hidden" aria-live="polite">
@@ -174,8 +174,8 @@
                     <strong id="record-streak" class="score-value score-row-streak">x0</strong>
                 </div>
                 <div class="score-col score-icons" aria-hidden="true">
-                    <img src="assets/unity/ui/menu-star.png" alt="">
-                    <img src="assets/unity/ui/result-clock.png" alt="">
+                    <img src="assets/unity/ui/menu-star.webp" alt="">
+                    <img src="assets/unity/ui/result-clock.webp" alt="">
                     <span class="score-streak-label">STREAK</span>
                 </div>
                 <div class="score-col score-run">
@@ -187,7 +187,7 @@
                 <span id="new-highscore" class="new-highscore hidden">NY REKORD!</span>
             </div>
             <div class="result-summary">
-                <div id="result-medal" class="result-medal medal-flight"><img src="assets/unity/ui/menu-star.png" alt=""><strong>FLYV IGEN</strong></div>
+                <div id="result-medal" class="result-medal medal-flight"><img src="assets/unity/ui/menu-star.webp" alt=""><strong>FLYV IGEN</strong></div>
                 <p id="result-progress" class="result-progress">20 point til bronze</p>
             </div>
             <div class="result-actions">
@@ -226,7 +226,7 @@
 
         <section id="leaderboard-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title">
             <div class="leaderboard-card">
-                <header><img src="assets/unity/ui/leaderboard-world.png" alt=""><div><p class="edition-label">GLOBAL HIGHSCORE</p><h2 id="leaderboard-title">PILOTER</h2></div><button id="close-leaderboard" type="button" aria-label="Luk">×</button></header>
+                <header><img src="assets/unity/ui/leaderboard-world.webp" alt=""><div><p class="edition-label">GLOBAL HIGHSCORE</p><h2 id="leaderboard-title">PILOTER</h2></div><button id="close-leaderboard" type="button" aria-label="Luk">×</button></header>
                 <div class="leaderboard-scope" role="group" aria-label="Vælg leaderboard">
                     <button type="button" data-board-scope="global" aria-pressed="true">GLOBALT</button>
                     <button type="button" data-board-scope="friends" aria-pressed="false">VENNER FRA DUELLER</button>
@@ -244,9 +244,9 @@
 
         <section id="missions-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="missions-title">
             <div class="missions-card">
-                <header><img src="assets/unity/ui/chest.png" alt=""><div><p class="edition-label">BERTS REDE</p><h2 id="missions-title">DAGENS MISSIONER</h2></div></header>
+                <header><img src="assets/unity/ui/chest.webp" alt=""><div><p class="edition-label">BERTS REDE</p><h2 id="missions-title">DAGENS MISSIONER</h2></div></header>
                 <div class="nest-economy">
-                    <div class="feather-wallet"><img src="assets/unity/particles/feather.png" alt=""><span>FJER</span><strong id="feather-balance">0</strong></div>
+                    <div class="feather-wallet"><img src="assets/unity/particles/feather.webp" alt=""><span>FJER</span><strong id="feather-balance">0</strong></div>
                     <div class="rescue-upgrade">
                         <div><small>PERMANENT REDE-FORDEL</small><strong id="rescue-level">REDNINGSLIV 0/3</strong></div>
                         <button id="rescue-upgrade-btn" type="button">LÅS OP · 20 FJER</button>
@@ -273,13 +273,13 @@
                         <span style="--slot:4">MAGNET</span>
                         <span style="--slot:5">FOKUS</span>
                     </div>
-                    <img class="rescue-wheel-bert" src="assets/unity/bird/fly-04.png" alt="">
+                    <img class="rescue-wheel-bert" src="assets/unity/bird/fly-04.webp" alt="">
                 </div>
                 <div class="rescue-wheel-copy">
                     <p class="edition-label">BERTS REDNINGSREDE</p>
                     <h2 id="rescue-wheel-title">ÉN CHANCE MERE?</h2>
                     <p id="rescue-wheel-copy">Brug 12 fjer på ét spin. Fem felter sender Bert tilbage i banen. Ét felt afslutter turen.</p>
-                    <div class="rescue-wheel-wallet"><img src="assets/unity/particles/feather.png" alt=""><span>DIN SALDO</span><strong id="rescue-wheel-balance">0</strong></div>
+                    <div class="rescue-wheel-wallet"><img src="assets/unity/particles/feather.webp" alt=""><span>DIN SALDO</span><strong id="rescue-wheel-balance">0</strong></div>
                     <strong id="rescue-wheel-result" class="rescue-wheel-result" aria-live="polite">SPIN FOR AT SE DIN REDNING</strong>
                     <div class="rescue-wheel-actions">
                         <button id="rescue-spin-btn" class="primary-menu-button" type="button">SPIN · 12 FJER</button>
@@ -301,7 +301,7 @@
         <section id="level-lock-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="level-lock-title" aria-describedby="level-lock-copy">
             <div class="qualification-card">
                 <div class="qualification-preview" aria-hidden="true">
-                    <img id="level-lock-preview" src="assets/unity/ui/previews/level-4.png" alt="">
+                    <img id="level-lock-preview" src="assets/unity/ui/previews/level-4.webp" alt="">
                     <span>LÅST BANE</span>
                 </div>
                 <div class="qualification-copy">
@@ -321,13 +321,13 @@
         </section>
 
         <section id="loading" class="loading" aria-live="polite">
-            <img src="assets/unity/ui/game-title.png" alt="Bert The Bird">
+            <img src="assets/unity/ui/game-title.webp" alt="Bert The Bird">
             <div class="loading-track"><i></i></div>
             <p>Indlæser originale Unity-assets …</p>
         </section>
 
         <section id="rotate-overlay" class="rotate-overlay" aria-live="polite">
-            <img src="assets/unity/ui/game-title.png" alt="Bert The Bird">
+            <img src="assets/unity/ui/game-title.webp" alt="Bert The Bird">
             <div class="phone-turn" aria-hidden="true"><i></i></div>
             <h2>DREJ TELEFONEN</h2>
             <p>Hele Bert The Bird er lavet til landscape.</p>
@@ -342,24 +342,24 @@
 
         <div id="app-status" class="app-status" role="status" aria-live="polite"></div>
     </main>
-    <script src="app-shell.js?v=worlds-relay-8"></script>
-    <script src="unity-collision.js?v=worlds-relay-8"></script>
-    <script src="bert-physics.js?v=worlds-relay-8"></script>
-    <script src="bert-progression.js?v=worlds-relay-8"></script>
-    <script src="bert-tunnel.js?v=worlds-relay-8"></script>
-    <script src="bert-edm.js?v=worlds-relay-8"></script>
-    <script src="bert-bird-run.js?v=worlds-relay-8"></script>
-    <script src="bert-stormline.js?v=worlds-relay-8"></script>
-    <script src="bert-world-mastery.js?v=worlds-relay-8"></script>
-    <script src="bert-sky-relay.js?v=worlds-relay-8"></script>
-    <script src="bert-event-powerups.js?v=worlds-relay-8"></script>
-    <script src="bert-collectible-motion.js?v=worlds-relay-8"></script>
-    <script src="bert-haptics.js?v=worlds-relay-8"></script>
-    <script src="bert-hero-store.js?v=worlds-relay-8"></script>
-    <script src="bert-meta.js?v=worlds-relay-8"></script>
-    <script src="bert-social.js?v=worlds-relay-8"></script>
-    <script src="bert-focus-audio.js?v=worlds-relay-8"></script>
-    <script src="bert-star-audio.js?v=worlds-relay-8"></script>
-    <script src="unity-faithful.js?v=worlds-relay-8"></script>
+    <script src="app-shell.js?v=worlds-relay-9"></script>
+    <script src="unity-collision.js?v=worlds-relay-9"></script>
+    <script src="bert-physics.js?v=worlds-relay-9"></script>
+    <script src="bert-progression.js?v=worlds-relay-9"></script>
+    <script src="bert-tunnel.js?v=worlds-relay-9"></script>
+    <script src="bert-edm.js?v=worlds-relay-9"></script>
+    <script src="bert-bird-run.js?v=worlds-relay-9"></script>
+    <script src="bert-stormline.js?v=worlds-relay-9"></script>
+    <script src="bert-world-mastery.js?v=worlds-relay-9"></script>
+    <script src="bert-sky-relay.js?v=worlds-relay-9"></script>
+    <script src="bert-event-powerups.js?v=worlds-relay-9"></script>
+    <script src="bert-collectible-motion.js?v=worlds-relay-9"></script>
+    <script src="bert-haptics.js?v=worlds-relay-9"></script>
+    <script src="bert-hero-store.js?v=worlds-relay-9"></script>
+    <script src="bert-meta.js?v=worlds-relay-9"></script>
+    <script src="bert-social.js?v=worlds-relay-9"></script>
+    <script src="bert-focus-audio.js?v=worlds-relay-9"></script>
+    <script src="bert-star-audio.js?v=worlds-relay-9"></script>
+    <script src="unity-faithful.js?v=worlds-relay-9"></script>
 </body>
 </html>

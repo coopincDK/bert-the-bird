@@ -19,27 +19,27 @@ def require_match(pattern: str, text: str, label: str) -> str:
     return match.group(1)
 
 
-required = set(re.findall(r"['\"](assets/[^'\"]+\.(?:png|jpg|jpeg|mp3|wav|ttf))['\"]", RUNTIME, re.I))
-required.update(f"assets/unity/bird/fly-{index:02d}.png" for index in range(14))
-required.update(f"assets/unity/bird-blue/fly-{index:02d}.png" for index in range(14))
-required.update(f"assets/klodsbert/{pose}.png" for pose in ("up", "mid", "glide", "dead"))
+required = set(re.findall(r"['\"](assets/[^'\"]+\.(?:webp|png|jpg|jpeg|mp3|wav|ttf))['\"]", RUNTIME, re.I))
+required.update(f"assets/unity/bird/fly-{index:02d}.webp" for index in range(14))
+required.update(f"assets/unity/bird-blue/fly-{index:02d}.webp" for index in range(14))
+required.update(f"assets/klodsbert/{pose}.webp" for pose in ("up", "mid", "glide", "dead"))
 for folder in ("brainbird", "skyclaw", "mechabert"):
-    required.update(f"assets/{folder}/{pose}.png" for pose in ("up", "mid", "glide", "dead"))
+    required.update(f"assets/{folder}/{pose}.webp" for pose in ("up", "mid", "glide", "dead"))
 for folder in ("noirwing", "bonebeak", "sugarrush", "mosshex", "inkbird", "prismwing"):
-    required.update(f"assets/{folder}/{pose}.png" for pose in ("up", "mid", "glide", "dead"))
-required.update(f"assets/unity/ui/previews/level-{level_id}.png" for level_id in (1, 2, 3, 4, 5, 6, 7, 8, 9))
+    required.update(f"assets/{folder}/{pose}.webp" for pose in ("up", "mid", "glide", "dead"))
+required.update(f"assets/unity/ui/previews/level-{level_id}.webp" for level_id in (1, 2, 3, 4, 5, 6, 7, 8, 9))
 required.update({
-    "assets/unity/props/flappy-pipe-blue.png",
-    "assets/unity/props/flappy-pipe-gold.png",
-    "assets/edm/concert-stage.jpg",
-    "assets/edm/mirror-ball.png",
-    "assets/edm/speaker-stack.png",
-    "assets/edm/light-truss.png",
-    "assets/edm/center-led.png",
-    "assets/edm/crowd-ball.png",
-    "assets/edm/crowd-foreground.png",
+    "assets/unity/props/flappy-pipe-blue.webp",
+    "assets/unity/props/flappy-pipe-gold.webp",
+    "assets/edm/concert-stage.webp",
+    "assets/edm/mirror-ball.webp",
+    "assets/edm/speaker-stack.webp",
+    "assets/edm/light-truss.webp",
+    "assets/edm/center-led.webp",
+    "assets/edm/crowd-ball.webp",
+    "assets/edm/crowd-foreground.webp",
     "assets/edm/neon-encore.mp3",
-    *(f"assets/obstacles/{name}.png" for name in (
+    *(f"assets/obstacles/{name}.webp" for name in (
         "desert-ruin", "desert-banded", "desert-etched", "flappy-copper", "flappy-pearl", "jungle-stone", "happy-coral"
     )),
 })
@@ -50,7 +50,7 @@ for prefix, count in (
     ("assets/unity/props/snake-jump-", 5),
     ("assets/unity/props/snake-catch-", 3),
 ):
-    required.update(f"{prefix}{index:02d}.png" for index in range(count))
+    required.update(f"{prefix}{index:02d}.webp" for index in range(count))
 
 missing = sorted(path for path in required if not (WEBAPP / path).is_file())
 if missing:
@@ -96,7 +96,7 @@ for script in ('bert-world-mastery.js', 'bert-sky-relay.js'):
         raise AssertionError(f'{script} must load before the game runtime')
     if f'./{script}?v={runtime_build}' not in SERVICE_WORKER:
         raise AssertionError(f'{script} is missing from the offline PWA cache')
-for name in ('flight-gate-play.png', 'flight-gate-foreground-play.png', 'wind-chime-target-play.png'):
+for name in ('flight-gate-play.webp', 'flight-gate-foreground-play.webp', 'wind-chime-target-play.webp'):
     if f"'./assets/sky-relay/{name}'" not in SERVICE_WORKER:
         raise AssertionError(f'Sky Relay sprite {name} is missing from the offline PWA cache')
 motion_script = 'bert-collectible-motion.js'
@@ -104,7 +104,7 @@ if not (WEBAPP / motion_script).is_file() or INDEX.index(motion_script) >= INDEX
     raise AssertionError('Powerup motion must load before the game runtime')
 if f'./{motion_script}?v={runtime_build}' not in SERVICE_WORKER:
     raise AssertionError('Powerup motion is missing from the offline PWA cache')
-for path in ('concert-stage.jpg', 'mirror-ball.png', 'speaker-stack.png', 'light-truss.png', 'neon-encore.mp3'):
+for path in ('concert-stage.webp', 'mirror-ball.webp', 'speaker-stack.webp', 'light-truss.webp', 'neon-encore.mp3'):
     if f"'./assets/edm/{path}'" not in SERVICE_WORKER:
         raise AssertionError(f'EDM asset {path} is missing from the offline PWA cache')
 

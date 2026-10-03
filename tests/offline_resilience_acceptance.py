@@ -11,7 +11,7 @@ from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT.parent / 'qa-offline-resilience'
-BUILD = 'worlds-relay-8'
+BUILD = 'worlds-relay-9'
 
 
 class GameHandler(SimpleHTTPRequestHandler):
@@ -62,14 +62,14 @@ async def browser_case(browser_type, base, width, height, server):
         await page.wait_for_function('window.BertApp?.offlineReady()', timeout=45000)
         assert await page.evaluate('navigator.serviceWorker.controller !== null')
         cache = await page.evaluate('''async () => {
-            const entries = await caches.open('bert-the-bird-worlds-relay-8');
+            const entries = await caches.open('bert-the-bird-worlds-relay-9');
             return {html: !!(await entries.match('./index.html')),
-                    game: !!(await entries.match('./unity-faithful.js?v=worlds-relay-8')),
-                    relay: !!(await entries.match('./bert-sky-relay.js?v=worlds-relay-8')),
-                    mastery: !!(await entries.match('./bert-world-mastery.js?v=worlds-relay-8')),
-                    gate: !!(await entries.match('./assets/sky-relay/flight-gate-play.png')),
-                    front: !!(await entries.match('./assets/sky-relay/flight-gate-foreground-play.png')),
-                    bell: !!(await entries.match('./assets/sky-relay/wind-chime-target-play.png'))};
+                    game: !!(await entries.match('./unity-faithful.js?v=worlds-relay-9')),
+                    relay: !!(await entries.match('./bert-sky-relay.js?v=worlds-relay-9')),
+                    mastery: !!(await entries.match('./bert-world-mastery.js?v=worlds-relay-9')),
+                    gate: !!(await entries.match('./assets/sky-relay/flight-gate-play.webp')),
+                    front: !!(await entries.match('./assets/sky-relay/flight-gate-foreground-play.webp')),
+                    bell: !!(await entries.match('./assets/sky-relay/wind-chime-target-play.webp'))};
         }''')
         assert cache == {'html': True, 'game': True, 'relay': True, 'mastery': True,
                          'gate': True, 'front': True, 'bell': True}, cache

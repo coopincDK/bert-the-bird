@@ -1510,7 +1510,7 @@ body {
     border: 2px solid #79dfe3;
     border-radius: 13px;
     background: linear-gradient(90deg, rgba(7, 22, 45, .74), rgba(13, 28, 50, .87)),
-        url('assets/edm/concert-stage.jpg') center 75% / cover;
+        url('assets/edm/concert-stage.webp') center 75% / cover;
     color: #fff;
     box-shadow: inset 0 1px rgba(255,255,255,.25), 0 4px 0 rgba(0,0,0,.3);
     text-align: left;
@@ -1536,21 +1536,21 @@ body {
 .bird-run-event-button {
     border-color: #c8f4ff;
     background: linear-gradient(90deg, rgba(12, 74, 103, .82), rgba(20, 92, 117, .56)),
-        url('assets/unity/levels/happy-sky/sky.png') center / cover;
+        url('assets/unity/levels/happy-sky/sky.webp') center / cover;
 }
 .bird-run-event-button .edm-event-kicker { color: #e0faff; }
 .bird-run-event-button:hover, .bird-run-event-button:focus-visible { border-color: #fff2b1; }
 .stormline-event-button {
     border-color: #87bbd5;
     background: linear-gradient(90deg, rgba(12, 40, 64, .82), rgba(14, 55, 80, .68)),
-        url('assets/stormline/storm-sky.jpg') center / cover;
+        url('assets/stormline/storm-sky.webp') center / cover;
 }
 .stormline-event-button .edm-event-kicker { color: #d6f5f7; }
 .stormline-event-button:hover, .stormline-event-button:focus-visible { border-color: #ffe1aa; }
 .sky-relay-event-button {
     border-color: #f5d98b;
     background: linear-gradient(90deg, rgba(25, 77, 111, .87), rgba(35, 100, 135, .71)),
-        url('assets/unity/levels/happy-sky/sky.png') center / cover;
+        url('assets/unity/levels/happy-sky/sky.webp') center / cover;
 }
 .sky-relay-event-button .edm-event-kicker { color: #ffefbd; }
 .sky-relay-event-button:hover, .sky-relay-event-button:focus-visible { border-color: #fff7d8; }

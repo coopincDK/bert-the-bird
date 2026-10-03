@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-8';
+    const BUILD_VERSION = 'worlds-relay-9';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -231,115 +231,115 @@
     }
 
     const ASSET_PATHS = {
-        desertSky: 'assets/unity/levels/desert/sky.jpg',
-        desertBg1: 'assets/unity/levels/desert/bg-1.png',
-        desertBg2: 'assets/unity/levels/desert/bg-2.png',
-        desertMg: 'assets/unity/levels/desert/mg.png',
-        desertFg: 'assets/unity/levels/desert/fg.png',
-        flappySky: 'assets/unity/levels/flappy/sky.png',
-        flappyBg: 'assets/unity/levels/flappy/bg.png',
-        flappyMg: 'assets/unity/levels/flappy/mg.png',
-        flappyFg: 'assets/unity/levels/flappy/fg.png',
-        jungleBg: 'assets/unity/levels/jungle/bg.png',
-        jungleMg: 'assets/unity/levels/jungle/mg.png',
-        jungleFg: 'assets/unity/levels/jungle/fg.png',
-        jungleTop: 'assets/unity/levels/jungle/top-foreground.png',
-        jungleGround: 'assets/unity/levels/jungle/ground.png',
-        jungleCanopyLeft: 'assets/unity/levels/jungle/canopy-left.png',
-        jungleCanopyRight: 'assets/unity/levels/jungle/canopy-right.png',
-        jungleStoneLeft: 'assets/unity/levels/jungle/stone-left.png',
-        jungleStoneRight: 'assets/unity/levels/jungle/stone-right.png',
-        happySky: 'assets/unity/levels/happy-sky/sky.png',
-        happyBg: 'assets/unity/levels/happy-sky/bg.png',
-        happyMg: 'assets/unity/levels/happy-sky/mg.png',
-        tunnelSky: 'assets/unity/levels/tunnel/sky.png',
-        tunnelBg1: 'assets/unity/levels/tunnel/bg-1.png',
-        tunnelBg2: 'assets/unity/levels/tunnel/bg-2.png',
-        tunnelMg: 'assets/unity/levels/tunnel/mg.png',
-        tunnelFg: 'assets/unity/levels/tunnel/fg.png',
-        desertTerrain: 'assets/unity/props/desert-terrain.png',
-        desertRuin: 'assets/obstacles/desert-ruin.png',
-        desertBanded: 'assets/obstacles/desert-banded.png',
-        desertEtched: 'assets/obstacles/desert-etched.png',
-        flappyPipe: 'assets/unity/props/flappy-pipe.png',
-        flappyPipeBlue: 'assets/unity/props/flappy-pipe-blue.png',
-        flappyPipeGold: 'assets/unity/props/flappy-pipe-gold.png',
-        flappyCopper: 'assets/obstacles/flappy-copper.png',
-        flappyPearl: 'assets/obstacles/flappy-pearl.png',
-        jungleStone: 'assets/obstacles/jungle-stone.png',
-        happyCoral: 'assets/obstacles/happy-coral.png',
-        edmStage: 'assets/edm/concert-stage.jpg',
-        edmMirror: 'assets/edm/mirror-ball.png',
-        edmSpeaker: 'assets/edm/speaker-stack.png',
-        edmTruss: 'assets/edm/light-truss.png',
-        edmCenterRig: 'assets/edm/center-led.png',
-        edmCrowdBall: 'assets/edm/crowd-ball.png',
-        edmCrowd: 'assets/edm/crowd-foreground.png',
-        birdRunBird: 'assets/bird-run/crosswind-bird-play.png',
-        birdRunSwift: 'assets/bird-run/amber-swift-play.png',
-        birdRunKite: 'assets/bird-run/violet-kite-play.png',
-        birdRunCloud: 'assets/bird-run/cloud-bank-play.png',
-        stormSky: 'assets/stormline/storm-sky.jpg',
-        stormSail: 'assets/stormline/wind-sail.png',
-        stormSock: 'assets/stormline/windsock.png',
-        stormUmbrella: 'assets/stormline/umbrella-play.png',
-        stormBranch: 'assets/stormline/branch-play.png',
-        stormSign: 'assets/stormline/sign-play.png',
-        stormCar: 'assets/stormline/car-play.png',
-        relayGate: 'assets/sky-relay/flight-gate-play.png',
-        relayGateFront: 'assets/sky-relay/flight-gate-foreground-play.png',
-        relayChime: 'assets/sky-relay/wind-chime-target-play.png',
-        eventMetal: 'assets/powerup-prototypes/metal.png',
-        eventHyper: 'assets/powerup-prototypes/hyper.png',
-        eventDouble: 'assets/powerup-prototypes/double.png',
-        eventFlap: 'assets/powerup-prototypes/flap.png',
-        rainbow: 'assets/unity/props/rainbow-normal.png',
-        star: 'assets/unity/collectibles/star.png',
-        blueGlow: 'assets/unity/powerups/blue-glow.png',
-        whiteGlow: 'assets/unity/powerups/white-glow.png',
-        yellowGlow: 'assets/unity/powerups/yellow-glow.png',
-        lightning: 'assets/unity/powerups/lightning.png',
-        powerupWing: 'assets/unity/powerups/wing.png',
-        shieldPickup: 'assets/unity/powerups/shield-pickup.png',
-        magnetPickup: 'assets/unity/powerups/magnet-pickup.png',
-        focusPickup: 'assets/unity/powerups/focus-pickup.png',
-        shieldCharge: 'assets/unity/powerups/shield-charge.png',
-        feather: 'assets/unity/particles/feather.png',
-        shieldSplinter: 'assets/unity/particles/shield-splinter.png',
-        shieldSplinterOrange: 'assets/unity/particles/shield-splinter-orange.png',
-        happyPipeBlue: 'assets/unity/props/happy-pipe/pipe-blue.png',
-        happyPipeBlueTop: 'assets/unity/props/happy-pipe/pipe-blue-top.png',
-        happyPipeGreen: 'assets/unity/props/happy-pipe/pipe-green.png',
-        happyPipeGreenTop: 'assets/unity/props/happy-pipe/pipe-green-top.png',
-        happyPipePurple: 'assets/unity/props/happy-pipe/pipe-purple.png',
-        happyPipePurpleTop: 'assets/unity/props/happy-pipe/pipe-purple-top.png',
-        happyPipeRed: 'assets/unity/props/happy-pipe/pipe-red.png',
-        happyPipeRedTop: 'assets/unity/props/happy-pipe/pipe-red-top.png',
-        happyPipeYellow: 'assets/unity/props/happy-pipe/pipe-yellow.png',
-        happyPipeYellowTop: 'assets/unity/props/happy-pipe/pipe-yellow-top.png',
-        happyEyeLeft: 'assets/unity/props/happy-pipe/eye-left.png',
-        happyEyeRight: 'assets/unity/props/happy-pipe/eye-right.png',
-        happyEyeLeftClosed: 'assets/unity/props/happy-pipe/eye-left-closed.png',
-        happyEyeRightClosed: 'assets/unity/props/happy-pipe/eye-right-closed.png',
-        happyMouth1: 'assets/unity/props/happy-pipe/mouth-1.png',
-        happyMouth2: 'assets/unity/props/happy-pipe/mouth-2.png',
-        happyMouth3: 'assets/unity/props/happy-pipe/mouth-3.png',
+        desertSky: 'assets/unity/levels/desert/sky.webp',
+        desertBg1: 'assets/unity/levels/desert/bg-1.webp',
+        desertBg2: 'assets/unity/levels/desert/bg-2.webp',
+        desertMg: 'assets/unity/levels/desert/mg.webp',
+        desertFg: 'assets/unity/levels/desert/fg.webp',
+        flappySky: 'assets/unity/levels/flappy/sky.webp',
+        flappyBg: 'assets/unity/levels/flappy/bg.webp',
+        flappyMg: 'assets/unity/levels/flappy/mg.webp',
+        flappyFg: 'assets/unity/levels/flappy/fg.webp',
+        jungleBg: 'assets/unity/levels/jungle/bg.webp',
+        jungleMg: 'assets/unity/levels/jungle/mg.webp',
+        jungleFg: 'assets/unity/levels/jungle/fg.webp',
+        jungleTop: 'assets/unity/levels/jungle/top-foreground.webp',
+        jungleGround: 'assets/unity/levels/jungle/ground.webp',
+        jungleCanopyLeft: 'assets/unity/levels/jungle/canopy-left.webp',
+        jungleCanopyRight: 'assets/unity/levels/jungle/canopy-right.webp',
+        jungleStoneLeft: 'assets/unity/levels/jungle/stone-left.webp',
+        jungleStoneRight: 'assets/unity/levels/jungle/stone-right.webp',
+        happySky: 'assets/unity/levels/happy-sky/sky.webp',
+        happyBg: 'assets/unity/levels/happy-sky/bg.webp',
+        happyMg: 'assets/unity/levels/happy-sky/mg.webp',
+        tunnelSky: 'assets/unity/levels/tunnel/sky.webp',
+        tunnelBg1: 'assets/unity/levels/tunnel/bg-1.webp',
+        tunnelBg2: 'assets/unity/levels/tunnel/bg-2.webp',
+        tunnelMg: 'assets/unity/levels/tunnel/mg.webp',
+        tunnelFg: 'assets/unity/levels/tunnel/fg.webp',
+        desertTerrain: 'assets/unity/props/desert-terrain.webp',
+        desertRuin: 'assets/obstacles/desert-ruin.webp',
+        desertBanded: 'assets/obstacles/desert-banded.webp',
+        desertEtched: 'assets/obstacles/desert-etched.webp',
+        flappyPipe: 'assets/unity/props/flappy-pipe.webp',
+        flappyPipeBlue: 'assets/unity/props/flappy-pipe-blue.webp',
+        flappyPipeGold: 'assets/unity/props/flappy-pipe-gold.webp',
+        flappyCopper: 'assets/obstacles/flappy-copper.webp',
+        flappyPearl: 'assets/obstacles/flappy-pearl.webp',
+        jungleStone: 'assets/obstacles/jungle-stone.webp',
+        happyCoral: 'assets/obstacles/happy-coral.webp',
+        edmStage: 'assets/edm/concert-stage.webp',
+        edmMirror: 'assets/edm/mirror-ball.webp',
+        edmSpeaker: 'assets/edm/speaker-stack.webp',
+        edmTruss: 'assets/edm/light-truss.webp',
+        edmCenterRig: 'assets/edm/center-led.webp',
+        edmCrowdBall: 'assets/edm/crowd-ball.webp',
+        edmCrowd: 'assets/edm/crowd-foreground.webp',
+        birdRunBird: 'assets/bird-run/crosswind-bird-play.webp',
+        birdRunSwift: 'assets/bird-run/amber-swift-play.webp',
+        birdRunKite: 'assets/bird-run/violet-kite-play.webp',
+        birdRunCloud: 'assets/bird-run/cloud-bank-play.webp',
+        stormSky: 'assets/stormline/storm-sky.webp',
+        stormSail: 'assets/stormline/wind-sail.webp',
+        stormSock: 'assets/stormline/windsock.webp',
+        stormUmbrella: 'assets/stormline/umbrella-play.webp',
+        stormBranch: 'assets/stormline/branch-play.webp',
+        stormSign: 'assets/stormline/sign-play.webp',
+        stormCar: 'assets/stormline/car-play.webp',
+        relayGate: 'assets/sky-relay/flight-gate-play.webp',
+        relayGateFront: 'assets/sky-relay/flight-gate-foreground-play.webp',
+        relayChime: 'assets/sky-relay/wind-chime-target-play.webp',
+        eventMetal: 'assets/powerup-prototypes/metal.webp',
+        eventHyper: 'assets/powerup-prototypes/hyper.webp',
+        eventDouble: 'assets/powerup-prototypes/double.webp',
+        eventFlap: 'assets/powerup-prototypes/flap.webp',
+        rainbow: 'assets/unity/props/rainbow-normal.webp',
+        star: 'assets/unity/collectibles/star.webp',
+        blueGlow: 'assets/unity/powerups/blue-glow.webp',
+        whiteGlow: 'assets/unity/powerups/white-glow.webp',
+        yellowGlow: 'assets/unity/powerups/yellow-glow.webp',
+        lightning: 'assets/unity/powerups/lightning.webp',
+        powerupWing: 'assets/unity/powerups/wing.webp',
+        shieldPickup: 'assets/unity/powerups/shield-pickup.webp',
+        magnetPickup: 'assets/unity/powerups/magnet-pickup.webp',
+        focusPickup: 'assets/unity/powerups/focus-pickup.webp',
+        shieldCharge: 'assets/unity/powerups/shield-charge.webp',
+        feather: 'assets/unity/particles/feather.webp',
+        shieldSplinter: 'assets/unity/particles/shield-splinter.webp',
+        shieldSplinterOrange: 'assets/unity/particles/shield-splinter-orange.webp',
+        happyPipeBlue: 'assets/unity/props/happy-pipe/pipe-blue.webp',
+        happyPipeBlueTop: 'assets/unity/props/happy-pipe/pipe-blue-top.webp',
+        happyPipeGreen: 'assets/unity/props/happy-pipe/pipe-green.webp',
+        happyPipeGreenTop: 'assets/unity/props/happy-pipe/pipe-green-top.webp',
+        happyPipePurple: 'assets/unity/props/happy-pipe/pipe-purple.webp',
+        happyPipePurpleTop: 'assets/unity/props/happy-pipe/pipe-purple-top.webp',
+        happyPipeRed: 'assets/unity/props/happy-pipe/pipe-red.webp',
+        happyPipeRedTop: 'assets/unity/props/happy-pipe/pipe-red-top.webp',
+        happyPipeYellow: 'assets/unity/props/happy-pipe/pipe-yellow.webp',
+        happyPipeYellowTop: 'assets/unity/props/happy-pipe/pipe-yellow-top.webp',
+        happyEyeLeft: 'assets/unity/props/happy-pipe/eye-left.webp',
+        happyEyeRight: 'assets/unity/props/happy-pipe/eye-right.webp',
+        happyEyeLeftClosed: 'assets/unity/props/happy-pipe/eye-left-closed.webp',
+        happyEyeRightClosed: 'assets/unity/props/happy-pipe/eye-right-closed.webp',
+        happyMouth1: 'assets/unity/props/happy-pipe/mouth-1.webp',
+        happyMouth2: 'assets/unity/props/happy-pipe/mouth-2.webp',
+        happyMouth3: 'assets/unity/props/happy-pipe/mouth-3.webp',
     };
 
     for (let index = 0; index < 3; index += 1) {
-        ASSET_PATHS[`spider${index}`] = `assets/unity/props/spider-${String(index).padStart(2, '0')}.png`;
+        ASSET_PATHS[`spider${index}`] = `assets/unity/props/spider-${String(index).padStart(2, '0')}.webp`;
     }
     for (let index = 0; index < 18; index += 1) {
-        ASSET_PATHS[`spiderCatch${index}`] = `assets/unity/props/spider-catch-${String(index).padStart(2, '0')}.png`;
+        ASSET_PATHS[`spiderCatch${index}`] = `assets/unity/props/spider-catch-${String(index).padStart(2, '0')}.webp`;
     }
     for (let index = 0; index < 7; index += 1) {
-        ASSET_PATHS[`snake${index}`] = `assets/unity/props/snake-${String(index).padStart(2, '0')}.png`;
+        ASSET_PATHS[`snake${index}`] = `assets/unity/props/snake-${String(index).padStart(2, '0')}.webp`;
     }
     for (let index = 0; index < 5; index += 1) {
-        ASSET_PATHS[`snakeJump${index}`] = `assets/unity/props/snake-jump-${String(index).padStart(2, '0')}.png`;
+        ASSET_PATHS[`snakeJump${index}`] = `assets/unity/props/snake-jump-${String(index).padStart(2, '0')}.webp`;
     }
     for (let index = 0; index < 3; index += 1) {
-        ASSET_PATHS[`snakeCatch${index}`] = `assets/unity/props/snake-catch-${String(index).padStart(2, '0')}.png`;
+        ASSET_PATHS[`snakeCatch${index}`] = `assets/unity/props/snake-catch-${String(index).padStart(2, '0')}.webp`;
     }
 
     const BASE_ASSET_KEYS = [
@@ -473,18 +473,18 @@
     let edmSmokeStamp = null;
     const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [] };
     const menuHeroArt = Object.freeze({
-        bert: 'assets/unity/ui/menu-bird.png',
-        blue: 'assets/unity/bird-blue/fly-00.png',
-        block: 'assets/klodsbert/up.png',
-        brain: 'assets/brainbird/up.png',
-        eagle: 'assets/skyclaw/up.png',
-        mecha: 'assets/mechabert/up.png',
-        noir: 'assets/noirwing/up.png',
-        vulture: 'assets/bonebeak/up.png',
-        sugar: 'assets/sugarrush/up.png',
-        moss: 'assets/mosshex/up.png',
-        ink: 'assets/inkbird/up.png',
-        prism: 'assets/prismwing/up.png',
+        bert: 'assets/unity/ui/menu-bird.webp',
+        blue: 'assets/unity/bird-blue/fly-00.webp',
+        block: 'assets/klodsbert/up.webp',
+        brain: 'assets/brainbird/up.webp',
+        eagle: 'assets/skyclaw/up.webp',
+        mecha: 'assets/mechabert/up.webp',
+        noir: 'assets/noirwing/up.webp',
+        vulture: 'assets/bonebeak/up.webp',
+        sugar: 'assets/sugarrush/up.webp',
+        moss: 'assets/mosshex/up.webp',
+        ink: 'assets/inkbird/up.webp',
+        prism: 'assets/prismwing/up.webp',
     });
     const audio = Object.create(null);
     let currentLevel = UNITY_LEVELS[0];
@@ -591,9 +591,9 @@
         });
     }
 
-    function sound(url) {
+    function sound(url, preload = 'auto') {
         const loaded = new Audio(url);
-        loaded.preload = 'auto';
+        loaded.preload = preload;
         return loaded;
     }
 
@@ -661,13 +661,13 @@
 
     async function loadAssets() {
         const focusSoundLoading = window.BertFocusAudio.create('assets/unity/audio/chopin.mp3');
-        const pointSoundLoading = window.BertStarAudio.create('assets/sounds/Sounds/Sfx/COIN 1.wav');
+        const pointSoundLoading = window.BertStarAudio.create('assets/sounds/Sounds/Sfx/COIN 1.mp3');
         await ensureAssetKeys(BASE_ASSET_KEYS);
         warmStarGlow();
-        const generatedFrames = (folder) => Promise.all(['up', 'mid', 'glide', 'dead'].map((pose) => image(`assets/${folder}/${pose}.png`)));
+        const generatedFrames = (folder) => Promise.all(['up', 'mid', 'glide', 'dead'].map((pose) => image(`assets/${folder}/${pose}.webp`)));
         const [bert, blue, block, brain, eagle, mecha, noir, vulture, sugar, moss, ink, prism] = await Promise.all([
-            Promise.all(Array.from({ length: 14 }, (_, index) => image(`assets/unity/bird/fly-${String(index).padStart(2, '0')}.png`))),
-            Promise.all(Array.from({ length: 14 }, (_, index) => image(`assets/unity/bird-blue/fly-${String(index).padStart(2, '0')}.png`))),
+            Promise.all(Array.from({ length: 14 }, (_, index) => image(`assets/unity/bird/fly-${String(index).padStart(2, '0')}.webp`))),
+            Promise.all(Array.from({ length: 14 }, (_, index) => image(`assets/unity/bird-blue/fly-${String(index).padStart(2, '0')}.webp`))),
             generatedFrames('klodsbert'),
             generatedFrames('brainbird'),
             generatedFrames('skyclaw'),
@@ -696,15 +696,15 @@
         setGeneratedAnimation('prism', prism);
 
         audio.point = await pointSoundLoading;
-        audio.explosion = sound('assets/sounds/Sounds/Sfx/Explotion.wav');
-        audio.pop = sound('assets/sounds/Sounds/GUI/Pop.wav');
-        audio.music = sound('assets/unity/audio/level-1.mp3');
+        audio.explosion = sound('assets/sounds/Sounds/Sfx/Explotion.mp3');
+        audio.pop = sound('assets/sounds/Sounds/GUI/Pop.mp3');
+        audio.music = sound('assets/unity/audio/level-1.mp3', 'none');
         audio.music.loop = true;
         audio.music.volume = 0.32;
-        audio.tunnel = sound('assets/unity/audio/tunnel.mp3');
+        audio.tunnel = sound('assets/unity/audio/tunnel.mp3', 'none');
         audio.tunnel.loop = true;
         audio.tunnel.volume = 0.32;
-        audio.edm = sound('assets/edm/neon-encore.mp3');
+        audio.edm = sound('assets/edm/neon-encore.mp3', 'none');
         audio.edm.loop = true;
         audio.edm.volume = 0.32;
         audio.menu = sound('assets/unity/audio/menu.mp3');
@@ -713,14 +713,14 @@
         audio.focus = await focusSoundLoading;
         audio.focus.loop = true;
         audio.focus.volume = 0;
-        audio.magnetUp = sound('assets/unity/audio/magnet-up.wav');
-        audio.magnetRunning = sound('assets/unity/audio/magnet-running.wav');
+        audio.magnetUp = sound('assets/unity/audio/magnet-up.mp3');
+        audio.magnetRunning = sound('assets/unity/audio/magnet-running.mp3');
         audio.magnetRunning.loop = true;
         audio.magnetRunning.volume = 0.34;
-        audio.magnetDown = sound('assets/unity/audio/magnet-down.wav');
-        audio.shieldOn = sound('assets/unity/audio/shield-on.wav');
-        audio.shieldBreak = sound('assets/unity/audio/shield-break.wav');
-        audio.shieldOff = sound('assets/unity/audio/shield-off.wav');
+        audio.magnetDown = sound('assets/unity/audio/magnet-down.mp3');
+        audio.shieldOn = sound('assets/unity/audio/shield-on.mp3');
+        audio.shieldBreak = sound('assets/unity/audio/shield-break.mp3');
+        audio.shieldOff = sound('assets/unity/audio/shield-off.mp3');
     }
 
     function primeFocusAudio() {
@@ -914,7 +914,7 @@
             button.dataset.mode = modeForLevel(level);
             button.dataset.variant = level.variant;
             button.dataset.levelId = String(level.id);
-            const thumbnail = `assets/unity/ui/previews/level-${level.id}.png`;
+            const thumbnail = `assets/unity/ui/previews/level-${level.id}.webp`;
             button.innerHTML = `
                 <img class="level-thumb" data-src="${thumbnail}" alt="" decoding="async">
                 <span class="level-card-copy">
@@ -1004,7 +1004,7 @@
         const mission = status.missionRequirement;
         if (!status.requirement || !mission) return;
         lockedCardTrigger = trigger;
-        dom.levelLockPreview.src = `assets/unity/ui/previews/level-${level.id}.png`;
+        dom.levelLockPreview.src = `assets/unity/ui/previews/level-${level.id}.webp`;
         dom.levelLockTitle.textContent = `${level.name.toUpperCase()} ER LÅST`;
         const scoreCopy = pendingScores.length
             ? `Klar hele trin ${level.modeOrder - 1}: ${pendingScores.map(scoreRequirementText).join(' · ')}.`
@@ -3878,8 +3878,8 @@
             const label = dom.leaderboardModal.querySelector('.edition-label');
             label.textContent = leaderboardScope === 'friends' ? 'DINE VENNEDUELLER' : 'GLOBAL HIGHSCORE';
             dom.leaderboardModal.querySelector('header img').src = leaderboardScope === 'friends'
-                ? 'assets/unity/ui/leaderboard-friends.png'
-                : 'assets/unity/ui/leaderboard-world.png';
+                ? 'assets/unity/ui/leaderboard-friends.webp'
+                : 'assets/unity/ui/leaderboard-world.webp';
             refreshLeaderboard();
         }));
         [dom.boardPeriod, dom.boardLevel, dom.boardMetric].forEach((select) => select.addEventListener('change', refreshLeaderboard));
