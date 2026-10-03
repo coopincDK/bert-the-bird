@@ -28,6 +28,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | Fil | Nummer på Suno | Lavet | Bruges til |
 | --- | --- | --- | --- |
 | `assets/music/menu.mp3` | "Menu", https://suno.com/song/77fb60ae-602b-49e7-85d5-ace3e7756d7f | 3. okt. 2026 | Hovedmenu |
+| `assets/music/classic.mp3` | "Classic" (uploadet fil) | 3. okt. 2026 | Desert, Jungle, Happy Sky og banerne uden eget nummer endnu |
 
 ## Musik – mangler stadig at blive skiftet
 
@@ -35,7 +36,6 @@ Artlists katalog (stockmusik og -lydeffekter) må **ikke** bruges i spillet med 
 
 | Nuværende fil | Kilde | Status |
 | --- | --- | --- |
-| `assets/unity/audio/level-1.mp3` | Unity 2014, ukendt ophav | Skiftes til AI-musik |
 | `assets/unity/audio/tunnel.mp3` | Unity 2014, ukendt ophav | Skiftes til AI-musik |
 | `assets/edm/neon-encore.mp3` | Manus-perioden, ukendt kilde | Skiftes til AI-musik |
 | `assets/unity/audio/chopin.mp3` | Ukendt indspilning (værket er frit, indspilningen måske ikke) | Skiftes til AI-musik |
