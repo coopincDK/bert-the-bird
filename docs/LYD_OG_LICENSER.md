@@ -31,6 +31,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | `assets/music/classic.mp3` | "Classic" (uploadet fil) | 3. okt. 2026 | Desert, Jungle, Happy Sky og banerne uden eget nummer endnu |
 | `assets/music/flappy.mp3` | "Flappy" (uploadet fil) | 3. okt. 2026 | De tre Flappy-baner |
 | `assets/music/tunnel.mp3` | "Tunnel" (uploadet fil) | 3. okt. 2026 | De tre Tunnel-baner |
+| `assets/music/edm.mp3` | "EDM" (uploadet fil) | 3. okt. 2026 | Neon Encore |
 
 ## Musik – mangler stadig at blive skiftet
 
@@ -38,7 +39,6 @@ Artlists katalog (stockmusik og -lydeffekter) må **ikke** bruges i spillet med 
 
 | Nuværende fil | Kilde | Status |
 | --- | --- | --- |
-| `assets/edm/neon-encore.mp3` | Manus-perioden, ukendt kilde | Skiftes til AI-musik |
 | `assets/unity/audio/chopin.mp3` | Ukendt indspilning (værket er frit, indspilningen måske ikke) | Skiftes til AI-musik |
 
 For hvert AI-nummer gemmes: prompt, dato, Artlist-konto og den downloadede fil, som dokumentation.

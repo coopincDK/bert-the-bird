@@ -10,7 +10,7 @@ from playwright.async_api import async_playwright
 
 PROJECT = Path(__file__).resolve().parents[1]
 OUTPUT = PROJECT.parent / 'qa-edm-motion'
-BUILD = 'worlds-relay-33'
+BUILD = 'worlds-relay-34'
 
 
 def free_port():

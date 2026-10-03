@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-33';
+    const BUILD_VERSION = 'worlds-relay-34';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -843,7 +843,7 @@
         audio.tunnel = sound('assets/music/tunnel.mp3', 'none');
         audio.tunnel.loop = true;
         audio.tunnel.volume = 0.32;
-        audio.edm = sound('assets/edm/neon-encore.mp3', 'none');
+        audio.edm = sound('assets/music/edm.mp3', 'none');
         audio.edm.loop = true;
         audio.edm.volume = 0.32;
         Object.entries(EXTRA_MUSIC).forEach(([name, url]) => {
