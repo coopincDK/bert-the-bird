@@ -35,6 +35,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | `assets/music/focus.mp3` | "Focus" (uploadet fil) | 3. okt. 2026 | Fokus-tilstand (slowmotion) |
 | `assets/music/iceberg.mp3` | "Iceberg" (uploadet fil) | 3. okt. 2026 | Isbjerget |
 | `assets/music/harbor.mp3` | "Harbor" (uploadet fil) | 3. okt. 2026 | Havnen |
+| `assets/music/nightcity.mp3` | "Nightcity" (uploadet fil) | 3. okt. 2026 | Nattebyen |
 
 ## Musik – mangler stadig at blive skiftet
 
