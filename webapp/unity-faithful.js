@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-31';
+    const BUILD_VERSION = 'worlds-relay-32';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -846,6 +846,11 @@
         audio.edm = sound('assets/edm/neon-encore.mp3', 'none');
         audio.edm.loop = true;
         audio.edm.volume = 0.32;
+        Object.entries(EXTRA_MUSIC).forEach(([name, url]) => {
+            audio[name] = sound(url, 'none');
+            audio[name].loop = true;
+            audio[name].volume = 0.32;
+        });
         audio.menu = sound('assets/music/menu.mp3');
         audio.menu.loop = true;
         audio.menu.volume = 0.24;
@@ -883,10 +888,14 @@
         }).catch(() => {});
     }
 
+    // Level tracks made in Suno (see docs/LYD_OG_LICENSER.md). Key = level kind.
+    const EXTRA_MUSIC = Object.freeze({ flappy: 'assets/music/flappy.mp3' });
+    const MUSIC_NAMES = ['music', 'tunnel', 'edm', 'menu', 'focus', ...Object.keys(EXTRA_MUSIC)];
+
     function playAudio(name) {
         const clip = audio[name];
         if (!clip) return;
-        const isMusic = ['music', 'tunnel', 'edm', 'menu', 'focus'].includes(name);
+        const isMusic = MUSIC_NAMES.includes(name);
         if (!BertMeta.settingEnabled(isMusic ? 'music' : 'sfx')) return;
         try {
             if (isMusic) {
@@ -911,7 +920,7 @@
     }
 
     function stopMusic() {
-        ['music', 'tunnel', 'edm', 'menu', 'focus', 'magnetRunning'].forEach((name) => {
+        [...MUSIC_NAMES, 'magnetRunning'].forEach((name) => {
             const clip = audio[name];
             if (!clip) return;
             clip.pause();
@@ -926,11 +935,18 @@
             audio.tunnel.playbackRate = 1;
         }
         if (audio.edm) audio.edm.volume = 0.32;
+        Object.keys(EXTRA_MUSIC).forEach((name) => {
+            if (audio[name]) { audio[name].volume = 0.32; audio[name].playbackRate = 1; }
+        });
         if (audio.focus) audio.focus.volume = 0;
     }
 
     function levelMusicName() {
-        return currentLevel.kind === 'edm' ? 'edm' : currentLevel.kind === 'tunnel' ? 'tunnel' : 'music';
+        if (currentLevel.kind === 'edm') return 'edm';
+        if (currentLevel.kind === 'tunnel') return 'tunnel';
+        // Own track per level type when one exists; otherwise the Classic track.
+        if (EXTRA_MUSIC[currentLevel.kind] && audio[currentLevel.kind]) return currentLevel.kind;
+        return 'music';
     }
 
     function activeLevelMusic() {
