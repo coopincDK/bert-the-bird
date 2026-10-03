@@ -8,7 +8,7 @@
         hero: 'bert',
         ownedHeroes: { bert: { source: 'starter' } },
         achievements: { bestScores: {}, bronzeLevels: {}, medals: {}, maxScore: 0, cleanJungle: false, clean180: false },
-        player: { id: '', name: 'Pilot' },
+        player: { id: '', name: '' },
         totalStars: 0,
         feathers: 0,
         runCount: 0,
@@ -170,11 +170,17 @@
 
     function setPlayerName(name) {
         const cleaned = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24);
-        data.player.name = cleaned || 'Pilot';
+        data.player.name = cleaned;
         const granted = syncSecretHeroes();
         // A newly matched epic hero is equipped right away, as a surprise.
         if (granted.length) data.hero = granted[0];
         return save();
+    }
+
+    /** 'Pilot' was the old placeholder; it never counts as a chosen name. */
+    function hasPlayerName() {
+        const name = String(data.player.name || '').trim();
+        return name.length > 0 && name.toLowerCase() !== 'pilot';
     }
 
     function setSetting(name, enabled) {
@@ -283,7 +289,7 @@
             .filter((run) => levelId == null || run.levelId === levelId)
             .sort((a, b) => b[key] - a[key] || b.score - a.score)
             .slice(0, 20)
-            .map((run, index) => ({ rank: index + 1, playerName: data.player.name, ...run }));
+            .map((run, index) => ({ rank: index + 1, playerName: data.player.name || 'Dig', ...run }));
     }
 
     function missions(date = new Date()) {
@@ -475,7 +481,7 @@
     window.BertHaptics?.setEnabled(data.settings.haptics);
     save();
     window.BertMeta = Object.freeze({
-        addFeathers,
+        addFeathers, hasPlayerName,
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,
         continueSpinOffer, buyContinueSpin, settleContinueSpin,

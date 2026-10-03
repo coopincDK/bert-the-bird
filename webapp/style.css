@@ -2021,3 +2021,20 @@ body:not(.is-prewarm) .hud-level { opacity: 0; }
 /* Episke navnehelte: guldkant, så de føles særlige. */
 .hero-option.epic { border-color: #ffd34d; box-shadow: 0 0 0 2px rgba(255, 211, 77, .35), 0 0 14px rgba(255, 196, 0, .35); }
 .hero-option.epic small { color: #ffd34d; }
+
+/* Fjerde fane: Eventyr med fem nye baner. */
+.mode-tabs { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+.level-grid[data-mode='adventure'] { grid-template-columns: repeat(5, minmax(0, 1fr)) !important; }
+.level-grid[data-mode='adventure'] .level-card-mode { display: none; }
+.level-grid[data-mode='adventure'] .level-card-title { font-size: clamp(12px, 1.6cqw, 17px); }
+
+/* Første gang: spørg om navn. */
+.first-name-input {
+    display: block; width: min(320px, 100%); margin: 4px auto 14px; padding: 12px 14px;
+    border: 2px solid rgba(255,255,255,.45); border-radius: 14px; background: rgba(4, 22, 32, .7);
+    color: #fff; font: 800 18px 'Bert Rounded', sans-serif; text-align: center;
+}
+.first-name-input:focus { outline: none; border-color: var(--lime, #b6f23a); }
+.name-card .challenge-actions { justify-content: center; }
+.level-grid[data-mode='adventure'] .level-card-title { font-size: clamp(10px, 1.35cqw, 16px); letter-spacing: 0; }
+.level-grid[data-mode='adventure'] .level-card-copy { grid-template-columns: 22px 1fr auto; gap: 4px; }

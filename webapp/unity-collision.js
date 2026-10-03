@@ -97,6 +97,9 @@
     }
 
     function obstacleShapes(obstacle) {
+        if (obstacle.kind === 'adventure' && typeof window !== 'undefined' && window.BertAdventure) {
+            return window.BertAdventure.shapes(obstacle);
+        }
         if (obstacle.kind === 'bird-run-bird') {
             // Selectable hero poses face right. All body boxes are defined in the
             // front-facing (mirrored) art; rear flight mirrors this same box.

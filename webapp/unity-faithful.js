@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-16';
+    const BUILD_VERSION = 'worlds-relay-18';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -25,7 +25,7 @@
     // Focus starts instantly; its soundtrack is decoded at load time.
     const FOCUS_COUNTDOWN_SECONDS = 0;
     const FOCUS_ENTER_SECONDS = 0.65;
-    const GENERATED_HERO_IDS = new Set(['pingo', 'mogens', 'ninja', 'pakke', 'gold', 'epicMalthe', 'epicJohan', 'epicSos', 'epicThor', 'block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism']);
+    const GENERATED_HERO_IDS = new Set(['pingo', 'mogens', 'ninja', 'pakke', 'gold', 'epicMalthe', 'epicJohan', 'epicSos', 'epicThor', 'epicFan', 'block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism']);
     const GENERATED_FLIGHT_SEQUENCE = Object.freeze([0, 2, 4, 2]);
     const GENERATED_ANIMATION_FPS = 6;
     const RESCUE_OUTCOMES = Object.freeze([
@@ -230,11 +230,49 @@
         stages: [], layers: [],
     });
 
+    // Five adventure worlds, always open. Endless like every other level.
+    const ADVENTURE_ART = Object.freeze({
+        iceberg: { name: 'Isbjerget', card: 'ISTAPPER & SPIDSER', obstacles: { advIceStalactite: 'falling-stalactite', advIceShelf: 'cracking-ice-shelf', advIceSpikes: 'ice-spike-cluster' } },
+        harbor: { name: 'Havnen', card: 'KRANER & MÅGER', obstacles: { advCraneHook: 'crane-hook', advGull: 'diving-gull', advParcel: 'rolling-parcel' } },
+        nightcity: { name: 'Nattebyen', card: 'MØRKE & SKILTE', obstacles: { advWaterTank: 'lit-water-tank', advVent: 'rooftop-vent', advSignboard: 'swaying-signboard' } },
+        volcano: { name: 'Vulkanen', card: 'LAVA & BOBLER', obstacles: { advLavaLedge: 'cracked-lava-ledge', advLavaBubble: 'lava-bubble', advLavaSpout: 'lava-spout' } },
+        windfarm: { name: 'Vindmøller', card: 'ROTORER & BØJER', obstacles: { advRotor: 'rotor-gate', advBuoys: 'buoy-chain', advPlatform: 'service-platform' } },
+    });
+    // bg1 ends just inside bg2's solid band, so no seam shows between them.
+    const ADVENTURE_BG1_Y = Object.freeze({ iceberg: 310, harbor: 335, nightcity: 350, volcano: 361, windfarm: 238 });
+    const adventureLayers = (theme) => [
+        { image: `${theme}Sky`, y: 0, height: 720, factor: 0.03 },
+        { image: `${theme}Bg1`, y: ADVENTURE_BG1_Y[theme], height: 190, factor: 0.06 },
+        { image: `${theme}Bg2`, y: 275, height: 400, factor: 0.1 },
+        { image: `${theme}Mg`, y: 470, height: 200, factor: 0.18 },
+        { image: `${theme}Fg`, y: 545, height: 200, factor: 0.55 },
+    ];
+    const ADVENTURE_LEVELS = Object.freeze(['iceberg', 'harbor', 'nightcity', 'volcano', 'windfarm'].map((theme, index) => Object.freeze({
+        id: 20 + index, modeGroup: 'adventure', modeOrder: index + 1, unlockScore: 0,
+        name: ADVENTURE_ART[theme].name, sourceName: ADVENTURE_ART[theme].name, cardText: ADVENTURE_ART[theme].card,
+        mode: MODE.DEFAULT, startSpeed: 0.8, kind: theme, variant: theme, spacing: 820,
+        stages: [
+            { duration: 0.5, speed: 0.8, difficulty: 0.4 }, { duration: 30, speed: 1.0, difficulty: 0.6 },
+            { duration: 35, speed: 1.25, difficulty: 0.8 }, { duration: 40, speed: 1.6, difficulty: 1.0 },
+            { duration: 60, speed: 2.0, difficulty: 1.3 }, { duration: 150, speed: 2.7, difficulty: 1.8 },
+        ],
+        layers: adventureLayers(theme),
+    })));
+    const isAdventureLevel = (level = currentLevel) => level?.modeGroup === 'adventure';
+
     function isEventLevel(level = currentLevel) {
         return level.modeGroup === 'event';
     }
 
     const ASSET_PATHS = {
+        ...Object.fromEntries(Object.entries(ADVENTURE_ART).flatMap(([theme, art]) => [
+            [`${theme}Sky`, `assets/adventure/${theme}/sky.webp`],
+            [`${theme}Bg1`, `assets/adventure/${theme}/bg1.webp`],
+            [`${theme}Bg2`, `assets/adventure/${theme}/bg2.webp`],
+            [`${theme}Mg`, `assets/adventure/${theme}/mg.webp`],
+            [`${theme}Fg`, `assets/adventure/${theme}/fg.webp`],
+            ...Object.entries(art.obstacles).map(([key, file]) => [key, `assets/adventure/${theme}/${file}.webp`]),
+        ])),
         desertSky: 'assets/unity/levels/desert/sky.webp',
         desertBg1: 'assets/unity/levels/desert/bg-1.webp',
         desertBg2: 'assets/unity/levels/desert/bg-2.webp',
@@ -362,6 +400,8 @@
         stormline: ['stormSky', 'stormSail', 'stormSock', 'stormUmbrella', 'stormBranch',
             'stormSign', 'stormCar'],
         skyRelay: ['happySky', 'happyMg', 'relayGate', 'relayGateFront', 'relayChime'],
+        ...Object.fromEntries(Object.entries(ADVENTURE_ART).map(([theme, art]) => [theme,
+            [`${theme}Sky`, `${theme}Bg1`, `${theme}Bg2`, `${theme}Mg`, `${theme}Fg`, ...Object.keys(art.obstacles)]])),
         tunnel: ['tunnelSky', 'tunnelBg1', 'tunnelBg2', 'tunnelMg', 'tunnelFg'],
         flappy: ['flappySky', 'flappyBg', 'flappyMg', 'flappyFg', 'flappyPipe', 'flappyPipeBlue', 'flappyPipeGold', 'flappyCopper', 'flappyPearl'],
         jungle: [
@@ -457,6 +497,9 @@
         rescueSpin: document.getElementById('rescue-spin-btn'),
         rescueEnd: document.getElementById('rescue-end-btn'),
         challengeModal: document.getElementById('challenge-modal'),
+        nameModal: document.getElementById('name-modal'),
+        firstNameInput: document.getElementById('first-name-input'),
+        saveFirstName: document.getElementById('save-first-name'),
         challengeCopy: document.getElementById('challenge-copy'),
         levelLockModal: document.getElementById('level-lock-modal'),
         levelLockPreview: document.getElementById('level-lock-preview'),
@@ -481,7 +524,7 @@
     }));
     let edmSmokeStamp = null;
     const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [],
-        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [] };
+        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [] };
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
     const EPIC_HEROES = Object.freeze({
@@ -489,6 +532,7 @@
         epicJohan: { folder: 'epic-johan', standIn: 'block' },
         epicSos: { folder: 'epic-sos', standIn: 'sugar' },
         epicThor: { folder: 'epic-thor', standIn: 'mecha' },
+        epicFan: { folder: 'fanbert', standIn: 'bert' },
     });
     const menuHeroArt = Object.freeze({
         bert: 'assets/unity/ui/menu-bird.webp',
@@ -512,6 +556,7 @@
         epicJohan: 'assets/klodsbert/up.webp',
         epicSos: 'assets/sugarrush/up.webp',
         epicThor: 'assets/mechabert/up.webp',
+        epicFan: 'assets/fanbert/up.webp',
     });
     const audio = Object.create(null);
     let currentLevel = UNITY_LEVELS[0];
@@ -905,7 +950,7 @@
     }
 
     function selectGameMode(mode = 'classic') {
-        const selectedMode = ['classic', 'flappy', 'tunnel'].includes(mode) ? mode : 'classic';
+        const selectedMode = ['classic', 'flappy', 'tunnel', 'adventure'].includes(mode) ? mode : 'classic';
         document.querySelectorAll('.mode-tab').forEach((button) => {
             const selected = button.dataset.mode === selectedMode;
             button.classList.toggle('selected', selected);
@@ -948,7 +993,7 @@
 
     function createLevelButtons() {
         dom.levelGrid.innerHTML = '';
-        UNITY_LEVELS.forEach((level) => {
+        [...UNITY_LEVELS, ...ADVENTURE_LEVELS].forEach((level) => {
             const button = document.createElement('button');
             button.className = `level-card level-${level.id}`;
             button.dataset.mode = modeForLevel(level);
@@ -1073,6 +1118,10 @@
     }
 
     function attemptLevel(levelId, trigger = null) {
+        if (ADVENTURE_LEVELS.some((level) => level.id === Number(levelId))) {
+            startLevel(Number(levelId));
+            return;
+        }
         const level = UNITY_LEVELS.find((candidate) => candidate.id === Number(levelId));
         const status = level ? progressionSnapshot()[level.id] : null;
         if (!level || !status) return;
@@ -1144,8 +1193,21 @@
                 if (fill) fill.style.width = `${Math.round(status.progress * 100)}%`;
             }
         });
-        const modeHelp = { classic: 'HOLD OP/NED', flappy: 'TAP', tunnel: 'PRÆCISION' };
+        ADVENTURE_LEVELS.forEach((level) => {
+            const element = document.getElementById(`level-score-${level.id}`);
+            if (element) element.textContent = String(loadHighscore(level.id));
+            const lock = document.getElementById(`level-lock-${level.id}`);
+            if (lock) lock.textContent = 'NY BANE';
+            const fill = document.getElementById(`level-unlock-fill-${level.id}`);
+            if (fill) fill.style.width = '100%';
+        });
+        const modeHelp = { classic: 'HOLD OP/NED', flappy: 'TAP', tunnel: 'PRÆCISION', adventure: 'NYE VERDENER' };
         document.querySelectorAll('.mode-tab').forEach((tab) => {
+            if (tab.dataset.mode === 'adventure') {
+                const copy = tab.querySelector('small');
+                if (copy) copy.textContent = `${ADVENTURE_LEVELS.length} BANER · ${modeHelp.adventure}`;
+                return;
+            }
             const levels = UNITY_LEVELS.filter((level) => level.modeGroup === tab.dataset.mode);
             const open = levels.filter((level) => progression[level.id]?.unlocked).length;
             const copy = tab.querySelector('small');
@@ -1230,13 +1292,39 @@
         if (document.activeElement !== dom.playerName) dom.playerName.value = meta.player.name;
     }
 
+    // The first flight asks for a name; 'Pilot' is no longer a default.
+    let pendingFirstFlight = null;
+    function askForName(levelId, options) {
+        pendingFirstFlight = { levelId, options };
+        dom.firstNameInput.value = '';
+        dom.saveFirstName.disabled = true;
+        setVisible(dom.nameModal, true);
+        setTimeout(() => dom.firstNameInput.focus({ preventScroll: true }), 50);
+    }
+    function saveFirstName() {
+        const name = dom.firstNameInput.value.trim();
+        if (!name) return;
+        BertMeta.setPlayerName(name);
+        setVisible(dom.nameModal, false);
+        updateMetaMenu();
+        const pending = pendingFirstFlight;
+        pendingFirstFlight = null;
+        if (pending) startLevel(pending.levelId, pending.options);
+    }
+
     async function startLevel(levelId, options = {}) {
+        if (!QUERY.has('qa') && !BertMeta.hasPlayerName()) {
+            askForName(levelId, options);
+            return false;
+        }
         const requestedLevel = Number(levelId) === EDM_EVENT.id ? EDM_EVENT
             : Number(levelId) === BIRD_RUN_EVENT.id ? BIRD_RUN_EVENT
                 : Number(levelId) === STORMLINE_EVENT.id ? STORMLINE_EVENT
                     : Number(levelId) === SKY_RELAY_EVENT.id ? SKY_RELAY_EVENT
-                    : UNITY_LEVELS.find((level) => level.id === Number(levelId)) || UNITY_LEVELS[0];
-        const unlock = isEventLevel(requestedLevel) ? { unlocked: true } : progressionSnapshot()[requestedLevel.id];
+                    : ADVENTURE_LEVELS.find((level) => level.id === Number(levelId))
+                    || UNITY_LEVELS.find((level) => level.id === Number(levelId)) || UNITY_LEVELS[0];
+        const unlock = isEventLevel(requestedLevel) || isAdventureLevel(requestedLevel)
+            ? { unlocked: true } : progressionSnapshot()[requestedLevel.id];
         if (!QUERY.has('qa') && !unlock?.unlocked) {
             showLevelMenu(modeForLevel(requestedLevel));
             window.BertApp?.showToast(unlock?.requirement
@@ -1361,6 +1449,7 @@
             : currentLevel === BIRD_RUN_EVENT ? 'EVENT · BIRD RUN · TESTBANE'
             : currentLevel === STORMLINE_EVENT ? 'EVENT · STORMLINE · TESTBANE'
             : currentLevel === SKY_RELAY_EVENT ? 'MINISPIL · SKY RELAY · LOKALT'
+            : isAdventureLevel() ? `EVENTYR · ${currentLevel.name.toUpperCase()}`
             : `${currentLevel.modeGroup.toUpperCase()} ${currentLevel.modeOrder} · ${currentLevel.name.toUpperCase()}`;
         dom.hint.textContent = currentLevel.mode === MODE.FLAPPY
             ? `TAP FOR AT FLYVE · ${currentLevel.cardText}`
@@ -1658,6 +1747,11 @@
                 BertBirdRun.advance(obstacle, delta, scroll, bird.y + BIRD.height / 2);
             } else if (BertStormline.isHazard(obstacle)) {
                 BertStormline.advance(obstacle, delta, scroll, BertStormline.windCue(state.worldTime));
+            } else if (obstacle.kind === 'adventure') {
+                BertAdventure.advance(obstacle, delta, {
+                    scroll, speed: scroll / Math.max(delta, 1e-6),
+                    birdX: bird.x + BIRD.width / 2, birdY: bird.y + BIRD.height / 2, time: state.worldTime,
+                });
             } else if (obstacle.kind === 'edm-crowd-ball') {
                 BertEDM.advanceCrowdBall(obstacle, delta, scroll, bird.x + BIRD.width,
                     VIEW.width, gameRandom,
@@ -1679,6 +1773,8 @@
         const beforeCull = obstacles;
         obstacles = obstacles.filter((obstacle) => obstacle.kind === 'bird-run-bird'
             ? !BertBirdRun.isGone(obstacle, VIEW.width)
+            : obstacle.kind === 'adventure'
+                ? obstacle.x + obstacle.width > -260 && obstacle.y < VIEW.height + 120 && obstacle.y + obstacle.size > -260
             : obstacle.x + obstacle.width > -140);
         if (interactive && isEventLevel() && !state.worldBadge
             && BertWorldMastery.qualifies(currentLevel.id,
@@ -1809,6 +1905,12 @@
     function spawnObstacle() {
         const x = VIEW.width + 120;
         const id = state.obstacleId++;
+        if (BertAdventure.isTheme(currentLevel.kind)) {
+            const encounter = BertAdventure.createEncounter(currentLevel.kind, id, x, gameRandom, state.difficulty);
+            obstacles.push(...encounter.obstacles);
+            if (encounter.star) collectibles.push(makeCollectible(encounter.star.x, clamp(encounter.star.y, 110, 600)));
+            return;
+        }
         if (currentLevel.kind === 'birdRun') {
             const wave = BertBirdRun.createWave(id, x, gameRandom);
             obstacles.push(...wave.obstacles);
@@ -2006,7 +2108,7 @@
 
     // Stars start drifting once a run heats up: more of them, and further,
     // the harder it gets. Tunnel stars follow their own path and stay put.
-    const DRIFTING_STAR_KINDS = new Set(['desert', 'jungle', 'flappy', 'happySky', 'edm', 'stormline']);
+    const DRIFTING_STAR_KINDS = new Set(['desert', 'jungle', 'flappy', 'happySky', 'edm', 'stormline', 'iceberg', 'harbor', 'nightcity', 'volcano', 'windfarm']);
     function starDrift(risk) {
         if (!DRIFTING_STAR_KINDS.has(currentLevel.kind) || state.phase !== 'playing') return null;
         const heat = clamp((state.difficulty - 0.55) / 1.2, 0, 1);
@@ -3158,7 +3260,104 @@
         ctx.drawImage(assets[`happyMouth${1 + (Math.floor(obstacle.age * 6) % 3)}`], obstacle.x + obstacle.width * .39, faceY + 29, 30, 14);
     }
 
+    function drawAdventureObstacle(o) {
+        const image = assets[o.art];
+        const scale = o.size / 512;
+        const spot = BertAdventure.warningSpot(o);
+        if (spot && o.warn > 0) {
+            // A calm, growing glow: never a flash, always before the hazard moves.
+            ctx.save();
+            const pulse = 0.55 + Math.sin(state.worldTime * 9) * 0.2;
+            const gradient = ctx.createRadialGradient(spot.x, spot.y, 0, spot.x, spot.y, spot.radius * (0.7 + o.warn * 0.5));
+            const color = BertAdventure.WARN_COLOR[o.theme] || '#ffffff';
+            gradient.addColorStop(0, color);
+            gradient.addColorStop(1, 'rgba(255,255,255,0)');
+            ctx.globalAlpha = o.warn * pulse;
+            ctx.fillStyle = gradient;
+            ctx.beginPath();
+            ctx.arc(spot.x, spot.y, spot.radius * (0.7 + o.warn * 0.5), 0, Math.PI * 2);
+            ctx.fill();
+            ctx.globalAlpha = Math.min(1, o.warn * 1.4);
+            ctx.font = '900 34px "Bert Rounded", sans-serif';
+            ctx.textAlign = 'center';
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = 'rgba(20, 20, 30, .85)';
+            ctx.fillStyle = '#fff';
+            ctx.strokeText('!', spot.x, spot.y + 12);
+            ctx.fillText('!', spot.x, spot.y + 12);
+            ctx.restore();
+        }
+        if (!image?.naturalWidth) return;
+        ctx.save();
+        if (o.clipGround) {
+            ctx.beginPath();
+            ctx.rect(-200, -400, VIEW.width + 400, BertAdventure.GROUND + 400);
+            ctx.clip();
+        }
+        if (o.behaviour === 'swing') {
+            const top = BertAdventure.TYPES[o.type].bbox[1] * scale;
+            ctx.translate(o.pivotX, o.pivotY);
+            ctx.rotate(o.angle);
+            ctx.strokeStyle = 'rgba(40, 44, 52, 0.92)';
+            ctx.lineWidth = 5;
+            ctx.beginPath();
+            if (o.type === 'signboard') {
+                ctx.moveTo(0, 0); ctx.lineTo(-o.pivotOffset + 140 * scale, o.length);
+                ctx.moveTo(0, 0); ctx.lineTo(-o.pivotOffset + 372 * scale, o.length);
+            } else {
+                ctx.moveTo(0, 0); ctx.lineTo(0, o.length + 4);
+            }
+            ctx.stroke();
+            ctx.drawImage(image, -o.pivotOffset, o.length - top, o.size, o.size);
+        } else if (o.behaviour === 'spin') {
+            const hubX = o.x + o.hubAx * scale;
+            const hubY = o.y + o.hubAy * scale;
+            // Tower: drawn in the same place as its lethal segment.
+            const towerGradient = ctx.createLinearGradient(hubX - 9, 0, hubX + 9, 0);
+            towerGradient.addColorStop(0, '#c9d3dc');
+            towerGradient.addColorStop(0.5, '#ffffff');
+            towerGradient.addColorStop(1, '#aab6c1');
+            ctx.fillStyle = towerGradient;
+            ctx.beginPath();
+            ctx.moveTo(hubX - 7, hubY + 20);
+            ctx.lineTo(hubX + 7, hubY + 20);
+            ctx.lineTo(hubX + 13, BertAdventure.GROUND + 40);
+            ctx.lineTo(hubX - 13, BertAdventure.GROUND + 40);
+            ctx.closePath();
+            ctx.fill();
+            ctx.translate(hubX, hubY);
+            ctx.rotate(o.angle);
+            ctx.drawImage(image, -o.hubAx * scale, -o.hubAy * scale, o.size, o.size);
+        } else if (o.angle) {
+            ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
+            ctx.rotate(o.angle);
+            ctx.drawImage(image, -o.size / 2, -o.size / 2, o.size, o.size);
+        } else {
+            ctx.drawImage(image, o.x, o.y, o.size, o.size);
+        }
+        ctx.restore();
+    }
+
+    // Nattebyen: darkness away from Bert. Hazards have glowing rims and stay readable.
+    function drawNightDarkness() {
+        if (currentLevel.kind !== 'nightcity' || !['prewarm', 'playing', 'dead'].includes(state.phase)) return;
+        const centerX = bird.x + BIRD.width / 2;
+        const centerY = bird.y + BIRD.height / 2;
+        const strength = clamp(0.42 + (state.difficulty - 0.6) * 0.14, 0.42, 0.66);
+        const gradient = ctx.createRadialGradient(centerX, centerY, 150, centerX, centerY, 620);
+        gradient.addColorStop(0, 'rgba(4, 6, 24, 0)');
+        gradient.addColorStop(1, `rgba(4, 6, 24, ${strength})`);
+        ctx.save();
+        ctx.fillStyle = gradient;
+        ctx.fillRect(0, 0, VIEW.width, VIEW.height);
+        ctx.restore();
+    }
+
     function drawObstacle(obstacle) {
+        if (obstacle.kind === 'adventure') {
+            if (!(state.phase === 'dead' && obstacle.id === state.deathObstacleId && obstacle.type === state.deathObstacleType)) drawAdventureObstacle(obstacle);
+            return;
+        }
         ctx.save();
         if (state.phase === 'dead' && obstacle.id === state.deathObstacleId) {
             ctx.restore();
@@ -3703,6 +3902,7 @@
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
         drawRelayNearEdge();
         drawRelayLabels();
+        drawNightDarkness();
         drawParticles();
         // The shallow top/bottom set pieces are *in front* of Bert, not just
         // decorative scenery behind him. Only the outer, non-playable bands cover him.
@@ -4062,6 +4262,13 @@
         document.getElementById('settings-btn').addEventListener('click', openSettings);
         document.getElementById('pause-settings-btn').addEventListener('click', openSettings);
         document.getElementById('close-settings').addEventListener('click', closeSettings);
+        dom.firstNameInput.addEventListener('input', () => {
+            dom.saveFirstName.disabled = !dom.firstNameInput.value.trim();
+        });
+        dom.firstNameInput.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') saveFirstName();
+        });
+        dom.saveFirstName.addEventListener('click', saveFirstName);
         dom.playerName.addEventListener('change', () => {
             BertMeta.setPlayerName(dom.playerName.value);
             updateMetaMenu();
@@ -4179,6 +4386,8 @@
         });
 
         document.addEventListener('keydown', (event) => {
+            // Typing a name must never steer Bert or open menus.
+            if (event.target instanceof HTMLInputElement) return;
             if (event.key === 'Escape') {
                 if (!dom.levelLockModal.classList.contains('hidden')) {
                     closeLockedLevel();

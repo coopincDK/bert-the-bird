@@ -26,6 +26,7 @@
         { id: 'epicJohan', name: 'Blok-Johan', price: 0, goal: 'Hemmelig helt', target: 1, secret: true, nameHash: 667591339 },
         { id: 'epicSos', name: 'Prinsesse Søs', price: 0, goal: 'Hemmelig helt', target: 1, secret: true, nameHash: 1846338164 },
         { id: 'epicThor', name: 'Thor Obby', price: 0, goal: 'Hemmelig helt', target: 1, secret: true, nameHash: 4206434765 },
+        { id: 'epicFan', name: 'Fodbold-Bert', price: 0, goal: 'Hemmelig helt', target: 1, secret: true, nameHash: 3317535425 },
     ]);
     /** FNV-1a over the trimmed, lower-cased, NFC-normalised pilot name. */
     function nameHash(name) {
