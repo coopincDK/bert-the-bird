@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-10';
+    const BUILD_VERSION = 'worlds-relay-11';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -382,6 +382,8 @@
         levelMenu: document.getElementById('level-menu'),
         gameOver: document.getElementById('game-over'),
         hud: document.getElementById('hud'),
+        hudStrip: document.querySelector('#hud .hud-strip'),
+        hudMenu: document.getElementById('hud-menu-btn'),
         loading: document.getElementById('loading'),
         levelGrid: document.getElementById('level-grid'),
         score: document.getElementById('score'),
@@ -4080,6 +4082,64 @@
         if (lastRender === 0 || now - lastRender >= RENDER_INTERVAL - 0.75) {
             render();
             lastRender = now;
+            updateHudClearance();
+        }
+    }
+
+    // The score strip and pause button sit over the top of the play field.
+    // When Bert, a star or the visible part of an obstacle is underneath them,
+    // they fade out so nothing the player has to react to is ever hidden.
+    const hudClearance = { frame: 0, rects: [], dim: false };
+    function hudOverlapRects() {
+        const canvasRect = dom.canvas?.getBoundingClientRect?.();
+        if (!canvasRect || !canvasRect.width || !canvasRect.height) return [];
+        const sx = VIEW.width / canvasRect.width;
+        const sy = VIEW.height / canvasRect.height;
+        return [dom.hudStrip, dom.hudMenu].filter(Boolean).map((element) => {
+            const rect = element.getBoundingClientRect();
+            return {
+                left: (rect.left - canvasRect.left) * sx - 6,
+                right: (rect.right - canvasRect.left) * sx + 6,
+                top: (rect.top - canvasRect.top) * sy,
+                bottom: (rect.bottom - canvasRect.top) * sy + 8,
+            };
+        }).filter((rect) => rect.right > rect.left && rect.bottom > rect.top);
+    }
+    function overlapsHud(rects, left, top, right, bottom) {
+        return rects.some((rect) => left < rect.right && right > rect.left && top < rect.bottom && bottom > rect.top);
+    }
+    function updateHudClearance() {
+        if (!dom.hud) return;
+        const active = ['playing', 'prewarm'].includes(state.phase) && !dom.hud.classList.contains('hidden');
+        let dim = false;
+        if (active) {
+            if (hudClearance.frame % 20 === 0 || !hudClearance.rects.length) hudClearance.rects = hudOverlapRects();
+            hudClearance.frame += 1;
+            const rects = hudClearance.rects;
+            if (rects.length) {
+                dim = overlapsHud(rects, bird.x, bird.y, bird.x + BIRD.width, bird.y + BIRD.height)
+                    || collectibles.some((item) => !item.collected && overlapsHud(rects,
+                        item.x - item.width / 2, item.y - item.height / 2, item.x + item.width / 2, item.y + item.height / 2))
+                    || obstacles.some((obstacle) => {
+                        const x = obstacle.renderX ?? obstacle.x;
+                        const y = obstacle.renderY ?? obstacle.y;
+                        const width = obstacle.renderWidth ?? obstacle.width;
+                        const height = obstacle.renderHeight ?? obstacle.height;
+                        if (!(width > 0 && height > 0)) return false;
+                        const lowestHudEdge = Math.max(...rects.map((rect) => rect.bottom));
+                        // A pipe or wall hanging from the top is only body under the HUD;
+                        // its dangerous edge is far below, so it does not need a fade.
+                        if (y <= 2 && y + height > lowestHudEdge + 24) return false;
+                        return overlapsHud(rects, x, y, x + width, y + height);
+                    });
+            }
+        } else {
+            hudClearance.frame = 0;
+            hudClearance.rects = [];
+        }
+        if (dim !== hudClearance.dim) {
+            hudClearance.dim = dim;
+            dom.hud.classList.toggle('is-clear', dim);
         }
     }
 

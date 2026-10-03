@@ -1982,3 +1982,35 @@ body {
         grid-template-columns: repeat(3, minmax(0, 1fr));
     }
 }
+
+/* Score-tavle under spillet: slankere, mere gennemsigtig, og den viger,
+   når Bert, en stjerne eller en forhindring er under den. */
+.hud-strip {
+    width: min(38%, 360px);
+    padding: 4px clamp(12px, 2cqw, 20px) 5px;
+    border-width: 1px;
+    border-color: rgba(255, 255, 255, 0.28);
+    border-radius: 14px;
+    background: linear-gradient(180deg, rgba(20, 47, 60, 0.55), rgba(5, 25, 37, 0.55));
+    box-shadow: 0 3px 0 rgba(0, 0, 0, 0.18);
+    transition: opacity 160ms ease;
+}
+.hud-stat span { font-size: 9px; margin-bottom: 1px; }
+.hud-stat strong { font-size: clamp(20px, 2.5vw, 28px); }
+.hud-menu {
+    padding: 6px 10px;
+    background: linear-gradient(180deg, rgba(27, 56, 69, 0.6), rgba(6, 25, 36, 0.6));
+    transition: opacity 160ms ease;
+}
+.hud.is-clear .hud-strip,
+.hud.is-clear .hud-menu { opacity: 0.22; }
+
+/* Banenavnet vises kun før start, ikke midt i spillet. */
+.hud-level { transition: opacity 400ms ease; }
+body:not(.is-prewarm) .hud-level { opacity: 0; }
+
+@media (orientation: landscape) and (max-height: 520px) {
+    .hud-strip { top: max(4px, env(safe-area-inset-top)); padding-block: 3px 4px; }
+    .hud-stat span { font-size: 8px; }
+    .hud-stat strong { font-size: 20px; }
+}
