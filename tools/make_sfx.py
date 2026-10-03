@@ -77,3 +77,8 @@ for k in range(7):
 x += 0.25*highpass(noise(0.35),3000)*env(n,0.001,curve=5)
 save('crack', x, 0.8)
 print(sorted(f for f in os.listdir('.') if f.endswith('.mp3')))
+
+# miss: soft two-note "aww" when a star is missed (replaces the harsh explosion)
+a = sweep(587.3, 560, 0.09, 'tri')*env(int(SR*0.09),0.004,curve=1.5)
+b = sweep(440, 392, 0.16, 'tri')*env(int(SR*0.16),0.004,curve=2.5)
+save('miss', lowpass(np.concatenate([a, np.zeros(int(SR*0.02)), b]), 2500), 0.45)

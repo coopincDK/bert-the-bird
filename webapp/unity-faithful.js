@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-41';
+    const BUILD_VERSION = 'worlds-relay-42';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -872,6 +872,7 @@
         audio.whoosh = sound('assets/sfx/whoosh.mp3');
         audio.wind = sound('assets/sfx/wind.mp3');
         audio.crack = sound('assets/sfx/crack.mp3');
+        audio.miss = sound('assets/sfx/miss.mp3');
     }
 
     function primeFocusAudio() {
@@ -1492,6 +1493,7 @@
         state.poopCooldown = 0;
         state.poopMessage = '';
         state.poopMessageUntil = 0;
+        state.smokeFog = [];
         updatePoopButton();
         state.nextLanternAt = 5;
         state.nextCrystalAt = 7;
@@ -1910,6 +1912,7 @@
                     lavaTop: currentLevel.kind === 'volcano' ? state.lavaTop : undefined,
                 });
                 // Sound cues follow the hazards' own state changes.
+                if (obstacle.palette === 'smoke' && obstacle.harmful) blowSmoke(obstacle, delta);
                 if (interactive && obstacle.x < VIEW.width + 60) {
                     if (obstacle.behaviour === 'column' && obstacle.harmful && !before.harmful) playAudio(obstacle.palette === 'smoke' ? 'whoosh' : 'lava');
                     if ((obstacle.behaviour === 'meteor' || obstacle.behaviour === 'bomb') && obstacle.phase === 'fly' && before.phase !== 'fly') playAudio('whoosh');
@@ -2775,7 +2778,8 @@
         const brokenStreak = state.streak;
         state.bestStreak = Math.max(state.bestStreak, state.streak);
         state.streak = 0;
-        playAudio('explosion');
+        // A missed star gets a soft "aww", not an explosion.
+        playAudio('miss');
         if (brokenStreak >= 3) BertMeta.haptic('warning');
         updateHud();
     }
@@ -3322,6 +3326,7 @@
             updateIceAndWind(delta);
             updateNightLight(delta);
             updatePoop(delta, BertProgression.scrollPixelsPerSecond(state.speed) * delta);
+            updateSmokeFog(delta, BertProgression.scrollPixelsPerSecond(state.speed) * delta);
             updateHud();
             return;
         }
@@ -3570,7 +3575,18 @@
         }
         ctx.fillStyle = level.kind === 'jungle' ? '#153c20' : level.kind === 'happySky' ? '#bdeeff' : level.kind === 'tunnel' ? '#061a2b' : '#70c8e0';
         ctx.fillRect(0, 0, VIEW.width, VIEW.height);
-        level.layers.forEach((layer) => drawTiled(assets[layer.image], layer.y, layer.height, layer.factor));
+        level.layers.forEach((layer, index) => {
+            drawTiled(assets[layer.image], layer.y, layer.height, layer.factor);
+            // Desert: the stretched sky's horizon showed as a cyan band (looked like
+            // water) between the city and the dunes. Sand fills it behind the layers.
+            if (index === 0 && level.kind === 'desert') {
+                const sand = ctx.createLinearGradient(0, 410, 0, VIEW.height);
+                sand.addColorStop(0, '#d7c67c');
+                sand.addColorStop(1, '#bfac67');
+                ctx.fillStyle = sand;
+                ctx.fillRect(0, 410, VIEW.width, VIEW.height - 410);
+            }
+        });
         if (level.kind === 'tunnel') drawTunnelWalls();
         if (level.kind === 'jungle') {
             ctx.fillStyle = 'rgba(4, 29, 11, 0.06)';
@@ -4095,6 +4111,61 @@
                 ctx.beginPath(); ctx.arc(o.x + o.width - 26, edge + o.gap - 12, 30, 0, Math.PI * 2); ctx.fill();
             }
         }
+        ctx.restore();
+    }
+
+    // Neon Encore: a blast pushes Bert out of the jet and leaves drifting fog
+    // that hides what is behind it for a few seconds. Smoke never kills.
+    function blowSmoke(o, delta) {
+        const cx = o.x + o.size / 2;
+        const top = Math.min(o.lavaTop, o.topY);
+        const bottom = Math.max(o.lavaTop, o.topY);
+        const centerX = bird.x + BIRD.width / 2;
+        const centerY = bird.y + BIRD.height / 2;
+        if (state.phase === 'playing' && Math.abs(centerX - cx) < o.columnWidth * 0.95 && centerY > top - 30 && centerY < bottom + 30) {
+            const dir = o.fromTop ? 1 : -1;
+            bird.velocity = clamp(bird.velocity + dir * 2600 * delta, -820, 820);
+        }
+        o.fogTimer = (o.fogTimer || 0) - delta;
+        if (o.fogTimer <= 0) {
+            o.fogTimer = 0.12;
+            state.smokeFog.push({ x: cx + randomBetween(-o.columnWidth, o.columnWidth),
+                y: o.topY + randomBetween(-40, 40) * (o.fromTop ? -1 : 1), r: randomBetween(55, 85),
+                vx: randomBetween(-110, 110), vy: randomBetween(-20, 20), age: 0 });
+        }
+    }
+
+    function updateSmokeFog(delta, scroll) {
+        if (!state.smokeFog?.length) return;
+        state.smokeFog.forEach((puff) => {
+            puff.age += delta;
+            puff.x += puff.vx * delta - scroll;
+            puff.y += puff.vy * delta;
+            puff.vx *= 0.985;
+            puff.r += 38 * delta;
+        });
+        state.smokeFog = state.smokeFog.filter((puff) => puff.age < 3.5 && puff.x + puff.r > -100);
+    }
+
+    // One soft puff is rendered once and reused; per-puff gradients stalled phones.
+    let fogSprite = null;
+    function drawSmokeFog() {
+        if (!state.smokeFog?.length) return;
+        if (!fogSprite) {
+            fogSprite = document.createElement('canvas');
+            fogSprite.width = fogSprite.height = 128;
+            const g = fogSprite.getContext('2d');
+            const gradient = g.createRadialGradient(64, 64, 8, 64, 64, 64);
+            gradient.addColorStop(0, 'rgba(240, 248, 255, 0.85)');
+            gradient.addColorStop(1, 'rgba(210, 230, 255, 0)');
+            g.fillStyle = gradient;
+            g.fillRect(0, 0, 128, 128);
+        }
+        ctx.save();
+        state.smokeFog.forEach((puff) => {
+            ctx.globalAlpha = puff.age < 0.4 ? puff.age / 0.4 : Math.max(0, 1 - (puff.age - 0.4) / 3.1);
+            ctx.drawImage(fogSprite, puff.x - puff.r, puff.y - puff.r, puff.r * 2, puff.r * 2);
+        });
         ctx.restore();
     }
 
@@ -5029,6 +5100,7 @@
         drawEnemyCapture();
         collectibles.forEach(drawCollectible);
         drawPowerupAura();
+        drawSmokeFog();
         drawGhost();
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
         drawRelayNearEdge();

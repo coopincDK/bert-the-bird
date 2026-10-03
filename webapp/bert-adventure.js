@@ -493,6 +493,8 @@
     /** Hit shapes in world space, measured on the 512 px art. */
     function shapes(o) {
         if (!o.harmful) return [];
+        // Smoke cannons push and hide things, but smoke itself never kills.
+        if (o.palette === 'smoke') return [];
         const s = o.size / ART;
         const p = (ax, ay) => at(o, ax, ay);
         if (o.behaviour === 'stack') {

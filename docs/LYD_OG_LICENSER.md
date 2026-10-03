@@ -10,7 +10,7 @@ Alle lydeffekter er syntetiseret af `tools/make_sfx.py` (ingen samples, ingen tr
 | --- | --- |
 | `assets/sfx/coin.mp3` | Stjerne, point, træffer |
 | `assets/sfx/pop.mp3` | Knapper, containere der flytter sig |
-| `assets/sfx/explosion.mp3` | Streak brudt, sammenstød |
+| `assets/sfx/explosion.mp3` | (bruges ikke længere) |
 | `assets/sfx/shield-on.mp3`, `shield-off.mp3`, `shield-break.mp3` | Skjold og streak guard |
 | `assets/sfx/magnet-up.mp3`, `magnet-down.mp3`, `magnet-running.mp3` | Magnet |
 | `assets/sfx/splat.mp3`, `drop.mp3` | Fugleklat |
@@ -18,6 +18,7 @@ Alle lydeffekter er syntetiseret af `tools/make_sfx.py` (ingen samples, ingen tr
 | `assets/sfx/whoosh.mp3` | Meteor, lavabombe, røgkanon |
 | `assets/sfx/wind.mp3` | Vindstød |
 | `assets/sfx/crack.mp3` | Istap varsler |
+| `assets/sfx/miss.mp3` | Misset stjerne (blød "øv"-lyd) |
 
 De gamle lydeffekter med ukendt kilde (fra Unity 2014 og en lydpakke) er slettet.
 
