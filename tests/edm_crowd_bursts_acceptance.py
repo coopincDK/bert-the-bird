@@ -24,7 +24,7 @@ async def run_phone(browser, port, width, height):
     posts = []
     page.on('pageerror', lambda error: errors.append(str(error)))
     page.on('request', lambda request: posts.append(request.url) if request.method == 'POST' else None)
-    await page.goto(f'http://127.0.0.1:{port}/?qa=1&noclip=1&rev=worlds-relay-42', wait_until='networkidle')
+    await page.goto(f'http://127.0.0.1:{port}/?qa=1&noclip=1&rev=worlds-relay-43', wait_until='networkidle')
     await page.wait_for_function("document.querySelector('#loading').classList.contains('hidden')")
     await page.locator('#play-btn').click()
     await page.locator('#edm-event-btn').click()
@@ -49,7 +49,7 @@ async def run_phone(browser, port, width, height):
     balls = result['balls']
     shapes = result['shapes']
     view = result['view']
-    assert view['event'] and view['build'] == 'worlds-relay-42'
+    assert view['event'] and view['build'] == 'worlds-relay-43'
     assert len(balls) == 6 and len(shapes) == 6
     assert len({ball['motionAmplitude'] for ball in balls}) >= 4
     assert all(ball['baseY'] + ball['height'] == 670 for ball in balls)

@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-42';
+    const BUILD_VERSION = 'worlds-relay-43';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -4599,27 +4599,51 @@
             ctx.stroke();
             ctx.drawImage(frame, obstacle.renderX + swing, obstacle.renderY, obstacle.renderWidth, obstacle.renderHeight);
             if (currentLevel.spiderWarning && obstacle.attackState === 'attacking'
-                && obstacle.attackElapsed < (obstacle.attackWindup ?? 0.52) + 0.14) {
+                && obstacle.attackElapsed < (obstacle.attackWindup ?? 0.52) + 0.5) {
+                // The spider shoots a thread and spins a web where it will land:
+                // the web's centre is exactly where it drops to.
                 const windup = obstacle.attackWindup ?? 0.52;
-                const fadeIn = clamp(obstacle.attackElapsed / 0.12, 0, 1);
-                const fadeOut = clamp((windup + 0.14 - obstacle.attackElapsed) / 0.18, 0, 1);
-                const targetX = obstacle.x + obstacle.width / 2 + swing;
+                const elapsed = obstacle.attackElapsed;
+                const shoot = clamp(elapsed / (windup * 0.45), 0, 1);
+                const grow = clamp((elapsed - windup * 0.35) / (windup * 0.55), 0, 1);
+                const fadeOut = clamp((windup + 0.5 - elapsed) / 0.25, 0, 1);
+                const startX = obstacle.x + obstacle.width / 2 + swing;
+                const startY = obstacle.renderY + obstacle.height * 0.8;
+                const targetX = startX;
                 const targetY = obstacle.targetY + obstacle.height * 0.45;
-                ctx.globalAlpha = 0.8 * fadeIn * fadeOut;
-                ctx.strokeStyle = '#f8e7ba';
+                ctx.save();
+                ctx.globalAlpha = 0.9 * fadeOut;
+                ctx.strokeStyle = '#f4f7f8';
+                ctx.lineCap = 'round';
                 ctx.lineWidth = 2;
                 ctx.beginPath();
-                ctx.moveTo(targetX, obstacle.renderY + obstacle.height);
-                ctx.lineTo(targetX, targetY - 15);
+                ctx.moveTo(startX, startY);
+                ctx.lineTo(startX, lerp(startY, targetY, shoot));
                 ctx.stroke();
-                ctx.beginPath();
-                ctx.ellipse(targetX, targetY, 28, 14, 0, 0, Math.PI * 2);
-                ctx.moveTo(targetX - 18, targetY - 11);
-                ctx.lineTo(targetX + 18, targetY + 11);
-                ctx.moveTo(targetX - 18, targetY + 11);
-                ctx.lineTo(targetX + 18, targetY - 11);
-                ctx.stroke();
-                ctx.globalAlpha = 1;
+                if (grow > 0) {
+                    const radius = 46 * smoothStep(grow);
+                    const spokes = 8;
+                    ctx.lineWidth = 1.6;
+                    ctx.beginPath();
+                    for (let i = 0; i < spokes; i += 1) {
+                        const a = (i / spokes) * Math.PI * 2 + 0.2;
+                        ctx.moveTo(targetX, targetY);
+                        ctx.lineTo(targetX + Math.cos(a) * radius, targetY + Math.sin(a) * radius * 0.85);
+                    }
+                    for (let ring = 1; ring <= 4; ring += 1) {
+                        const r = radius * ring / 4;
+                        for (let i = 0; i <= spokes; i += 1) {
+                            const a = (i / spokes) * Math.PI * 2 + 0.2;
+                            // Slight inward sag between spokes makes it read as silk.
+                            const sag = i % 1 === 0 ? 1 : 0.9;
+                            const x = targetX + Math.cos(a) * r * sag;
+                            const y = targetY + Math.sin(a) * r * 0.85 * sag;
+                            if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+                        }
+                    }
+                    ctx.stroke();
+                }
+                ctx.restore();
             }
         } else if (obstacle.kind === 'jungle-snake') {
             if (assets.jungleStone && obstacle.baseBottom != null) {
