@@ -30,7 +30,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | `assets/music/menu.mp3` | "Menu", https://suno.com/song/77fb60ae-602b-49e7-85d5-ace3e7756d7f | 3. okt. 2026 | Hovedmenu |
 | `assets/music/classic.mp3` | "Classic" (uploadet fil) | 3. okt. 2026 | Desert, Jungle, Happy Sky og banerne uden eget nummer endnu |
 | `assets/music/flappy.mp3` | "Flappy" (uploadet fil) | 3. okt. 2026 | De tre Flappy-baner |
-| `assets/music/tunnel.mp3` | "Tunnel" (uploadet fil) | 3. okt. 2026 | De tre Tunnel-baner |
+| `assets/music/tunnel.mp3` | "Tunnel", https://suno.com/song/c76881a1-d238-40dc-bcb2-f7f3b8012425 | 3. okt. 2026 | De tre Tunnel-baner |
 | `assets/music/edm.mp3` | "EDM", https://suno.com/song/5711d0a3-f25b-4e60-9eac-2ea4c1da7dbf | 3. okt. 2026 | Neon Encore |
 | `assets/music/focus.mp3` | "Focus", https://suno.com/song/3c2e2309-ffd6-42ce-9752-f91cd2ad1194 | 3. okt. 2026 | Fokus-tilstand (slowmotion) |
 | `assets/music/iceberg.mp3` | "Iceberg", https://suno.com/song/51c8a3cf-0531-4bfc-bae1-7aafb49cc17f | 3. okt. 2026 | Isbjerget |
