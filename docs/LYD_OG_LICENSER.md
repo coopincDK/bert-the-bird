@@ -38,12 +38,14 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | `assets/music/nightcity.mp3` | "Nightcity" (uploadet fil) | 3. okt. 2026 | Nattebyen |
 | `assets/music/volcano.mp3` | "Volcano" (uploadet fil) | 3. okt. 2026 | Vulkanen |
 | `assets/music/windfarm.mp3` | "Windfarm" (uploadet fil) | 3. okt. 2026 | Vindmøller |
+| `assets/music/poop.mp3` | "Poop" (uploadet fil) | 3. okt. 2026 | Fugleklat |
 
-## Musik – mangler stadig at blive skiftet
+Al gammel musik med ukendt kilde (Unity 2014, Manus-perioden og Chopin-indspilningen) er slettet. Spillet bruger nu kun egen Suno-musik og egne lydeffekter.
 
-Artlists katalog (stockmusik og -lydeffekter) må **ikke** bruges i spillet med Max Pro-licensen (Artlist support, 3. okt. 2026: kræver en særlig Business-licens). Musik, SmartPack selv genererer med Artlists AI-værktøj, er dækket af Artlists Terms of Use afsnit 14.9 (rettighederne overdrages, kommerciel brug ikke begrænset).
+## Artlist
 
-| Nuværende fil | Kilde | Status |
-| --- | --- | --- |
+Artlists katalog (stockmusik og -lydeffekter) må **ikke** bruges i spillet med SmartPacks Max Pro-licens (Artlist support, 3. okt. 2026: spil og apps kræver en særlig Business-licens). Ingen Artlist-filer er brugt i spillet.
 
-For hvert AI-nummer gemmes: prompt, dato, Artlist-konto og den downloadede fil, som dokumentation.
+## Dokumentation for Suno-numrene
+
+Gem for hvert nummer: Suno-link, dato og et skærmbillede af, at kontoen var på Pro, da nummeret blev lavet og downloadet. Gem også en kopi af Sunos vilkår fra 3. okt. 2026.

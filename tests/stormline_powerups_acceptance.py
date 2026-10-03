@@ -12,7 +12,7 @@ from playwright.async_api import async_playwright
 
 PROJECT = Path(__file__).resolve().parents[1]
 OUTPUT = PROJECT.parent / 'qa-stormline-powerups'
-BUILD = 'worlds-relay-40'
+BUILD = 'worlds-relay-41'
 
 
 def free_port():
