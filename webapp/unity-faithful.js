@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-36';
+    const BUILD_VERSION = 'worlds-relay-37';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -889,7 +889,7 @@
     }
 
     // Level tracks made in Suno (see docs/LYD_OG_LICENSER.md). Key = level kind.
-    const EXTRA_MUSIC = Object.freeze({ flappy: 'assets/music/flappy.mp3', iceberg: 'assets/music/iceberg.mp3' });
+    const EXTRA_MUSIC = Object.freeze({ flappy: 'assets/music/flappy.mp3', iceberg: 'assets/music/iceberg.mp3', harbor: 'assets/music/harbor.mp3' });
     const MUSIC_NAMES = ['music', 'tunnel', 'edm', 'menu', 'focus', ...Object.keys(EXTRA_MUSIC)];
 
     function playAudio(name) {
