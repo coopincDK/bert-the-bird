@@ -11,7 +11,7 @@ from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
 OUTPUT = ROOT.parent / 'qa-offline-resilience'
-BUILD = 'worlds-relay-6'
+BUILD = 'worlds-relay-7'
 
 
 class GameHandler(SimpleHTTPRequestHandler):
@@ -62,11 +62,11 @@ async def browser_case(browser_type, base, width, height, server):
         await page.wait_for_function('window.BertApp?.offlineReady()', timeout=45000)
         assert await page.evaluate('navigator.serviceWorker.controller !== null')
         cache = await page.evaluate('''async () => {
-            const entries = await caches.open('bert-the-bird-worlds-relay-6');
+            const entries = await caches.open('bert-the-bird-worlds-relay-7');
             return {html: !!(await entries.match('./index.html')),
-                    game: !!(await entries.match('./unity-faithful.js?v=worlds-relay-6')),
-                    relay: !!(await entries.match('./bert-sky-relay.js?v=worlds-relay-6')),
-                    mastery: !!(await entries.match('./bert-world-mastery.js?v=worlds-relay-6')),
+                    game: !!(await entries.match('./unity-faithful.js?v=worlds-relay-7')),
+                    relay: !!(await entries.match('./bert-sky-relay.js?v=worlds-relay-7')),
+                    mastery: !!(await entries.match('./bert-world-mastery.js?v=worlds-relay-7')),
                     gate: !!(await entries.match('./assets/sky-relay/flight-gate-play.png')),
                     front: !!(await entries.match('./assets/sky-relay/flight-gate-foreground-play.png')),
                     bell: !!(await entries.match('./assets/sky-relay/wind-chime-target-play.png'))};

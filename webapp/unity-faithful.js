@@ -10,7 +10,7 @@
     'use strict';
 
     const VIEW = { width: 1280, height: 720 };
-    const BUILD_VERSION = 'worlds-relay-6';
+    const BUILD_VERSION = 'worlds-relay-7';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -3067,8 +3067,12 @@
         } else if (obstacle.kind === 'desert-wall') {
             const terrain = assets[obstacle.artKey] || assets.desertTerrain;
             if (obstacle.artKey === 'desertTerrain' || !obstacle.artKey) {
-                const sourceHeight = Math.floor(terrain.naturalHeight / 2);
-                const sourceY = obstacle.top ? 0 : sourceHeight;
+                // Klippebilledet har gennemsigtig luft mod åbningen (ca. 13 % af hver halvdel).
+                // Den skæres fra, så den synlige klippe passer præcist med hitboxen.
+                const half = Math.floor(terrain.naturalHeight / 2);
+                const air = Math.round(half * 0.135);
+                const sourceY = obstacle.top ? 0 : half + air;
+                const sourceHeight = half - air;
                 ctx.drawImage(terrain, 0, sourceY, terrain.naturalWidth, sourceHeight, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
             } else if (obstacle.top) {
                 ctx.translate(obstacle.x + obstacle.width / 2, obstacle.height);

@@ -7,7 +7,7 @@
     const installGuideText = document.getElementById('install-guide-text');
     const closeInstallGuide = document.getElementById('close-install-guide');
     const statusToast = document.getElementById('app-status');
-    const ACTIVE_BUILD = 'worlds-relay-6';
+    const ACTIVE_BUILD = 'worlds-relay-7';
     const IS_QA = new URLSearchParams(window.location.search).has('qa');
     let deferredInstallPrompt = null;
     let toastTimer = 0;

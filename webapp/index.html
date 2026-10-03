@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bert The Bird">
     <title>Bert The Bird – flyvespil og præcisionsverdener</title>
-    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-6">
+    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-7">
     <link rel="apple-touch-icon" href="icons/bert-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/bert-192.png">
-    <link rel="stylesheet" href="style.css?v=worlds-relay-6">
+    <link rel="stylesheet" href="style.css?v=worlds-relay-7">
 </head>
 <body>
     <main id="game-shell" aria-label="Bert The Bird">
@@ -167,22 +167,32 @@
         <section id="game-over" class="game-over hidden" aria-live="polite">
             <p class="result-kicker">DIN FLYVETUR</p>
             <div class="scoreboard">
-                <img class="scoreboard-art" src="assets/unity/ui/scoreboard.png" alt="Resultattavle">
-                <strong id="final-highscore" class="score-value score-personal score-row-score">0</strong>
-                <strong id="final-score" class="score-value score-run score-row-score">0</strong>
-                <span id="record-time" class="score-value score-personal score-row-time">0:00</span>
-                <span id="final-time" class="score-value score-run score-row-time">0:00</span>
-                <strong id="record-streak" class="score-value score-personal score-row-streak">x0</strong>
-                <strong id="final-streak" class="score-value score-run score-row-streak">x0</strong>
-                <img id="new-highscore" class="new-highscore hidden" src="assets/unity/ui/new-highscore.png" alt="Ny highscore">
+                <div class="score-col score-personal">
+                    <h2 class="score-heading">PERSONLIG REKORD</h2>
+                    <strong id="final-highscore" class="score-value score-row-score">0</strong>
+                    <span id="record-time" class="score-value score-row-time">0:00</span>
+                    <strong id="record-streak" class="score-value score-row-streak">x0</strong>
+                </div>
+                <div class="score-col score-icons" aria-hidden="true">
+                    <img src="assets/unity/ui/menu-star.png" alt="">
+                    <img src="assets/unity/ui/result-clock.png" alt="">
+                    <span class="score-streak-label">STREAK</span>
+                </div>
+                <div class="score-col score-run">
+                    <h2 class="score-heading">DENNE TUR</h2>
+                    <strong id="final-score" class="score-value score-row-score">0</strong>
+                    <span id="final-time" class="score-value score-row-time">0:00</span>
+                    <strong id="final-streak" class="score-value score-row-streak">x0</strong>
+                </div>
+                <span id="new-highscore" class="new-highscore hidden">NY REKORD!</span>
             </div>
             <div class="result-summary">
                 <div id="result-medal" class="result-medal medal-flight"><img src="assets/unity/ui/menu-star.png" alt=""><strong>FLYV IGEN</strong></div>
                 <p id="result-progress" class="result-progress">20 point til bronze</p>
             </div>
             <div class="result-actions">
-                <button id="retry-btn" class="unity-button result-button" type="button" aria-label="Spil igen"><img src="assets/unity/ui/button-again.png" alt="Again"></button>
-                <button id="menu-btn" class="unity-button result-button change-level" type="button" aria-label="Skift level"><img src="assets/unity/ui/button-change-level.png" alt="Change level"></button>
+                <button id="retry-btn" class="result-button result-again" type="button">FLYV IGEN</button>
+                <button id="menu-btn" class="result-button result-change" type="button">SKIFT BANE</button>
             </div>
             <button id="challenge-btn" class="challenge-button" type="button">UDFORDR EN VEN</button>
         </section>
@@ -332,24 +342,24 @@
 
         <div id="app-status" class="app-status" role="status" aria-live="polite"></div>
     </main>
-    <script src="app-shell.js?v=worlds-relay-6"></script>
-    <script src="unity-collision.js?v=worlds-relay-6"></script>
-    <script src="bert-physics.js?v=worlds-relay-6"></script>
-    <script src="bert-progression.js?v=worlds-relay-6"></script>
-    <script src="bert-tunnel.js?v=worlds-relay-6"></script>
-    <script src="bert-edm.js?v=worlds-relay-6"></script>
-    <script src="bert-bird-run.js?v=worlds-relay-6"></script>
-    <script src="bert-stormline.js?v=worlds-relay-6"></script>
-    <script src="bert-world-mastery.js?v=worlds-relay-6"></script>
-    <script src="bert-sky-relay.js?v=worlds-relay-6"></script>
-    <script src="bert-event-powerups.js?v=worlds-relay-6"></script>
-    <script src="bert-collectible-motion.js?v=worlds-relay-6"></script>
-    <script src="bert-haptics.js?v=worlds-relay-6"></script>
-    <script src="bert-hero-store.js?v=worlds-relay-6"></script>
-    <script src="bert-meta.js?v=worlds-relay-6"></script>
-    <script src="bert-social.js?v=worlds-relay-6"></script>
-    <script src="bert-focus-audio.js?v=worlds-relay-6"></script>
-    <script src="bert-star-audio.js?v=worlds-relay-6"></script>
-    <script src="unity-faithful.js?v=worlds-relay-6"></script>
+    <script src="app-shell.js?v=worlds-relay-7"></script>
+    <script src="unity-collision.js?v=worlds-relay-7"></script>
+    <script src="bert-physics.js?v=worlds-relay-7"></script>
+    <script src="bert-progression.js?v=worlds-relay-7"></script>
+    <script src="bert-tunnel.js?v=worlds-relay-7"></script>
+    <script src="bert-edm.js?v=worlds-relay-7"></script>
+    <script src="bert-bird-run.js?v=worlds-relay-7"></script>
+    <script src="bert-stormline.js?v=worlds-relay-7"></script>
+    <script src="bert-world-mastery.js?v=worlds-relay-7"></script>
+    <script src="bert-sky-relay.js?v=worlds-relay-7"></script>
+    <script src="bert-event-powerups.js?v=worlds-relay-7"></script>
+    <script src="bert-collectible-motion.js?v=worlds-relay-7"></script>
+    <script src="bert-haptics.js?v=worlds-relay-7"></script>
+    <script src="bert-hero-store.js?v=worlds-relay-7"></script>
+    <script src="bert-meta.js?v=worlds-relay-7"></script>
+    <script src="bert-social.js?v=worlds-relay-7"></script>
+    <script src="bert-focus-audio.js?v=worlds-relay-7"></script>
+    <script src="bert-star-audio.js?v=worlds-relay-7"></script>
+    <script src="unity-faithful.js?v=worlds-relay-7"></script>
 </body>
 </html>
