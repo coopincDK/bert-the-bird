@@ -32,7 +32,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | `assets/music/flappy.mp3` | "Flappy" (uploadet fil) | 3. okt. 2026 | De tre Flappy-baner |
 | `assets/music/tunnel.mp3` | "Tunnel" (uploadet fil) | 3. okt. 2026 | De tre Tunnel-baner |
 | `assets/music/edm.mp3` | "EDM" (uploadet fil) | 3. okt. 2026 | Neon Encore |
-| `assets/music/focus.mp3` | "Focus" (uploadet fil) | 3. okt. 2026 | Fokus-tilstand (slowmotion) |
+| `assets/music/focus.mp3` | "Focus", https://suno.com/song/3c2e2309-ffd6-42ce-9752-f91cd2ad1194 | 3. okt. 2026 | Fokus-tilstand (slowmotion) |
 | `assets/music/iceberg.mp3` | "Iceberg", https://suno.com/song/51c8a3cf-0531-4bfc-bae1-7aafb49cc17f | 3. okt. 2026 | Isbjerget |
 | `assets/music/harbor.mp3` | "Harbor", https://suno.com/song/3bd854ba-34fd-4de9-9805-e36fd04ab568 | 3. okt. 2026 | Havnen |
 | `assets/music/nightcity.mp3` | "Nightcity", https://suno.com/song/c602d3c4-4fd6-4f0a-918e-b8b231d78857 | 3. okt. 2026 | Nattebyen |
