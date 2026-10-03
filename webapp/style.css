@@ -2038,3 +2038,6 @@ body:not(.is-prewarm) .hud-level { opacity: 0; }
 .name-card .challenge-actions { justify-content: center; }
 .level-grid[data-mode='adventure'] .level-card-title { font-size: clamp(10px, 1.35cqw, 16px); letter-spacing: 0; }
 .level-grid[data-mode='adventure'] .level-card-copy { grid-template-columns: 22px 1fr auto; gap: 4px; }
+
+/* Testbanerne ligger nu som kort under Eventyr. */
+.event-shelf { display: none; }

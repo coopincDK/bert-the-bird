@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-19';
+    const BUILD_VERSION = 'worlds-relay-20';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -259,6 +259,14 @@
         layers: adventureLayers(theme),
     })));
     const isAdventureLevel = (level = currentLevel) => level?.modeGroup === 'adventure';
+    // The four test worlds live in the Eventyr tab too, after the five new levels.
+    const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT]);
+    const EVENT_CARD = Object.freeze({
+        11: { name: 'Bird Run', card: 'FUGLE & ROVFUGL', order: 6 },
+        10: { name: 'Neon Encore', card: 'RIGGE & BOLDE', order: 7 },
+        12: { name: 'Stormline', card: 'VIND & GENSTANDE', order: 8 },
+        13: { name: 'Sky Relay', card: 'PORTE & KLOKKE', order: 9 },
+    });
 
     function isEventLevel(level = currentLevel) {
         return level.modeGroup === 'event';
@@ -995,10 +1003,12 @@
 
     function createLevelButtons() {
         dom.levelGrid.innerHTML = '';
-        [...UNITY_LEVELS, ...ADVENTURE_LEVELS].forEach((level) => {
+        const eventCards = EVENT_LEVELS.map((event) => ({ ...event, name: EVENT_CARD[event.id].name,
+            cardText: EVENT_CARD[event.id].card, modeOrder: EVENT_CARD[event.id].order }));
+        [...UNITY_LEVELS, ...ADVENTURE_LEVELS, ...eventCards].forEach((level) => {
             const button = document.createElement('button');
             button.className = `level-card level-${level.id}`;
-            button.dataset.mode = modeForLevel(level);
+            button.dataset.mode = level.modeGroup === 'event' ? 'adventure' : modeForLevel(level);
             button.dataset.variant = level.variant;
             button.dataset.levelId = String(level.id);
             const thumbnail = `assets/unity/ui/previews/level-${level.id}.webp`;
@@ -1120,7 +1130,8 @@
     }
 
     function attemptLevel(levelId, trigger = null) {
-        if (ADVENTURE_LEVELS.some((level) => level.id === Number(levelId))) {
+        if (ADVENTURE_LEVELS.some((level) => level.id === Number(levelId))
+            || EVENT_LEVELS.some((level) => level.id === Number(levelId))) {
             startLevel(Number(levelId));
             return;
         }
@@ -1195,11 +1206,12 @@
                 if (fill) fill.style.width = `${Math.round(status.progress * 100)}%`;
             }
         });
-        ADVENTURE_LEVELS.forEach((level) => {
+        const earnedBadges = BertWorldMastery.read(localStorage);
+        [...ADVENTURE_LEVELS, ...EVENT_LEVELS].forEach((level) => {
             const element = document.getElementById(`level-score-${level.id}`);
             if (element) element.textContent = String(loadHighscore(level.id));
             const lock = document.getElementById(`level-lock-${level.id}`);
-            if (lock) lock.textContent = 'NY BANE';
+            if (lock) lock.textContent = level.modeGroup === 'event' ? (earnedBadges[level.id] ? 'MÆRKE VUNDET' : 'TESTBANE') : 'NY BANE';
             const fill = document.getElementById(`level-unlock-fill-${level.id}`);
             if (fill) fill.style.width = '100%';
         });
@@ -1207,7 +1219,7 @@
         document.querySelectorAll('.mode-tab').forEach((tab) => {
             if (tab.dataset.mode === 'adventure') {
                 const copy = tab.querySelector('small');
-                if (copy) copy.textContent = `${ADVENTURE_LEVELS.length} BANER · ${modeHelp.adventure}`;
+                if (copy) copy.textContent = `${ADVENTURE_LEVELS.length + EVENT_LEVELS.length} BANER · ${modeHelp.adventure}`;
                 return;
             }
             const levels = UNITY_LEVELS.filter((level) => level.modeGroup === tab.dataset.mode);
