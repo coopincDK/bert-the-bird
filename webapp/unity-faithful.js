@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-44';
+    const BUILD_VERSION = 'worlds-relay-45';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1870,8 +1870,11 @@
             obstacle.baseBottom ??= obstacle.y + obstacle.height;
             obstacle.attackState ??= 'idle';
             obstacle.attackElapsed ??= 0;
-            const distanceAhead = obstacle.x - (bird.x + BIRD.width);
-            if (interactive && obstacle.attackState === 'idle' && distanceAhead < 390 && distanceAhead > 30) {
+            // Time the jump so the top of it (frames 4, ~0.27–0.47 s in) meets Bert,
+            // whatever the current speed. A fixed distance made it jump too late or early.
+            const scrollPerSecond = BertProgression.scrollPixelsPerSecond(state.speed);
+            const centerGap = (obstacle.x + obstacle.width / 2) - (bird.x + BIRD.width / 2);
+            if (interactive && obstacle.attackState === 'idle' && centerGap > 0 && centerGap <= scrollPerSecond * 0.37) {
                 obstacle.attackState = 'attacking';
                 obstacle.attackElapsed = 0;
             }
