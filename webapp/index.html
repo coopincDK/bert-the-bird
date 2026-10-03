@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bert The Bird">
     <title>Bert The Bird – flyvespil og præcisionsverdener</title>
-    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-9">
+    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-10">
     <link rel="apple-touch-icon" href="icons/bert-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/bert-192.png">
-    <link rel="stylesheet" href="style.css?v=worlds-relay-9">
+    <link rel="stylesheet" href="style.css?v=worlds-relay-10">
 </head>
 <body>
     <main id="game-shell" aria-label="Bert The Bird">
@@ -51,17 +51,17 @@
             <h1 id="main-title" class="sr-only">Bert The Bird</h1>
             <img class="game-title" src="assets/unity/ui/game-title.webp" alt="Bert The Bird">
             <img id="menu-bird" class="menu-bird" data-hero="bert" src="assets/unity/ui/menu-bird.webp" alt="Bert flyver">
-            <button id="settings-btn" class="round-menu-button" type="button" aria-label="Åbn indstillinger"><img src="assets/unity/ui/menu-settings.webp" alt="Settings"></button>
-            <button id="leaderboard-btn" class="leaderboard-button" type="button" aria-label="Åbn highscore"><img src="assets/unity/ui/menu-leaderboards.webp" alt="Highscore"></button>
+            <button id="settings-btn" class="round-menu-button" type="button" aria-label="Åbn indstillinger"><span class="ui-word ui-orange">INDSTILLINGER</span></button>
+            <button id="leaderboard-btn" class="leaderboard-button" type="button" aria-label="Åbn highscore"><span class="ui-word ui-blue">RANGLISTE</span></button>
             <button id="missions-btn" class="missions-button" type="button" aria-label="Åbn dagens missioner"><img src="assets/unity/ui/chest.webp" alt="Missioner"><span>MISSIONER</span></button>
 
             <div class="menu-actions">
                 <p class="edition-label">3 SPILFORMER · 9 BANER</p>
                 <button id="play-btn" class="unity-button play-button" type="button" aria-label="Vælg bane">
-                    <img src="assets/unity/ui/menu-play.webp" alt="Play">
+                    <span class="ui-word ui-lime ui-play">SPIL</span>
                 </button>
                 <button id="quick-play-btn" class="unity-button quick-play-button" type="button" aria-label="Start Quick Flight">
-                    <img src="assets/unity/ui/menu-quick-play.webp" alt="Quick Play">
+                    <span class="ui-house ui-lime">QUICK PLAY</span>
                 </button>
                 <button id="install-btn" class="install-button" type="button">
                     <span class="install-mark" aria-hidden="true">↓</span>
@@ -161,7 +161,7 @@
                     <b aria-hidden="true">SPIL →</b>
                 </button>
             </div>
-            <button id="back-to-main" class="text-button level-back-button" type="button"><img src="assets/unity/ui/level-main-menu.webp" alt="Main menu"></button>
+            <button id="back-to-main" class="text-button level-back-button" type="button"><span class="ui-house ui-orange ui-back">HOVEDMENU</span></button>
         </section>
 
         <section id="game-over" class="game-over hidden" aria-live="polite">
@@ -226,7 +226,7 @@
 
         <section id="leaderboard-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="leaderboard-title">
             <div class="leaderboard-card">
-                <header><img src="assets/unity/ui/leaderboard-world.webp" alt=""><div><p class="edition-label">GLOBAL HIGHSCORE</p><h2 id="leaderboard-title">PILOTER</h2></div><button id="close-leaderboard" type="button" aria-label="Luk">×</button></header>
+                <header><span class="ui-word ui-white ui-board-scope">VERDEN</span><div><p class="edition-label">GLOBAL HIGHSCORE</p><h2 id="leaderboard-title">PILOTER</h2></div><button id="close-leaderboard" type="button" aria-label="Luk">×</button></header>
                 <div class="leaderboard-scope" role="group" aria-label="Vælg leaderboard">
                     <button type="button" data-board-scope="global" aria-pressed="true">GLOBALT</button>
                     <button type="button" data-board-scope="friends" aria-pressed="false">VENNER FRA DUELLER</button>
@@ -342,24 +342,24 @@
 
         <div id="app-status" class="app-status" role="status" aria-live="polite"></div>
     </main>
-    <script src="app-shell.js?v=worlds-relay-9"></script>
-    <script src="unity-collision.js?v=worlds-relay-9"></script>
-    <script src="bert-physics.js?v=worlds-relay-9"></script>
-    <script src="bert-progression.js?v=worlds-relay-9"></script>
-    <script src="bert-tunnel.js?v=worlds-relay-9"></script>
-    <script src="bert-edm.js?v=worlds-relay-9"></script>
-    <script src="bert-bird-run.js?v=worlds-relay-9"></script>
-    <script src="bert-stormline.js?v=worlds-relay-9"></script>
-    <script src="bert-world-mastery.js?v=worlds-relay-9"></script>
-    <script src="bert-sky-relay.js?v=worlds-relay-9"></script>
-    <script src="bert-event-powerups.js?v=worlds-relay-9"></script>
-    <script src="bert-collectible-motion.js?v=worlds-relay-9"></script>
-    <script src="bert-haptics.js?v=worlds-relay-9"></script>
-    <script src="bert-hero-store.js?v=worlds-relay-9"></script>
-    <script src="bert-meta.js?v=worlds-relay-9"></script>
-    <script src="bert-social.js?v=worlds-relay-9"></script>
-    <script src="bert-focus-audio.js?v=worlds-relay-9"></script>
-    <script src="bert-star-audio.js?v=worlds-relay-9"></script>
-    <script src="unity-faithful.js?v=worlds-relay-9"></script>
+    <script src="app-shell.js?v=worlds-relay-10"></script>
+    <script src="unity-collision.js?v=worlds-relay-10"></script>
+    <script src="bert-physics.js?v=worlds-relay-10"></script>
+    <script src="bert-progression.js?v=worlds-relay-10"></script>
+    <script src="bert-tunnel.js?v=worlds-relay-10"></script>
+    <script src="bert-edm.js?v=worlds-relay-10"></script>
+    <script src="bert-bird-run.js?v=worlds-relay-10"></script>
+    <script src="bert-stormline.js?v=worlds-relay-10"></script>
+    <script src="bert-world-mastery.js?v=worlds-relay-10"></script>
+    <script src="bert-sky-relay.js?v=worlds-relay-10"></script>
+    <script src="bert-event-powerups.js?v=worlds-relay-10"></script>
+    <script src="bert-collectible-motion.js?v=worlds-relay-10"></script>
+    <script src="bert-haptics.js?v=worlds-relay-10"></script>
+    <script src="bert-hero-store.js?v=worlds-relay-10"></script>
+    <script src="bert-meta.js?v=worlds-relay-10"></script>
+    <script src="bert-social.js?v=worlds-relay-10"></script>
+    <script src="bert-focus-audio.js?v=worlds-relay-10"></script>
+    <script src="bert-star-audio.js?v=worlds-relay-10"></script>
+    <script src="unity-faithful.js?v=worlds-relay-10"></script>
 </body>
 </html>

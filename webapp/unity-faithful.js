@@ -13,7 +13,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-9';
+    const BUILD_VERSION = 'worlds-relay-10';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -3877,9 +3877,8 @@
             });
             const label = dom.leaderboardModal.querySelector('.edition-label');
             label.textContent = leaderboardScope === 'friends' ? 'DINE VENNEDUELLER' : 'GLOBAL HIGHSCORE';
-            dom.leaderboardModal.querySelector('header img').src = leaderboardScope === 'friends'
-                ? 'assets/unity/ui/leaderboard-friends.webp'
-                : 'assets/unity/ui/leaderboard-world.webp';
+            dom.leaderboardModal.querySelector('.ui-board-scope').textContent = leaderboardScope === 'friends'
+                ? 'VENNER' : 'VERDEN';
             refreshLeaderboard();
         }));
         [dom.boardPeriod, dom.boardLevel, dom.boardMetric].forEach((select) => select.addEventListener('change', refreshLeaderboard));
