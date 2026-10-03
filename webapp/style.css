@@ -2070,3 +2070,6 @@ body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 .poop-button:active { transform: scale(.94); }
 
 .lock-icon { width: 1.35em; height: 1.35em; vertical-align: -0.3em; margin-right: 3px; object-fit: contain; }
+
+.poop-button { background: none; border: 0; box-shadow: none; padding: 0; }
+.poop-button img { width: 92px; height: 92px; filter: drop-shadow(0 4px 0 rgba(0,0,0,.3)); }

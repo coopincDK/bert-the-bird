@@ -163,15 +163,19 @@
             }
         } else if (theme === 'volcano') {
             // Rising lava floor (handled by the game) + tall columns and arcing bombs.
-            if (pick < 0.4) {
+            // Columns leave room above them; meteors from the sky stop "hiding at the top".
+            if (pick < 0.3) {
                 obstacles.push(columnAt(theme, id, x, d, random));
                 star = { x: x + 330, y: lerp(200, 380, random()) };
-            } else if (pick < 0.72) {
+            } else if (pick < 0.52) {
                 obstacles.push(bombAt(theme, id, x, d, random), bombAt(theme, id, x + 260, d, random));
                 star = { x: x + 130, y: lerp(160, 300, random()) };
+            } else if (pick < 0.78) {
+                obstacles.push(columnAt(theme, id, x, d, random), meteorAt(theme, id, x + 360, d, random));
+                star = { x: x + 200, y: lerp(220, 330, random()) };
             } else {
-                obstacles.push(columnAt(theme, id, x, d, random), bombAt(theme, id, x + 380, d, random));
-                star = { x: x + 200, y: 180 };
+                obstacles.push(meteorAt(theme, id, x, d, random), meteorAt(theme, id, x + 300, d, random));
+                star = { x: x + 150, y: lerp(260, 420, random()) };
             }
         } else {
             if (pick < 0.45) {
@@ -280,11 +284,22 @@
         o.fromTop = Boolean(options.fromTop);
         o.palette = options.palette || 'lava';
         o.columnWidth = lerp(70, 90, random());
-        o.peakTop = options.peak ?? lerp(70, 150, random());
+        // Peak stays well below the ceiling, so there is always a way over the top.
+        o.peakTop = options.peak ?? lerp(230, 330, random());
         o.cycle = clamp(3.0 - 0.35 * difficulty, 1.9, 3.0);
         o.cycleOffset = random() * o.cycle;
         o.topY = GROUND;
         o.lavaTop = GROUND;
+        o.harmful = false;
+        return o;
+    }
+
+    /** A meteor: glows at the top edge first, then drops from the sky. */
+    function meteorAt(theme, id, x, difficulty, random) {
+        const o = base('lava-bubble', theme, id, x, lerp(120, 150, random()));
+        o.behaviour = 'meteor';
+        o.y = -o.size - 20;
+        o.fallSpeed = clamp(380 + 60 * difficulty, 380, 620);
         o.harmful = false;
         return o;
     }
@@ -399,16 +414,42 @@
         } else if (o.behaviour === 'column') {
             // Base edge: the lava surface, the floor, or the ceiling for jets from above.
             o.lavaTop = o.fromTop ? -40 : (env.lavaTop ?? GROUND);
-            const t = (o.age + o.cycleOffset) % o.cycle;
-            const warnStart = o.cycle - 0.8;
-            const up = 0.25;
-            const hold = 0.9;
-            if (t < up) o.topY = lerp(o.lavaTop, o.peakTop, t / up);
-            else if (t < up + hold) o.topY = o.peakTop;
-            else if (t < up + hold + 0.4) o.topY = lerp(o.peakTop, o.lavaTop, (t - up - hold) / 0.4);
-            else o.topY = o.lavaTop;
-            o.warn = t >= warnStart ? clamp((t - warnStart) / 0.6, 0, 1) : 0;
+            // The first eruption is triggered by Bert's approach, so its warning is
+            // always on screen; after that it repeats on a fixed, learnable rhythm.
+            const WARN = 1.1;
+            const UP = 0.25;
+            const HOLD = 1.0;
+            const DOWN = 0.4;
+            const REST = clamp(o.cycle - 1.2, 0.8, 1.8);
+            if (o.phase === 'idle') {
+                o.topY = o.lavaTop;
+                if (distance < speed * 1.5) { o.phase = 'cycle'; o.timer = 0; }
+            }
+            if (o.phase === 'cycle') {
+                o.timer += delta;
+                const period = WARN + UP + HOLD + DOWN + REST;
+                const t = o.timer % period;
+                if (t < WARN) { o.topY = o.lavaTop; o.warn = clamp(t / (WARN * 0.8), 0, 1); }
+                else if (t < WARN + UP) { o.warn = 0; o.topY = lerp(o.lavaTop, o.peakTop, (t - WARN) / UP); }
+                else if (t < WARN + UP + HOLD) { o.warn = 0; o.topY = o.peakTop; }
+                else if (t < WARN + UP + HOLD + DOWN) { o.warn = 0; o.topY = lerp(o.peakTop, o.lavaTop, (t - WARN - UP - HOLD) / DOWN); }
+                else { o.warn = 0; o.topY = o.lavaTop; }
+            }
             o.harmful = o.fromTop ? o.topY > o.lavaTop + 24 : o.topY < o.lavaTop - 24;
+        } else if (o.behaviour === 'meteor') {
+            const lavaTop = env.lavaTop ?? GROUND;
+            if (o.phase === 'idle' && distance < speed * 1.3) { o.phase = 'warn'; o.timer = 0; }
+            if (o.phase === 'warn') {
+                o.timer += delta;
+                o.warn = clamp(o.timer / 0.65, 0, 1);
+                if (o.timer >= 0.75) { o.phase = 'fly'; o.warn = 0; o.vy = o.fallSpeed; o.harmful = true; }
+            } else if (o.phase === 'fly') {
+                o.vy += 700 * delta;
+                o.y += o.vy * delta;
+                o.x -= 60 * delta;
+                o.angle += 3 * delta;
+                if (o.y + o.size * 0.5 > lavaTop) o.harmful = false;
+            }
         } else if (o.behaviour === 'bomb') {
             const lavaTop = env.lavaTop ?? GROUND;
             if (o.phase === 'idle') {
@@ -444,6 +485,7 @@
         if (o.behaviour === 'stack') return o.stackTop ? null : { x: o.x + o.width / 2, y: o.gapTop + o.gap / 2, radius: 70 };
         if (o.behaviour === 'column') return { x: o.x + o.size / 2, y: o.fromTop ? 30 : (o.lavaTop ?? GROUND) - 10, radius: o.columnWidth + 20 };
         if (o.behaviour === 'bomb') return { x: o.x + o.size / 2, y: (o.lavaTop ?? GROUND) - 10, radius: o.size * 0.55 };
+        if (o.behaviour === 'meteor') return { x: o.x + o.size / 2, y: 34, radius: o.size * 0.6 };
         if (o.type === 'lava-spout' || o.type === 'lava-bubble') return { x: o.x + 256 * scale, y: GROUND - 8, radius: 110 * scale + 24 };
         return null;
     }
@@ -469,7 +511,7 @@
             }
             return [box(cx - w * 0.42, o.topY + w * 0.3, w * 0.84, Math.max(0, o.lavaTop - o.topY)), circle(cx, o.topY + w * 0.35, w * 0.45)];
         }
-        if (o.behaviour === 'bomb') {
+        if (o.behaviour === 'bomb' || o.behaviour === 'meteor') {
             return [circle(o.x + o.size / 2, o.y + o.size * 0.45, o.size * 0.29)];
         }
         switch (o.type) {

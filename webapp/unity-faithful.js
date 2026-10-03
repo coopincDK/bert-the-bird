@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-27';
+    const BUILD_VERSION = 'worlds-relay-28';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -251,7 +251,9 @@
         poop: { name: T('Fugleklat'), card: T('SPIS & KLAT'), obstacles: {
             poopBerry: 'food-berry', poopCrumb: 'food-crumb', poopFries: 'food-fries', poopDrop: 'poop-drop',
             poopSplat1: 'poop-splat-1', poopSplat2: 'poop-splat-2', poopCar: 'target-car', poopCabrio: 'target-cabrio',
-            poopIcecream: 'target-icecream', poopStatue: 'target-statue' } },
+            poopIcecream: 'target-icecream', poopStatue: 'target-statue', poopGold: 'target-gold-car',
+            poopUmbrellaOpen: 'target-umbrella-open', poopUmbrellaClosed: 'target-umbrella-closed', poopLaundry: 'target-laundry',
+            poopMeterIcon: 'poop-meter-icon', poopMeterFrame: 'poop-meter-frame' } },
     });
     // bg1 ends just inside bg2's solid band, so no seam shows between them.
     const ADVENTURE_BG1_Y = Object.freeze({ iceberg: 310, harbor: 335, nightcity: 350, volcano: 361, windfarm: 238, poop: 250 });
@@ -576,10 +578,10 @@
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
     const EPIC_HEROES = Object.freeze({
-        epicMalthe: { folder: null, standIn: 'eagle' },
-        epicJohan: { folder: null, standIn: 'block' },
-        epicSos: { folder: null, standIn: 'sugar' },
-        epicThor: { folder: null, standIn: 'mecha' },
+        epicMalthe: { folder: 'epic-malthe', standIn: 'eagle' },
+        epicJohan: { folder: 'epic-johan', standIn: 'block' },
+        epicSos: { folder: 'epic-sos', standIn: 'sugar' },
+        epicThor: { folder: 'epic-thor', standIn: 'mecha' },
         epicFan: { folder: 'fanbert', standIn: 'bert' },
         epicCoop: { folder: 'coopinc', standIn: 'bert' },
     });
@@ -601,10 +603,10 @@
         ninja: 'assets/ninjabert/up.webp',
         pakke: 'assets/pakkeb/up.webp',
         gold: 'assets/goldbert/up.webp',
-        epicMalthe: 'assets/skyclaw/up.webp',
-        epicJohan: 'assets/klodsbert/up.webp',
-        epicSos: 'assets/sugarrush/up.webp',
-        epicThor: 'assets/mechabert/up.webp',
+        epicMalthe: 'assets/epic-malthe/up.webp',
+        epicJohan: 'assets/epic-johan/up.webp',
+        epicSos: 'assets/epic-sos/up.webp',
+        epicThor: 'assets/epic-thor/up.webp',
         epicFan: 'assets/fanbert/up.webp',
         epicCoop: 'assets/coopinc/up.webp',
     });
@@ -1734,7 +1736,8 @@
             // Isbjerget: on slippery ice Bert answers slowly and keeps gliding.
             // A frost crystal gives normal grip for a short while.
             if (currentLevel.kind === 'iceberg' && state.phase === 'playing' && state.elapsed >= (state.gripUntil || 0)) {
-                const grip = 1 - Math.exp(-delta * clamp(3.4 - state.difficulty * 0.5, 2.1, 3.4));
+                // Time constant ~0.12 s at the start, ~0.17 s late: a soft glide, never sluggish.
+                const grip = 1 - Math.exp(-delta * clamp(8.5 - state.difficulty * 1.2, 6, 8.5));
                 bird.velocity = previousVelocity + (bird.velocity - previousVelocity) * grip;
             }
         }
@@ -2075,10 +2078,10 @@
     const TARGET_TYPES = Object.freeze({
         car: { width: 190, height: 100, value: 1, drive: [40, 120] },
         cabrio: { width: 190, height: 94, value: 2, drive: [60, 140] },
-        gold: { width: 200, height: 90, value: 3, drive: [140, 220] },
+        gold: { width: 210, height: 77, value: 3, drive: [140, 220] },
         statue: { width: 110, height: 190, value: 1, drive: [0, 0] },
         icecream: { width: 116, height: 150, value: 2, drive: [0, 30] },
-        umbrella: { width: 120, height: 170, value: 2, drive: [0, 25] },
+        umbrella: { width: 120, height: 160, value: 2, drive: [0, 25] },
     });
     function spawnPoopEncounter(x, id) {
         const roll = gameRandom();
@@ -2094,8 +2097,10 @@
                 const top = randomBetween(360, 470);
                 obstacles.push({ kind: 'poop-hazard', type: 'lamp', id, x: x + 330, y: top, width: 40, height: VIEW.height - top + 40, harmful: true, age: 0 });
             } else {
-                const h = randomBetween(150, 240);
-                obstacles.push({ kind: 'poop-hazard', type: 'laundry', id, x: x + 300, y: 0, width: 260, height: h, harmful: true, age: 0 });
+                // Art content 432×163: the hit box is the washing itself, hung at a varying height.
+                const width = 300;
+                const height = Math.round(width * 163 / 432);
+                obstacles.push({ kind: 'poop-hazard', type: 'laundry', id, x: x + 300, y: randomBetween(40, 150), width, height, harmful: true, age: 0 });
             }
         }
         const foods = 1 + Math.floor(gameRandom() * 2);
@@ -2210,11 +2215,20 @@
         });
         ctx.globalAlpha = 1;
         // Klat meter under the pause button.
-        ctx.fillStyle = 'rgba(8, 16, 30, .78)';
-        ctx.fillRect(24, 112, 186, 26);
-        for (let i = 0; i < POOP_MAX; i += 1) {
-            ctx.fillStyle = i < state.poopMeter ? '#ffffff' : 'rgba(255,255,255,.18)';
-            ctx.beginPath(); ctx.ellipse(42 + i * 29, 125, 9, 10, 0, 0, Math.PI * 2); ctx.fill();
+        if (assets.poopMeterFrame?.naturalWidth) {
+            ctx.drawImage(assets.poopMeterFrame, 38, 21, 436, 53, 60, 108, 220, 34);
+            if (assets.poopMeterIcon?.naturalWidth) ctx.drawImage(assets.poopMeterIcon, 18, 100, 50, 50);
+            for (let i = 0; i < POOP_MAX; i += 1) {
+                ctx.fillStyle = i < state.poopMeter ? '#ffffff' : 'rgba(255,255,255,.16)';
+                ctx.beginPath(); ctx.ellipse(92 + i * 31, 125, 9, 10, 0, 0, Math.PI * 2); ctx.fill();
+            }
+        } else {
+            ctx.fillStyle = 'rgba(8, 16, 30, .78)';
+            ctx.fillRect(24, 112, 186, 26);
+            for (let i = 0; i < POOP_MAX; i += 1) {
+                ctx.fillStyle = i < state.poopMeter ? '#ffffff' : 'rgba(255,255,255,.18)';
+                ctx.beginPath(); ctx.ellipse(42 + i * 29, 125, 9, 10, 0, 0, Math.PI * 2); ctx.fill();
+            }
         }
         if (state.elapsed < (state.poopMessageUntil || 0) && state.poopMessage) {
             ctx.font = '900 34px "Bert Rounded", sans-serif';
@@ -2234,8 +2248,22 @@
         cabrio: { key: 'poopCabrio', box: [40, 149, 472, 362] },
         icecream: { key: 'poopIcecream', box: [89, 41, 422, 471] },
         statue: { key: 'poopStatue', box: [135, 41, 377, 471] },
+        gold: { key: 'poopGold', box: [41, 177, 472, 335] },
     });
     function drawTarget(target) {
+        if (target.type === 'umbrella') {
+            const open = umbrellaOpen(target);
+            const key = open ? 'poopUmbrellaOpen' : 'poopUmbrellaClosed';
+            const box = open ? [94, 40, 409, 472] : [120, 53, 418, 468];
+            if (assets[key]?.naturalWidth) {
+                // Keep the person's feet on the same spot in both frames.
+                const scale = target.height / (box[3] - box[1]);
+                const width = (box[2] - box[0]) * scale;
+                ctx.drawImage(assets[key], box[0], box[1], box[2] - box[0], box[3] - box[1],
+                    target.x + target.width / 2 - width / 2, target.y, width, target.height);
+                return;
+            }
+        }
         const art = TARGET_ART[target.type];
         if (art && assets[art.key]?.naturalWidth) {
             const [x0, y0, x1, y1] = art.box;
@@ -2316,6 +2344,14 @@
             ctx.fillRect(hazard.x + 12, hazard.y + 30, 16, hazard.height); ctx.strokeRect(hazard.x + 12, hazard.y + 30, 16, hazard.height);
             ctx.fillStyle = '#ffe28a';
             ctx.beginPath(); ctx.arc(hazard.x + 20, hazard.y + 22, 20, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        } else if (assets.poopLaundry?.naturalWidth) {
+            ctx.strokeStyle = '#2b2b2b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(hazard.x + 4, -10); ctx.lineTo(hazard.x + 4, hazard.y + 12);
+            ctx.moveTo(hazard.x + hazard.width - 4, -10); ctx.lineTo(hazard.x + hazard.width - 4, hazard.y + 12);
+            ctx.stroke();
+            ctx.drawImage(assets.poopLaundry, 40, 174, 432, 163, hazard.x, hazard.y, hazard.width, hazard.height);
         } else {
             ctx.strokeStyle = '#2b2b2b';
             ctx.lineWidth = 3;
@@ -3810,13 +3846,13 @@
             drawLavaColumn(o);
             return;
         }
-        if (o.behaviour === 'bomb') {
+        if (o.behaviour === 'bomb' || o.behaviour === 'meteor') {
             if (o.phase !== 'fly') return;
             ctx.save();
             if (assets.volcSmoke?.naturalWidth) {
                 ctx.globalAlpha = 0.75;
                 const trailX = o.x + o.size * 0.75;
-                const trailY = o.y + o.size * (o.vy > 0 ? 0.1 : 0.7);
+                const trailY = o.behaviour === 'meteor' ? o.y - o.size * 0.35 : o.y + o.size * (o.vy > 0 ? 0.1 : 0.7);
                 ctx.drawImage(assets.volcSmoke, trailX - o.size * 0.2, trailY - o.size * 0.35, o.size * 0.95, o.size * 0.95);
                 ctx.globalAlpha = 1;
                 ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
