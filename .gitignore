@@ -1,0 +1,22 @@
+# Never commit runtime data, credentials or generated caches.
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.env
+.env.*
+*.sqlite
+*.sqlite3
+*.sqlite3-*
+*.db
+*.db-*
+*.zip
+*.log
+node_modules/
+.DS_Store
+Thumbs.db
+BertTheBird/Library/
+BertTheBird/Temp/
+BertTheBird/Obj/
+BertTheBird/Logs/
+BertTheBird/UserSettings/
+# Unity Assets/ ARE intentionally included in this complete source bundle.

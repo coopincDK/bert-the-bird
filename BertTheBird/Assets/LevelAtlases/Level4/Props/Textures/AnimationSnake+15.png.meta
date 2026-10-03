@@ -1,0 +1,246 @@
+fileFormatVersion: 2
+guid: e121f81c8bb90b043aa21dee4216b17d
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: AnimationSnake+15
+    21300002: AnimationSnake+15_0
+    21300004: AnimationSnake+15_1
+    21300006: AnimationSnake+15_2
+    21300008: AnimationSnake+15_3
+    21300010: AnimationSnake+15_4
+    21300012: AnimationSnake+15_5
+    21300014: AnimationSnake+15_6
+    21300016: AnimationSnake+15_7
+    21300018: AnimationSnake+15_8
+    21300020: AnimationSnake+15_9
+    21300022: AnimationSnake+15_10
+    21300024: AnimationSnake+15_11
+    21300026: AnimationSnake+15_13
+    21300028: AnimationSnake+15_14
+    21300030: AnimationSnake+15_12
+    21300032: AnimationSnake+15_15
+    21300034: AnimationSnake+15_16
+    21300036: AnimationSnake+15_17
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: .25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  seamlessCubemap: 0
+  textureFormat: -3
+  maxTextureSize: 1024
+  textureSettings:
+    filterMode: -1
+    aniso: 1
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: .5, y: .5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 60
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: AnimationSnake+15_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 904
+        width: 76
+        height: 119
+      alignment: 9
+      pivot: {x: .796506524, y: .00307278684}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_1
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 901
+        width: 76
+        height: 122
+      alignment: 9
+      pivot: {x: .794319928, y: .00522300834}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_2
+      rect:
+        serializedVersion: 2
+        x: 152
+        y: 901
+        width: 76
+        height: 122
+      alignment: 9
+      pivot: {x: .796779633, y: .00497536594}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_3
+      rect:
+        serializedVersion: 2
+        x: 228
+        y: 901
+        width: 76
+        height: 122
+      alignment: 9
+      pivot: {x: .79649353, y: .00415589381}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_4
+      rect:
+        serializedVersion: 2
+        x: 304
+        y: 908
+        width: 75
+        height: 115
+      alignment: 9
+      pivot: {x: .805761695, y: .00334897242}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_5
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 779
+        width: 76
+        height: 117
+      alignment: 9
+      pivot: {x: .792991161, y: .00528084533}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_6
+      rect:
+        serializedVersion: 2
+        x: 76
+        y: 790
+        width: 81
+        height: 106
+      alignment: 9
+      pivot: {x: .80653888, y: .00327401794}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_7
+      rect:
+        serializedVersion: 2
+        x: 158
+        y: 732
+        width: 95
+        height: 164
+      alignment: 9
+      pivot: {x: .835114181, y: .0031760612}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_8
+      rect:
+        serializedVersion: 2
+        x: 253
+        y: 694
+        width: 104
+        height: 203
+      alignment: 9
+      pivot: {x: .849016309, y: .00167290447}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_9
+      rect:
+        serializedVersion: 2
+        x: 357
+        y: 656
+        width: 131
+        height: 241
+      alignment: 9
+      pivot: {x: .880723298, y: .0014635775}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_10
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 384
+        width: 127
+        height: 272
+      alignment: 9
+      pivot: {x: .877172887, y: .00200866256}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_11
+      rect:
+        serializedVersion: 2
+        x: 127
+        y: 361
+        width: 139
+        height: 295
+      alignment: 9
+      pivot: {x: .721736133, y: .874617457}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_12
+      rect:
+        serializedVersion: 2
+        x: 267
+        y: 361
+        width: 139
+        height: 295
+      alignment: 9
+      pivot: {x: .774577379, y: .875242293}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_13
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 189
+        width: 195
+        height: 172
+      alignment: 9
+      pivot: {x: .618949056, y: .734221339}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_14
+      rect:
+        serializedVersion: 2
+        x: 198
+        y: 261
+        width: 184
+        height: 99
+      alignment: 9
+      pivot: {x: .592886388, y: .487668127}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_15
+      rect:
+        serializedVersion: 2
+        x: 383
+        y: 281
+        width: 110
+        height: 78
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_16
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 104
+        width: 158
+        height: 85
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: AnimationSnake+15_17
+      rect:
+        serializedVersion: 2
+        x: 379
+        y: 897
+        width: 77
+        height: 126
+      alignment: 9
+      pivot: {x: .799118638, y: .00409274641}
+      border: {x: 0, y: 0, z: 0, w: 0}
+  spritePackingTag: 
+  userData: 

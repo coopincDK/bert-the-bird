@@ -1,0 +1,28 @@
+fileFormatVersion: 2
+guid: b80400677599d4d408d7417e2786cadc
+labels:
+- Architecture
+- Audio
+- Character
+- Concrete
+- Effect
+- Ground
+- Prop
+- Road
+- Sky
+- Terrain
+- Vegetation
+- Vehicle
+- Wall
+- Water
+- Weapon
+AudioImporter:
+  serializedVersion: 4
+  format: 0
+  quality: .5
+  stream: 2
+  3D: 0
+  forceToMono: 1
+  useHardware: 0
+  loopable: 0
+  userData: 

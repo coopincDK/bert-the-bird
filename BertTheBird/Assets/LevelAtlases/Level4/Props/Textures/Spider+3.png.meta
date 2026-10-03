@@ -1,0 +1,290 @@
+fileFormatVersion: 2
+guid: ea96eb4091b4b7b4da279eeb6df7b6bd
+TextureImporter:
+  fileIDToRecycleName:
+    21300000: Spider+3
+    21300002: Spider+3_0
+    21300004: Spider+3_1
+    21300006: Spider+3_2
+    21300008: Spider+3_3
+    21300010: Spider+3_4
+    21300012: Spider+3_5
+    21300014: Spider+3_6
+    21300016: Spider+3_7
+    21300018: Spider+3_8
+    21300020: Spider+3_9
+    21300022: Spider+3_10
+    21300024: Spider+3_11
+    21300026: Spider+3_12
+    21300028: Spider+3_13
+    21300030: Spider+3_14
+    21300032: Spider+3_15
+    21300034: Spider+3_16
+    21300036: Spider+3_17
+    21300038: Spider+3_18
+    21300040: Spider+3_19
+    21300042: Spider+3_20
+    21300044: Spider+3_21
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: .25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 1024
+  textureSettings:
+    filterMode: -1
+    aniso: 1
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: .5, y: .5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 80
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: Spider+3_0
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 936
+        width: 124
+        height: 87
+      alignment: 9
+      pivot: {x: .0108540952, y: .648364544}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_1
+      rect:
+        serializedVersion: 2
+        x: 124
+        y: 936
+        width: 124
+        height: 87
+      alignment: 9
+      pivot: {x: .010483834, y: .645977139}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_2
+      rect:
+        serializedVersion: 2
+        x: 248
+        y: 936
+        width: 124
+        height: 87
+      alignment: 9
+      pivot: {x: .0132532427, y: .650176644}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_3
+      rect:
+        serializedVersion: 2
+        x: 372
+        y: 958
+        width: 125
+        height: 66
+      alignment: 9
+      pivot: {x: .0118845217, y: .372832328}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_4
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 869
+        width: 125
+        height: 66
+      alignment: 9
+      pivot: {x: .0143709453, y: .371010512}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_5
+      rect:
+        serializedVersion: 2
+        x: 125
+        y: 869
+        width: 125
+        height: 66
+      alignment: 9
+      pivot: {x: .0110632936, y: .372494787}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_6
+      rect:
+        serializedVersion: 2
+        x: 250
+        y: 855
+        width: 125
+        height: 80
+      alignment: 9
+      pivot: {x: .0127081303, y: .478632361}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_7
+      rect:
+        serializedVersion: 2
+        x: 375
+        y: 845
+        width: 120
+        height: 90
+      alignment: 9
+      pivot: {x: .0124242147, y: .534206152}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_8
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 759
+        width: 120
+        height: 85
+      alignment: 9
+      pivot: {x: .012499976, y: .511764705}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_9
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 758
+        width: 120
+        height: 86
+      alignment: 9
+      pivot: {x: .0111032482, y: .517106891}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_10
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 753
+        width: 120
+        height: 91
+      alignment: 9
+      pivot: {x: .0103658037, y: .542529404}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_11
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 753
+        width: 120
+        height: 91
+      alignment: 9
+      pivot: {x: .0123204552, y: .543817878}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_12
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 659
+        width: 120
+        height: 94
+      alignment: 9
+      pivot: {x: .0116785448, y: .55986768}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_13
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 659
+        width: 120
+        height: 94
+      alignment: 9
+      pivot: {x: .012146187, y: .557485402}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_14
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 656
+        width: 120
+        height: 97
+      alignment: 9
+      pivot: {x: .0108333584, y: .572164953}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_15
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 631
+        width: 120
+        height: 122
+      alignment: 9
+      pivot: {x: .0126103722, y: .66017729}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_16
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 470
+        width: 120
+        height: 160
+      alignment: 9
+      pivot: {x: .0105876355, y: .741886914}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_17
+      rect:
+        serializedVersion: 2
+        x: 120
+        y: 469
+        width: 120
+        height: 161
+      alignment: 9
+      pivot: {x: .0128430044, y: .744586825}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_18
+      rect:
+        serializedVersion: 2
+        x: 240
+        y: 470
+        width: 120
+        height: 160
+      alignment: 9
+      pivot: {x: .0128429411, y: .741886914}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_19
+      rect:
+        serializedVersion: 2
+        x: 360
+        y: 471
+        width: 120
+        height: 159
+      alignment: 9
+      pivot: {x: .0117151896, y: .740004063}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_20
+      rect:
+        serializedVersion: 2
+        x: 1
+        y: 319
+        width: 121
+        height: 148
+      alignment: 9
+      pivot: {x: .004003176, y: .700721562}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Spider+3_21
+      rect:
+        serializedVersion: 2
+        x: 122
+        y: 149
+        width: 389
+        height: 318
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+  spritePackingTag: 
+  userData: 

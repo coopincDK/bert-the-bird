@@ -1,0 +1,29 @@
+{
+  "id": "./",
+  "name": "Bert The Bird",
+  "short_name": "Bert",
+  "description": "Det originale Bert The Bird genskabt som installérbart browserspil.",
+  "lang": "da",
+  "dir": "ltr",
+  "start_url": "./?source=installed",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#63cce1",
+  "theme_color": "#c50f38",
+  "categories": ["games", "entertainment"],
+  "icons": [
+    {
+      "src": "icons/bert-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/bert-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

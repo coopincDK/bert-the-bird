@@ -1,0 +1,316 @@
+fileFormatVersion: 2
+guid: 569f3290d189dc9458d23a4dad5a1dc3
+TextureImporter:
+  serializedVersion: 2
+  mipmaps:
+    mipMapMode: 0
+    enableMipMap: 0
+    linearTexture: 0
+    correctGamma: 0
+    fadeOut: 0
+    borderMipMap: 0
+    mipMapFadeDistanceStart: 1
+    mipMapFadeDistanceEnd: 3
+  bumpmap:
+    convertToNormalMap: 0
+    externalNormalMap: 0
+    heightScale: .25
+    normalMapFilter: 0
+  isReadable: 0
+  grayScaleToAlpha: 0
+  generateCubemap: 0
+  seamlessCubemap: 0
+  textureFormat: -1
+  maxTextureSize: 1024
+  textureSettings:
+    filterMode: -1
+    aniso: 1
+    mipBias: -1
+    wrapMode: 1
+  nPOTScale: 0
+  lightmap: 0
+  compressionQuality: 50
+  spriteMode: 2
+  spriteExtrude: 1
+  spriteMeshType: 1
+  alignment: 0
+  spritePivot: {x: .5, y: .5}
+  spriteBorder: {x: 0, y: 0, z: 0, w: 0}
+  spritePixelsToUnits: 70
+  alphaIsTransparency: 1
+  textureType: 8
+  buildTargetSettings: []
+  spriteSheet:
+    sprites:
+    - name: Pipe_Purple_Top
+      rect:
+        serializedVersion: 2
+        x: 3
+        y: 788
+        width: 153
+        height: 45
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Yellow_Top
+      rect:
+        serializedVersion: 2
+        x: 158
+        y: 788
+        width: 153
+        height: 45
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Blue_Top
+      rect:
+        serializedVersion: 2
+        x: 313
+        y: 788
+        width: 153
+        height: 45
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Red_Top
+      rect:
+        serializedVersion: 2
+        x: 468
+        y: 788
+        width: 153
+        height: 45
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Green_Top
+      rect:
+        serializedVersion: 2
+        x: 623
+        y: 788
+        width: 153
+        height: 45
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Yellow
+      rect:
+        serializedVersion: 2
+        x: 170
+        y: 439
+        width: 129
+        height: 349
+      alignment: 2
+      pivot: {x: .5, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Blue
+      rect:
+        serializedVersion: 2
+        x: 325
+        y: 439
+        width: 129
+        height: 349
+      alignment: 2
+      pivot: {x: .5, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Red
+      rect:
+        serializedVersion: 2
+        x: 480
+        y: 439
+        width: 129
+        height: 349
+      alignment: 2
+      pivot: {x: .5, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Green
+      rect:
+        serializedVersion: 2
+        x: 635
+        y: 439
+        width: 129
+        height: 349
+      alignment: 2
+      pivot: {x: .5, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Pipe_Purple
+      rect:
+        serializedVersion: 2
+        x: 15
+        y: 439
+        width: 129
+        height: 349
+      alignment: 2
+      pivot: {x: .5, y: 1}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Rainbow
+      rect:
+        serializedVersion: 2
+        x: 0
+        y: 2
+        width: 919
+        height: 433
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: L_Eye_Open1
+      rect:
+        serializedVersion: 2
+        x: 805
+        y: 773
+        width: 48
+        height: 50
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: R_Eye_Open_1
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 773
+        width: 48
+        height: 50
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: L_Eye_Open2
+      rect:
+        serializedVersion: 2
+        x: 805
+        y: 724
+        width: 48
+        height: 49
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: R_Eye_Open_2
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 724
+        width: 48
+        height: 49
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: L_Eye_Open3
+      rect:
+        serializedVersion: 2
+        x: 805
+        y: 671
+        width: 48
+        height: 53
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: R_Eye_Open3
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 671
+        width: 48
+        height: 53
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: L_Eye_Closed1
+      rect:
+        serializedVersion: 2
+        x: 805
+        y: 651
+        width: 48
+        height: 20
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: R_Eye_Closed1
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 651
+        width: 48
+        height: 20
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: L_Eye_Closed2
+      rect:
+        serializedVersion: 2
+        x: 799
+        y: 630
+        width: 54
+        height: 21
+      alignment: 9
+      pivot: {x: .551477492, y: .513936341}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: R_Eye_Closed2
+      rect:
+        serializedVersion: 2
+        x: 853
+        y: 630
+        width: 54
+        height: 21
+      alignment: 9
+      pivot: {x: .443102807, y: .520903111}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Mouth1
+      rect:
+        serializedVersion: 2
+        x: 829
+        y: 597
+        width: 39
+        height: 18
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Mouth2
+      rect:
+        serializedVersion: 2
+        x: 829
+        y: 581
+        width: 39
+        height: 16
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Mouth3
+      rect:
+        serializedVersion: 2
+        x: 829
+        y: 564
+        width: 39
+        height: 17
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Mouth4
+      rect:
+        serializedVersion: 2
+        x: 829
+        y: 551
+        width: 39
+        height: 13
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Mouth5
+      rect:
+        serializedVersion: 2
+        x: 829
+        y: 537
+        width: 39
+        height: 14
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+    - name: Rainbow2
+      rect:
+        serializedVersion: 2
+        x: 776
+        y: 440
+        width: 104
+        height: 39
+      alignment: 0
+      pivot: {x: .5, y: .5}
+      border: {x: 0, y: 0, z: 0, w: 0}
+  spritePackingTag: 
+  userData: 
