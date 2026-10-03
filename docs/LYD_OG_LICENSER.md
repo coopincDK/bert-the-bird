@@ -37,7 +37,7 @@ Lavet af Martin René Mortensen med Suno på SmartPacks betalte Pro-abonnement (
 | `assets/music/harbor.mp3` | "Harbor" (uploadet fil) | 3. okt. 2026 | Havnen |
 | `assets/music/nightcity.mp3` | "Nightcity" (uploadet fil) | 3. okt. 2026 | Nattebyen |
 | `assets/music/volcano.mp3` | "Volcano", https://suno.com/song/47036ce6-d447-47d6-8d09-dc9c146387a3 | 3. okt. 2026 | Vulkanen |
-| `assets/music/windfarm.mp3` | "Windfarm" (uploadet fil) | 3. okt. 2026 | Vindmøller |
+| `assets/music/windfarm.mp3` | "Windfarm", https://suno.com/song/30784f08-6a0b-4cdb-93a9-7b974f0a9b2a | 3. okt. 2026 | Vindmøller |
 | `assets/music/poop.mp3` | "Poop", https://suno.com/song/37c9c978-8cb3-40ff-898c-fd3a836d5849 | 3. okt. 2026 | Fugleklat |
 
 Al gammel musik med ukendt kilde (Unity 2014, Manus-perioden og Chopin-indspilningen) er slettet. Spillet bruger nu kun egen Suno-musik og egne lydeffekter.
