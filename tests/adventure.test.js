@@ -41,7 +41,7 @@ for (const theme of A.THEMES) {
 }
 
 // Drop, dive and rise hazards warn before they move.
-for (const [theme, type] of [['iceberg', 'ice-stalactite'], ['harbor', 'diving-gull'], ['volcano', 'lava-bubble']]) {
+for (const [theme, type] of [['iceberg', 'ice-stalactite'], ['volcano', 'lava-bubble']]) {
     let found = null;
     for (let index = 0; index < 200 && !found; index += 1) {
         found = A.createEncounter(theme, index, 1400, random, 1).obstacles.find((o) => o.type === type);
@@ -57,5 +57,22 @@ for (const [theme, type] of [['iceberg', 'ice-stalactite'], ['harbor', 'diving-g
     }
     assert(warned, `${type} shows a warning`);
     assert(!movedBeforeWarning, `${type} never moves before its warning`);
+}
+// Harbor container stacks blink before the gap moves.
+{
+    let stack = null;
+    for (let index = 0; index < 200 && !stack; index += 1) {
+        stack = A.createEncounter('harbor', index, 1400, random, 1).obstacles.find((o) => o.behaviour === 'stack' && !o.stackTop);
+    }
+    assert(stack, 'container stack spawns');
+    let warned = false;
+    let movedEarly = false;
+    for (let step = 0; step < 240; step += 1) {
+        A.advance(stack, 1 / 60, { ...env, scroll: 900 / 60 });
+        if (stack.warn > 0) warned = true;
+        if (!warned && stack.offset !== 0) movedEarly = true;
+    }
+    assert(warned && !movedEarly, 'stack warns before it moves');
+    assert(Math.abs(stack.offset) > 0, 'stack does move');
 }
 console.log('Adventure worlds: passable encounters, honest hit shapes, warnings first: PASS');

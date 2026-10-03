@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-24';
+    const BUILD_VERSION = 'worlds-relay-25';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1433,6 +1433,8 @@
         state.nextFeatherAt = 35 + gameRandom() * 25;
         state.lavaTop = LAVA_START;
         state.gripUntil = 0;
+        state.light = 1;
+        state.nextLanternAt = 5;
         state.nextCrystalAt = 7;
         state.gust = null;
         state.nextGustAt = 6;
@@ -1535,6 +1537,10 @@
                 ? T('PAS PÅ VINDSTØD · PILENE VISER VEJEN')
             : currentLevel.kind === 'volcano'
                 ? T('LAVAEN STIGER · SAML KØLESTEN')
+            : currentLevel.kind === 'nightcity'
+                ? T('LYSET SLUKKER LANGSOMT · SAML LANTERNER')
+            : currentLevel.kind === 'harbor'
+                ? T('CONTAINERNE FLYTTER SIG · PAS PÅ MÅGERNE')
             : currentLevel.kind === 'tunnel'
                 ? T`${currentLevel.cardText} · VENSTRE OP · HØJRE NED`
                 : T('VENSTRE SIDE = OP · HØJRE SIDE = NED');
@@ -1915,6 +1921,12 @@
                     collectible.collected = true;
                     if (collectible.kind === 'powerup') activatePowerup(collectible.type);
                     else if (collectible.kind === 'feather') collectFeather(collectible);
+                    else if (collectible.kind === 'lantern') {
+                        state.light = Math.min(1, (state.light ?? 0) + 0.38);
+                        playAudio('point');
+                        BertMeta.haptic('star');
+                        burst(collectible.x, collectible.y, '#ffe39a', 14);
+                    }
                     else if (collectible.kind === 'crystal') {
                         state.gripUntil = state.elapsed + 5;
                         playAudio('point');
@@ -2927,6 +2939,7 @@
             updateObjects(delta);
             updateVolcanoLava(delta);
             updateIceAndWind(delta);
+            updateNightLight(delta);
             updateHud();
             return;
         }
@@ -3421,6 +3434,21 @@
             ctx.fillText('!', spot.x, spot.y + 12);
             ctx.restore();
         }
+        if (o.behaviour === 'stack') {
+            drawContainerStack(o);
+            return;
+        }
+        if (o.behaviour === 'flock') {
+            if (!image?.naturalWidth) return;
+            ctx.save();
+            // Source art faces left already; small, quick wingbeat by squashing.
+            ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
+            ctx.rotate(o.angle);
+            ctx.scale(1, 0.85 + Math.abs(Math.sin(o.age * 12)) * 0.15);
+            ctx.drawImage(image, -o.size / 2, -o.size / 2, o.size, o.size);
+            ctx.restore();
+            return;
+        }
         if (o.behaviour === 'column') {
             if (o.palette === 'smoke') {
                 const resting = o.fromTop ? o.topY <= o.lavaTop + 4 : o.topY >= o.lavaTop - 4;
@@ -3550,6 +3578,52 @@
             ctx.beginPath();
             ctx.arc(cx + Math.cos(angle) * w * 0.7, top + Math.sin(angle * 1.3) * 10 - 6, 6 + (i % 2) * 3, 0, Math.PI * 2);
             ctx.fill();
+        }
+        ctx.restore();
+    }
+
+    const CONTAINER_COLORS = [['#c8402f', '#8e2519'], ['#2f6fc8', '#1c4485'], ['#3a9a4f', '#226433']];
+    function drawContainerStack(o) {
+        const edge = o.gapTop + o.offset;
+        const h = 104;
+        ctx.save();
+        const drawBox = (y, colorIndex) => {
+            const [main, dark] = CONTAINER_COLORS[colorIndex];
+            ctx.fillStyle = main;
+            ctx.strokeStyle = '#1b2230';
+            ctx.lineWidth = 4;
+            ctx.fillRect(o.x + 6, y, o.width - 12, h - 4);
+            ctx.strokeRect(o.x + 6, y, o.width - 12, h - 4);
+            ctx.strokeStyle = dark;
+            ctx.lineWidth = 5;
+            for (let rib = o.x + 26; rib < o.x + o.width - 20; rib += 20) {
+                ctx.beginPath(); ctx.moveTo(rib, y + 10); ctx.lineTo(rib, y + h - 14); ctx.stroke();
+            }
+        };
+        if (o.stackTop) {
+            let index = 0;
+            for (let y = edge - h; y > -h; y -= h) drawBox(y, o.colors[index++ % o.colors.length]);
+            // Crane cable above the hanging stack.
+            ctx.strokeStyle = 'rgba(30, 34, 44, .9)';
+            ctx.lineWidth = 4;
+            ctx.beginPath(); ctx.moveTo(o.x + o.width / 2, -10); ctx.lineTo(o.x + o.width / 2, 0); ctx.stroke();
+        } else {
+            let index = 0;
+            for (let y = edge + o.gap; y < VIEW.height + h; y += h) drawBox(y, o.colors[index++ % o.colors.length]);
+        }
+        // The warning beacon blinks on the bottom stack's top corner.
+        if (!o.stackTop && o.phase !== 'done') {
+            const on = o.phase === 'warn' || o.phase === 'move' ? Math.sin(state.worldTime * 22) > 0 : false;
+            ctx.fillStyle = on ? '#ffb02e' : '#7a5a2a';
+            ctx.strokeStyle = '#1b2230';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.arc(o.x + o.width - 26, edge + o.gap - 12, 11, 0, Math.PI * 2);
+            ctx.fill(); ctx.stroke();
+            if (on) {
+                ctx.globalAlpha = 0.35;
+                ctx.beginPath(); ctx.arc(o.x + o.width - 26, edge + o.gap - 12, 30, 0, Math.PI * 2); ctx.fill();
+            }
         }
         ctx.restore();
     }
@@ -3750,17 +3824,73 @@
     }
 
     // Nattebyen: darkness away from Bert. Hazards have glowing rims and stay readable.
+    // Nattebyen: the light around Bert is a resource. It drains slowly and
+    // lanterns fill it up. Hazards keep a faint glowing outline in the dark.
+    function updateNightLight(delta) {
+        if (currentLevel.kind !== 'nightcity' || state.phase !== 'playing') return;
+        state.light = Math.max(0, state.light - delta * clamp(0.028 + state.difficulty * 0.008, 0.028, 0.05));
+        if (state.elapsed >= state.nextLanternAt) {
+            collectibles.push({ x: VIEW.width + 140, y: randomBetween(160, 560), width: 70, height: 70, kind: 'lantern', spin: 0, age: 0, collected: false });
+            state.nextLanternAt = state.elapsed + 6 + gameRandom() * 4;
+        }
+    }
+
     function drawNightDarkness() {
         if (currentLevel.kind !== 'nightcity' || !['prewarm', 'playing', 'dead'].includes(state.phase)) return;
         const centerX = bird.x + BIRD.width / 2;
         const centerY = bird.y + BIRD.height / 2;
-        const strength = clamp(0.42 + (state.difficulty - 0.6) * 0.14, 0.42, 0.66);
-        const gradient = ctx.createRadialGradient(centerX, centerY, 150, centerX, centerY, 620);
+        const light = state.light ?? 1;
+        const inner = lerp(110, 260, light);
+        const outer = lerp(330, 700, light);
+        const strength = lerp(0.86, 0.5, light);
+        const gradient = ctx.createRadialGradient(centerX, centerY, inner, centerX, centerY, outer);
         gradient.addColorStop(0, 'rgba(4, 6, 24, 0)');
         gradient.addColorStop(1, `rgba(4, 6, 24, ${strength})`);
         ctx.save();
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, VIEW.width, VIEW.height);
+        // Faint rims so nothing lethal is ever fully invisible.
+        ctx.strokeStyle = 'rgba(140, 220, 255, .38)';
+        ctx.lineWidth = 2;
+        obstacles.filter((obstacle) => obstacle.harmful).forEach((obstacle) => {
+            BertCollision.obstacleShapes(obstacle).forEach((shape) => {
+                ctx.beginPath();
+                if (shape.type === 'circle') ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
+                else if (shape.type === 'segment') { ctx.moveTo(shape.x1, shape.y1); ctx.lineTo(shape.x2, shape.y2); }
+                else ctx.rect(shape.x, shape.y, shape.width, shape.height);
+                ctx.stroke();
+            });
+        });
+        // Lanterns glow through the dark too.
+        collectibles.filter((item) => item.kind === 'lantern').forEach(drawLantern);
+        // Light meter under the pause button.
+        ctx.fillStyle = 'rgba(8, 16, 30, .75)';
+        ctx.fillRect(24, 74, 168, 18);
+        ctx.fillStyle = light > 0.3 ? '#ffd56b' : '#ff8a4a';
+        ctx.fillRect(27, 77, 162 * light, 12);
+        ctx.restore();
+    }
+
+    function drawLantern(collectible) {
+        ctx.save();
+        ctx.translate(collectible.x, collectible.y + Math.sin(collectible.spin) * 4);
+        const glow = ctx.createRadialGradient(0, 0, 6, 0, 0, 64);
+        glow.addColorStop(0, 'rgba(255, 220, 120, .95)');
+        glow.addColorStop(1, 'rgba(255, 200, 90, 0)');
+        ctx.fillStyle = glow;
+        ctx.beginPath(); ctx.arc(0, 0, 64, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = '#ffcf5a';
+        ctx.strokeStyle = '#3a2410';
+        ctx.lineWidth = 4;
+        ctx.beginPath();
+        ctx.ellipse(0, 0, 20, 26, 0, 0, Math.PI * 2);
+        ctx.fill(); ctx.stroke();
+        ctx.strokeStyle = '#c4572a';
+        ctx.lineWidth = 3;
+        ctx.beginPath(); ctx.moveTo(-20, -6); ctx.lineTo(20, -6); ctx.moveTo(-20, 8); ctx.lineTo(20, 8); ctx.stroke();
+        ctx.fillStyle = '#3a2410';
+        ctx.fillRect(-9, -32, 18, 7);
+        ctx.fillRect(-9, 25, 18, 7);
         ctx.restore();
     }
 
@@ -3991,6 +4121,11 @@
         if (collectible.kind === 'crystal') {
             ctx.restore();
             drawFrostCrystal(collectible);
+            return;
+        }
+        if (collectible.kind === 'lantern') {
+            ctx.restore();
+            drawLantern(collectible);
             return;
         }
         if (collectible.kind === 'feather') {

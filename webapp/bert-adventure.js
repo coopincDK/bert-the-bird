@@ -115,15 +115,18 @@
                 star = { x: x + 160, y: spikes.top - 110 };
             }
         } else if (theme === 'harbor') {
-            if (pick < 0.4) {
+            // Container stacks that shift the gap as Bert closes in, gull flocks
+            // that home in on him, and the swinging crane hooks.
+            if (pick < 0.42) {
+                const pair = stacksAt(theme, id, x, gapTop, gap, d, random);
+                obstacles.push(...pair);
+                star = { x: x + 115, y: gapTop + gap / 2 };
+            } else if (pick < 0.72) {
+                obstacles.push(...flockAt(theme, id, x, d, random));
+                star = { x: x + 420, y: lerp(200, 520, random()) };
+            } else if (pick < 0.86) {
                 obstacles.push(swingAt('crane-hook', theme, id, x, lerp(250, 380, random()), d, random));
                 star = { x: x + 420, y: lerp(470, 560, random()) };
-            } else if (pick < 0.72) {
-                const gull = base('diving-gull', theme, id, x, lerp(190, 230, random()));
-                gull.y = lerp(40, 120, random());
-                gull.behaviour = 'dive';
-                obstacles.push(gull);
-                star = { x: x + 120, y: lerp(560, 600, random()) };
             } else {
                 const parcel = bottomAt('rolling-parcel', theme, id, x + 260, 600, 170, 210);
                 parcel.behaviour = 'roll';
@@ -211,6 +214,40 @@
     }
 
     /** A lava column: rests in the lava, warns, then shoots up almost to the top. */
+    /** A top and a bottom container stack. Both shift together once, after a lamp warning. */
+    function stacksAt(theme, id, x, gapTop, gap, difficulty, random) {
+        const width = 230;
+        const shift = (random() < 0.5 ? -1 : 1) * clamp(110 + 30 * difficulty, 110, 190);
+        const safeShift = clamp(gapTop + shift, 110, VIEW_HEIGHT - 110 - gap - 40) - gapTop;
+        const make = (top) => {
+            const o = base('rolling-parcel', theme, id, x, width);
+            o.behaviour = 'stack';
+            o.stackTop = top;
+            o.width = width;
+            o.gapTop = gapTop;
+            o.gap = gap;
+            o.shift = safeShift;
+            o.offset = 0;
+            o.colors = [0, 1, 2, 3, 4].map(() => Math.floor(random() * 3));
+            return o;
+        };
+        return [make(true), make(false)];
+    }
+
+    /** Three to five small gulls that fly in and gently steer towards Bert. */
+    function flockAt(theme, id, x, difficulty, random) {
+        const count = 3 + Math.floor(random() * Math.min(3, 1 + difficulty));
+        const centerY = lerp(180, 460, random());
+        return Array.from({ length: count }, (_, index) => {
+            const o = base('diving-gull', theme, id, x + index * 70 + random() * 30, lerp(105, 125, random()));
+            o.behaviour = 'flock';
+            o.y = centerY + (index - count / 2) * 55 + random() * 30;
+            o.turn = clamp(90 + 30 * difficulty, 90, 170);
+            o.extraSpeed = lerp(140, 200, random());
+            return o;
+        });
+    }
+
     function columnAt(theme, id, x, difficulty, random, options = {}) {
         const o = base('lava-spout', theme, id, x, 260);
         o.behaviour = 'column';
@@ -310,6 +347,26 @@
             }
         } else if (o.behaviour === 'spin') {
             o.angle += o.spinSpeed * delta;
+        } else if (o.behaviour === 'stack') {
+            if (o.phase === 'idle' && distance < speed * 1.15) { o.phase = 'warn'; o.timer = 0; }
+            if (o.phase === 'warn') {
+                o.timer += delta;
+                o.warn = clamp(o.timer / 0.45, 0, 1);
+                if (o.timer >= 0.5) { o.phase = 'move'; o.timer = 0; o.warn = 0; }
+            } else if (o.phase === 'move') {
+                o.timer += delta;
+                const t = clamp(o.timer / 0.6, 0, 1);
+                o.offset = o.shift * (t * t * (3 - 2 * t));
+                if (t >= 1) o.phase = 'done';
+            }
+        } else if (o.behaviour === 'flock') {
+            o.x -= o.extraSpeed * delta;
+            if (distance > -60) {
+                const target = env.birdY - o.size * 0.5;
+                const step = clamp(target - o.y, -o.turn * delta, o.turn * delta);
+                o.y += step;
+            }
+            o.angle = Math.sin(o.age * 12) * 0.08;
         } else if (o.behaviour === 'column') {
             // Base edge: the lava surface, the floor, or the ceiling for jets from above.
             o.lavaTop = o.fromTop ? -40 : (env.lavaTop ?? GROUND);
@@ -355,6 +412,7 @@
         const scale = o.size / ART;
         if (o.type === 'ice-stalactite') return { x: o.x + 256 * scale, y: Math.max(20, o.y + 70 * scale), radius: 70 * scale + 20 };
         if (o.type === 'diving-gull') return { x: o.x + 256 * scale, y: o.y + 250 * scale, radius: 120 * scale + 20 };
+        if (o.behaviour === 'stack') return o.stackTop ? null : { x: o.x + o.width / 2, y: o.gapTop + o.gap / 2, radius: 70 };
         if (o.behaviour === 'column') return { x: o.x + o.size / 2, y: o.fromTop ? 30 : (o.lavaTop ?? GROUND) - 10, radius: o.columnWidth + 20 };
         if (o.behaviour === 'bomb') return { x: o.x + o.size / 2, y: (o.lavaTop ?? GROUND) - 10, radius: o.size * 0.55 };
         if (o.type === 'lava-spout' || o.type === 'lava-bubble') return { x: o.x + 256 * scale, y: GROUND - 8, radius: 110 * scale + 24 };
@@ -366,6 +424,14 @@
         if (!o.harmful) return [];
         const s = o.size / ART;
         const p = (ax, ay) => at(o, ax, ay);
+        if (o.behaviour === 'stack') {
+            const edge = o.gapTop + o.offset;
+            return o.stackTop ? [box(o.x + 6, -40, o.width - 12, edge + 40)]
+                : [box(o.x + 6, edge + o.gap, o.width - 12, VIEW_HEIGHT - edge - o.gap + 40)];
+        }
+        if (o.behaviour === 'flock') {
+            return [circle(o.x + o.size * 0.5, o.y + o.size * 0.52, o.size * 0.2)];
+        }
         if (o.behaviour === 'column') {
             const cx = o.x + o.size / 2;
             const w = o.columnWidth;
