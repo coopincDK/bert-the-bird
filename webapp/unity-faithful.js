@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-70';
+    const BUILD_VERSION = 'worlds-relay-71';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -380,11 +380,16 @@
         stormSock: 'assets/stormline/windsock.webp',
         stormUmbrella: 'assets/stormline/umbrella-play.webp',
         stormBranch: 'assets/stormline/branch-play.webp',
-        stormSign: 'assets/stormline/sign-play.webp',
-        stormCar: 'assets/stormline/car-play.webp',
-        relayGate: 'assets/sky-relay/flight-gate-play.webp',
+        stormSign: 'assets/v2/g4/stormline/sign.webp',
+        stormCar: 'assets/v2/g4/stormline/car.webp',
+        relayGate: 'assets/v2/g4/skyrelay/gate.webp',
+        relayGateLit: 'assets/v2/g4/skyrelay/gate-lit.webp',
+        relaySkyRing: 'assets/v2/g4/skyrelay/sky-ring.webp',
         relayGateFront: 'assets/sky-relay/flight-gate-foreground-play.webp',
-        relayChime: 'assets/sky-relay/wind-chime-target-play.webp',
+        relayChime: 'assets/v2/g4/skyrelay/chime.webp',
+        stormSkyDark: 'assets/v2/g4/stormline/sky-dark.webp',
+        stormGust: 'assets/v2/g4/stormline/gust.webp',
+        stormLeaves: 'assets/v2/g4/stormline/leaves-burst.webp',
         eventMetal: 'assets/powerup-prototypes/metal.webp',
         eventHyper: 'assets/powerup-prototypes/hyper.webp',
         eventDouble: 'assets/powerup-prototypes/double.webp',
@@ -593,6 +598,8 @@
             for (let i = 0; i < 3; i += 1) extra.push(`v2WebStuck${i}`);
         }
         if (kind === 'birdRun') for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCarry${i}`);
+        if (kind === 'skyRelay') extra.push('relayGateLit', 'relaySkyRing');
+        if (kind === 'stormline') extra.push('stormSkyDark', 'stormGust', 'stormLeaves');
         if ((kind === 'birdRun' || kind === 'skyRelay') && V2.levels.has('happySky')) extra.push(...v2LayerKeys('happySky'));
         if (kind === 'birdRun' && ASSET_PATHS.v2HawkFly0) {
             for (let i = 0; i < 4; i += 1) extra.push(`v2HawkFly${i}`);
@@ -3632,6 +3639,7 @@
                 center.radius, state.worldTime);
             if (!DEBUG_NOCLIP && impact.contact) {
                 state.score = state.relayBanked || 0;
+                state.relayHitGate = index;
                 state.relayResult = {
                     completed: false, hit: false, outcome: 'ring-hit', score: 0,
                     ringIndex: index + 1, ringSide: impact.side,
@@ -3942,7 +3950,34 @@
         if (assets.stormSky?.naturalWidth) ctx.drawImage(assets.stormSky, 0, 0, VIEW.width, VIEW.height);
         const wind = BertStormline.windCue(state.worldTime);
         const reduced = prefersReducedMotion();
+        if (assets.stormSkyDark?.naturalWidth && wind.strength > 0.45) {
+            // Storm and hurricane darken the sky; it fades back when the wind drops.
+            ctx.save();
+            ctx.globalAlpha = clamp((wind.strength - 0.45) / 0.4, 0, 1) * 0.85;
+            ctx.drawImage(assets.stormSkyDark, 0, 0, VIEW.width, VIEW.height);
+            ctx.restore();
+        }
         ctx.save();
+        if (assets.stormGust?.naturalWidth && wind.strength > 0.05) {
+            // Drawn gust streaks instead of thin lines, flowing with the wind.
+            ctx.globalAlpha = 0.65 * wind.strength;
+            const flow = Math.sign(wind.horizontal || 1);
+            for (let band = 0; band < 4; band += 1) {
+                for (let repeat = 0; repeat < 3; repeat += 1) {
+                    const shift = reduced ? 0 : state.worldTime * 60 * flow;
+                    const x = ((repeat * 465 + band * 138 - shift + 180 + 3840) % 1480) - 180;
+                    const y = 200 + band * 90 + Math.sin(repeat * 2 + band) * 17;
+                    ctx.save();
+                    ctx.translate(x, y);
+                    ctx.rotate(Math.atan2(wind.vertical, Math.abs(wind.horizontal) || 1) * flow);
+                    if (flow < 0) ctx.scale(-1, 1);
+                    ctx.drawImage(assets.stormGust, -90, -22, 180, 44);
+                    ctx.restore();
+                }
+            }
+            ctx.restore();
+            ctx.save();
+        }
         ctx.strokeStyle = '#246384';
         ctx.lineCap = 'round';
         ctx.lineWidth = 2.4;
@@ -6041,9 +6076,12 @@
             if (x < -200 || x > VIEW.width + 200) return;
             const size = 350 * (gate.scale || 1);
             if (assets.relayGate?.naturalWidth) {
-                ctx.globalAlpha = state.relayGates[index]?.passed ? 0.68 : 1;
-                ctx.drawImage(assets.relayGate, x - size / 2, pose.centerY - size * 0.47, size, size);
-                ctx.globalAlpha = 1;
+                // New art: a passed gate glows gold; a hit gate turns into the dark sky ring.
+                const passed = state.relayGates[index]?.passed;
+                const hit = state.relayResult?.outcome === 'ring-hit' && !passed && state.relayHitGate === index;
+                const art = hit && assets.relaySkyRing?.naturalWidth ? assets.relaySkyRing
+                    : passed && assets.relayGateLit?.naturalWidth ? assets.relayGateLit : assets.relayGate;
+                ctx.drawImage(art, x - size / 2, pose.centerY - size * 0.47, size, size);
             }
         });
         const target = { ...route.target, centerY: BertSkyRelay.targetPose(route.target, state.worldTime).centerY };
@@ -6071,6 +6109,7 @@
     }
 
     function drawRelayNearEdge() {
+        if (assets.relayGate?.src?.includes('/g4/')) return; // the new gate art is one piece
         if (currentLevel.kind !== 'skyRelay' || !state.relayRoute
             || !assets.relayGateFront?.naturalWidth
             || !['prewarm', 'playing', 'relay-finish'].includes(state.phase)) return;
