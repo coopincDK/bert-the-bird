@@ -2116,3 +2116,9 @@ body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 .result-kicker { background: url(assets/v2/ui/result-ribbon.webp) center / contain no-repeat; padding: 10px 70px; color: #1d3b5a !important; text-shadow: none !important; }
 .loading { background: #8fd3ff url(assets/v2/ui/splash.webp) center / cover no-repeat !important; }
 .hero-wardrobe-card header { background: url(assets/v2/ui/wardrobe-header.webp) left center / auto 100% no-repeat; padding-left: 16px; }
+
+/* Mission claim buttons never wrap; big records shrink instead of overlapping. */
+.mission-claim { white-space: nowrap; min-width: 92px; }
+.menu-record #menu-highscore, .menu-record .record-total strong { font-size: clamp(18px, 4.4cqh, 30px) !important; white-space: nowrap; }
+.menu-record .record-total { white-space: nowrap; gap: 4px; }
+.menu-record .record-total img { width: 26px; height: 26px; }

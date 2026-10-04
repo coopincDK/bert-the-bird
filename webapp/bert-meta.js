@@ -183,6 +183,12 @@
 
     /** 'Pilot' was the old placeholder; it never counts as a chosen name. */
     /** The pilot name "test" opens every level and every hero, for trying things out. */
+    // "(OP)" anywhere in the pilot name: an everlasting shield for play-testing.
+    // Runs in OP mode never count for records, leaderboards or missions.
+    function hasOpMode() {
+        return /\(op\)/i.test(String(data.player.name || ''));
+    }
+
     function hasTestAccess() {
         return String(data.player.name || '').trim().toLowerCase() === 'test';
     }
@@ -490,7 +496,7 @@
     window.BertHaptics?.setEnabled(data.settings.haptics);
     save();
     window.BertMeta = Object.freeze({
-        addFeathers, hasPlayerName, hasTestAccess,
+        addFeathers, hasPlayerName, hasTestAccess, hasOpMode,
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,
         continueSpinOffer, buyContinueSpin, settleContinueSpin,

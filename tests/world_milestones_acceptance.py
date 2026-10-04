@@ -13,7 +13,7 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT.parent / 'qa-world-milestones-worlds-relay-56'
+OUTPUT = ROOT.parent / 'qa-world-milestones-worlds-relay-57'
 BADGES = {10: 'PUBLIKUMSVØLGE', 11: 'FRI AF ROVFUGLEN', 12: 'STORMPILOT'}
 
 
@@ -33,7 +33,7 @@ async def check(browser, port, width, height, event_id):
     page.on('request', lambda req: posts.append(req.url) if req.method == 'POST' else None)
     page.on('pageerror', lambda err: errors.append(str(err)))
     try:
-        await page.goto(f'http://127.0.0.1:{port}/?qa=1&noclip=1&rev=worlds-relay-56',
+        await page.goto(f'http://127.0.0.1:{port}/?qa=1&noclip=1&rev=worlds-relay-57',
                         wait_until='networkidle')
         await page.wait_for_function('window.BertQA && window.BertWorldMastery && window.BertEDM && window.BertStormline')
         start = await page.evaluate('''async id => {

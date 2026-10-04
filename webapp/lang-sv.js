@@ -431,4 +431,5 @@ window.BertI18n.register('sv', {
     'Slip en klat': 'Släpp en klick',
     'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Alla hjältar flyger lika. Vinn dem i spelet eller spara fjädrar.',
     'ÅBN GARDEROBE': 'ÖPPNA GARDEROBEN',
+    'OP · EVIGT SKJOLD · INGEN REKORDER': 'OP · EVIG SKÖLD · INGA REKORD',
 });

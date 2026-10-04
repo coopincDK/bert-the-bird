@@ -453,4 +453,5 @@ window.BertI18n.register('en', {
     'Slip en klat': 'Drop a splat',
     'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'All heroes fly the same. Win them in the game or save up feathers.',
     'ÅBN GARDEROBE': 'OPEN WARDROBE',
+    'OP · EVIGT SKJOLD · INGEN REKORDER': 'OP · ENDLESS SHIELD · NO RECORDS',
 });

@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-56';
+    const BUILD_VERSION = 'worlds-relay-57';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -549,7 +549,8 @@
             { image: bg1, y: y1, height: 190, factor: 0.06 },
             { image: bg2, y: y2, height: 400, factor: 0.1 },
             { image: mg, y: y3, height: 200, factor: 0.18 },
-            // The near layer (fg) is drawn in front of obstacles by drawForeground().
+            // The near layer sits behind obstacles and Bert, so flying low never hides him.
+            { image: fg, y: y4, height: 200, factor: kind === 'flappy' ? 1.0 : 0.55 },
         ];
     };
     function levelAssetKeys(kind) {
@@ -2872,7 +2873,7 @@
 
     function collectFeather(collectible) {
         state.feathersPicked += 1;
-        BertMeta.addFeathers(1);
+        if (!opMode()) BertMeta.addFeathers(1);
         playAudio('point');
         BertMeta.haptic('star');
         burst(collectible.x, collectible.y, '#fff1c7', 10);
@@ -3053,7 +3054,16 @@
         updateHud();
     }
 
+    // OP mode ("(OP)" in the name): an everlasting shield. Nothing can end the run.
+    const opMode = () => Boolean(BertMeta.hasOpMode?.());
     function triggerDeath(obstacle = null) {
+        if (opMode() && state.phase === 'playing') {
+            if (obstacle && state.elapsed >= (state.opFlashUntil || 0)) {
+                state.opFlashUntil = state.elapsed + 0.35;
+                playAudio('shieldBreak');
+            }
+            return;
+        }
         if (state.phase !== 'playing') return;
         state.cleanRun = false;
         if (state.activePowerup === POWERUP.SHIELD && state.shieldCharges > 0) {
@@ -3262,10 +3272,11 @@
         const run = { score: state.score, streak: state.bestStreak, time: state.elapsed };
         const nextLevel = nextLevelInMode(currentLevel);
         const nextWasUnlocked = nextLevel ? Boolean(progressionSnapshot()[nextLevel.id]?.unlocked) : true;
-        const { record, improved } = saveRecord(currentLevel.id, run);
+        const opRun = opMode();
+        const { record, improved } = opRun ? { record: loadRecord(currentLevel.id), improved: false } : saveRecord(currentLevel.id, run);
         state.completedGhost = state.ghostRecorder?.export() || [];
         const mode = currentLevel.kind === 'tunnel' ? 'tunnel' : currentLevel.mode === MODE.FLAPPY ? 'flappy' : 'classic';
-        const savedRun = isEventLevel() ? { unlockedHeroes: [] } : BertMeta.recordRun({
+        const savedRun = isEventLevel() || opRun ? { unlockedHeroes: [] } : BertMeta.recordRun({
             ...run,
             stars: state.starsCollected,
             levelId: currentLevel.id,
@@ -3275,7 +3286,7 @@
             rescueUsed: state.rescueUsed,
         });
         const player = BertMeta.snapshot().player;
-        if (!isEventLevel()) BertSocial.submitScore({
+        if (!isEventLevel() && !opRun) BertSocial.submitScore({
             runId: savedRun.runId,
             playerId: player.id,
             playerName: player.name,
@@ -3940,9 +3951,9 @@
         // quay or street looked upside down and made harbour read as water-sky-water-sky.
         if (currentLevel.kind === 'iceberg') v2Edge('iceberg', assets.icebergFg, false);
         if ((currentLevel.kind === 'birdRun' || currentLevel.kind === 'skyRelay') && V2.levels.has('happySky')) {
-            if (v2Edge('happySky', assets.v2_happySky_Fg)) return;
+            if (v2Edge('happySky', assets.v2_happySky_Fg, false)) return;
         }
-        if (V2.levels.has(currentLevel.kind) && v2Edge(currentLevel.kind, assets[`v2_${currentLevel.kind}_Fg`])) return;
+        if (V2.levels.has(currentLevel.kind) && v2Edge(currentLevel.kind, assets[`v2_${currentLevel.kind}_Fg`], false)) return;
         if (currentLevel.kind === 'birdRun') {
             if (!assets.birdRunCloud?.naturalWidth) return;
             ctx.save();
@@ -5794,6 +5805,26 @@
         drawEnemyCapture();
         collectibles.forEach(drawCollectible);
         drawPowerupAura();
+        if (opMode() && ['prewarm', 'playing'].includes(state.phase)) {
+            const cx = bird.x + BIRD.width / 2;
+            const cy = bird.y + BIRD.height / 2;
+            const flash = state.elapsed < (state.opFlashUntil || 0);
+            ctx.save();
+            ctx.globalAlpha = flash ? 0.9 : 0.45 + 0.1 * Math.sin(state.worldTime * 4);
+            ctx.strokeStyle = flash ? '#ffffff' : '#7fe8ff';
+            ctx.lineWidth = flash ? 7 : 5;
+            ctx.beginPath(); ctx.arc(cx, cy, BIRD.width * 0.62, 0, Math.PI * 2); ctx.stroke();
+            ctx.globalAlpha = 0.9;
+            ctx.font = '900 18px "Bert Rounded", sans-serif';
+            ctx.fillStyle = '#7fe8ff';
+            ctx.strokeStyle = 'rgba(10, 20, 35, .85)';
+            ctx.lineWidth = 4;
+            ctx.textAlign = 'left';
+            const label = T('OP · EVIGT SKJOLD · INGEN REKORDER');
+            ctx.strokeText(label, 24, 108);
+            ctx.fillText(label, 24, 108);
+            ctx.restore();
+        }
         drawSmokeFog();
         drawArtEffects(1 / 60);
         drawGhost();
