@@ -2237,3 +2237,49 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
     animation: confetti-fall var(--d, 2.4s) ease-in forwards; }
 @keyframes confetti-fall { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--x, 0), 110vh) rotate(var(--r, 360deg)); opacity: .9; } }
 @media (prefers-reduced-motion: reduce) { .game-over.reveal * { animation: none !important; } }
+
+/* ======================================================================
+   Runde D: menuerne i forsidens stil. Samme paneler, knapper og
+   ikoner som forsiden, og en levende himmel bag det hele.
+   ====================================================================== */
+.hero-wardrobe-card, .pause-card, .settings-card, .leaderboard-card, .missions-card, .rescue-wheel-card, .challenge-card, .qualification-card, .install-card {
+    border: 16px solid transparent !important;
+    border-image: url(assets/v2/ui/panel-dark.webp) 60 fill / 16px stretch !important;
+    background: none !important;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, .35) !important;
+    border-radius: 0 !important;
+}
+.primary-menu-button, .hero-wardrobe-footer .primary-menu-button, #close-missions, #confirm-hero {
+    border: 14px solid transparent !important;
+    border-image: url(assets/v2/ui/button-primary.webp) 70 fill / 14px stretch !important;
+    background: none !important; box-shadow: none !important; border-radius: 0 !important;
+    color: #123018 !important; text-shadow: 0 1px 0 rgba(255,255,255,.4) !important;
+}
+.hero-wardrobe-card header > button, .modal-x, #close-leaderboard, .leaderboard-card header button {
+    background: url(assets/v2/ui/button-round.webp) center / 100% 100% no-repeat !important;
+    border: 0 !important; color: #fff !important; width: 44px !important; height: 44px !important;
+}
+.modal-backdrop { backdrop-filter: blur(6px) saturate(1.1); }
+/* Levende himmel bag forsiden: to lag drivende skyer tegnet som bløde pletter. */
+.main-menu::after {
+    content: ''; position: absolute; inset: -10% -20%; pointer-events: none; z-index: 0; opacity: .55;
+    background:
+        radial-gradient(ellipse 160px 60px at 10% 18%, rgba(255,255,255,.75), transparent 70%),
+        radial-gradient(ellipse 220px 80px at 42% 10%, rgba(255,255,255,.65), transparent 70%),
+        radial-gradient(ellipse 180px 70px at 72% 22%, rgba(255,255,255,.7), transparent 70%),
+        radial-gradient(ellipse 260px 90px at 95% 12%, rgba(255,255,255,.6), transparent 70%),
+        radial-gradient(ellipse 200px 70px at 28% 30%, rgba(255,255,255,.5), transparent 70%);
+    animation: menu-clouds 70s linear infinite;
+}
+@keyframes menu-clouds { from { transform: translateX(0); } to { transform: translateX(-20%); } }
+.main-menu > * { position: relative; }
+.main-menu .menu-bird { animation: menu-bird-float 3.4s ease-in-out infinite; }
+@keyframes menu-bird-float { 0%, 100% { translate: 0 0; } 50% { translate: 0 -12px; } }
+@media (prefers-reduced-motion: reduce) { .main-menu::after, .main-menu .menu-bird { animation: none; } }
+.hero-wardrobe-card, .pause-card, .settings-card, .leaderboard-card, .missions-card, .rescue-wheel-card, .challenge-card, .qualification-card, .install-card {
+    border-width: 12px !important; box-sizing: border-box; max-height: calc(100vh - 12px) !important; overflow: auto;
+}
+.settings-card { padding: 6px 14px 10px !important; }
+.settings-card .primary-menu-button { min-height: 40px !important; }
+.hero-wardrobe-card header > div { padding: 4px 56px 6px 44px; }
+.hero-wardrobe-card .hero-grid, .hero-wardrobe-card .hero-options { max-height: 34vh; overflow-y: auto; }
