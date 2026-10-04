@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-76';
+    const BUILD_VERSION = 'worlds-relay-77';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -271,8 +271,10 @@
     ];
     // Fugleklat: a sixth adventure world. Until its own art arrives it borrows the Flappy town.
     const ADVENTURE_INFO = ADVENTURE_ART;
+    // Unlock order (feedback): one world per base mode first, then the hard ones; Isbjerget and Fugleklat last.
+    const ADVENTURE_ORDER = Object.freeze({ harbor: 1, nightcity: 2, windfarm: 3, volcano: 4, iceberg: 5, poop: 6 });
     const ADVENTURE_LEVELS = Object.freeze(['iceberg', 'harbor', 'nightcity', 'volcano', 'windfarm', 'poop'].map((theme, index) => Object.freeze({
-        id: 20 + index, modeGroup: 'adventure', modeOrder: index + 1, unlockScore: 0,
+        id: 20 + index, modeGroup: 'adventure', modeOrder: ADVENTURE_ORDER[theme], unlockScore: 0,
         name: ADVENTURE_INFO[theme].name, sourceName: ADVENTURE_INFO[theme].name, cardText: ADVENTURE_INFO[theme].card,
         mode: MODE.DEFAULT, startSpeed: 0.8, kind: theme, variant: theme, spacing: theme === 'windfarm' ? 980 : 820,
         stages: [
@@ -283,27 +285,41 @@
         layers: adventureLayers(theme),
     })));
     const isAdventureLevel = (level = currentLevel) => level?.modeGroup === 'adventure';
-    // Eventyr opens with bronze on all nine base levels; inside, each level
-    // needs silver on the one before. The test worlds open together with Eventyr.
+    // Eventyr (feedback 4. okt.): each world opens through something done elsewhere.
+    // Havnen = all Classic bronze, Nattebyen = all Flappy bronze, Vindmøller = all Tunnel bronze,
+    // Vulkanen = silver in two of those three, Isbjerget = silver in Vulkanen + gold somewhere,
+    // Fugleklat = silver in Isbjerget. The tab and the test worlds appear with the first world.
     const BRONZE_SCORE = 20;
     const SILVER_SCORE = 50;
+    const GOLD_SCORE = 100;
+    const best = (id) => loadHighscore(id);
+    const allBronze = (ids) => ids.every((id) => best(id) >= BRONZE_SCORE);
+    const countBronze = (ids) => ids.filter((id) => best(id) >= BRONZE_SCORE).length;
     function baseBronzeCount() {
         return UNITY_LEVELS.filter((level) => loadHighscore(level.id) >= BRONZE_SCORE).length;
     }
+    const WORLD_RULES = {
+        21: () => ({ ok: allBronze([1, 4, 5]), short: T`${countBronze([1, 4, 5])}/3 CLASSIC`, long: T('Få bronze på alle tre Classic-baner for at åbne Havnen.') }),
+        22: () => ({ ok: allBronze([3, 6, 7]), short: T`${countBronze([3, 6, 7])}/3 FLAPPY`, long: T('Få bronze på alle tre Flappy-baner for at åbne Nattebyen.') }),
+        24: () => ({ ok: allBronze([2, 8, 9]), short: T`${countBronze([2, 8, 9])}/3 TUNNEL`, long: T('Få bronze på alle tre Tunnel-baner for at åbne Vindmøller.') }),
+        23: () => { const n = [21, 22, 24].filter((id) => best(id) >= SILVER_SCORE).length;
+            return { ok: n >= 2, short: T`SØLV ${n}/2`, long: T('Få sølv i to af Havnen, Nattebyen og Vindmøller for at åbne Vulkanen.') }; },
+        20: () => { const gold = UNITY_LEVELS.some((level) => best(level.id) >= GOLD_SCORE);
+            return { ok: best(23) >= SILVER_SCORE && gold, short: best(23) >= SILVER_SCORE ? T('GULD PÅ EN BANE') : T('SØLV I VULKANEN'),
+                long: T('Få sølv i Vulkanen og guld på én af grundbanerne for at åbne Isbjerget.') }; },
+        25: () => ({ ok: best(20) >= SILVER_SCORE, short: T('SØLV I ISBJERGET'), long: T('Få sølv i Isbjerget for at åbne Fugleklat.') }),
+    };
     function adventureOpen() {
-        return BertMeta.hasTestAccess?.() || baseBronzeCount() >= UNITY_LEVELS.length;
+        return BertMeta.hasTestAccess?.() || [21, 22, 24].some((id) => WORLD_RULES[id]().ok);
     }
     function adventureStatus(level) {
         if (BertMeta.hasTestAccess?.()) return { unlocked: true };
-        if (!adventureOpen()) {
-            return { unlocked: false, short: T`${baseBronzeCount()}/${UNITY_LEVELS.length} BRONZE`,
-                long: T`Få bronze (20 point) på alle ${UNITY_LEVELS.length} grundbaner for at åbne Eventyr. Du har ${baseBronzeCount()}.` };
-        }
-        if (level.modeGroup === 'event' || level.modeOrder === 1) return { unlocked: true };
-        const previous = ADVENTURE_LEVELS.find((candidate) => candidate.modeOrder === level.modeOrder - 1);
-        if (!previous || loadHighscore(previous.id) >= SILVER_SCORE) return { unlocked: true };
-        return { unlocked: false, short: T`SØLV I ${previous.name.toUpperCase()}`,
-            long: T`Få sølv (50 point) i ${previous.name} for at åbne ${level.name}.` };
+        if (level.modeGroup === 'event') return adventureOpen() ? { unlocked: true }
+            : { unlocked: false, short: T('ÅBNER MED EVENTYR'), long: T('Testbanerne åbner sammen med den første eventyrverden.') };
+        const rule = WORLD_RULES[level.id];
+        if (!rule) return { unlocked: true };
+        const result = rule();
+        return result.ok ? { unlocked: true } : { unlocked: false, short: result.short, long: result.long };
     }
     // The four test worlds live in the Eventyr tab too, after the five new levels.
     const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT]);
@@ -745,9 +761,11 @@
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     // Heroes redrawn in the shared style (see docs: grafikplan). Folder under assets/.
     const V2_FPS = 12;
-    // Music sat too low against the effects (feedback 4. okt.).
-    const MUSIC_VOLUME = 0.5;
-    const FOCUS_VOLUME = 0.78;
+    // Volumes follow the sliders in Lyd & feedback (default 70 %, overall lower than before).
+    const volumeSetting = (name) => { const value = Number(BertMeta.settingValue?.(name)); return Number.isFinite(value) ? value : 0.7; };
+    const musicVol = () => 0.45 * volumeSetting('musicVolume');
+    const sfxVol = () => 0.45 * volumeSetting('sfxVolume');
+    const focusVol = () => 0.7 * volumeSetting('musicVolume');
     const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
     const EPIC_HEROES = Object.freeze({
         epicMalthe: { folder: 'epic-malthe', standIn: 'eagle' },
@@ -1053,28 +1071,28 @@
         audio.pop = sound('assets/sfx/pop.mp3');
         audio.music = sound('assets/music/classic.mp3', 'none');
         audio.music.loop = true;
-        audio.music.volume = MUSIC_VOLUME;
+        audio.music.volume = musicVol();
         audio.tunnel = sound('assets/music/tunnel.mp3', 'none');
         audio.tunnel.loop = true;
-        audio.tunnel.volume = MUSIC_VOLUME;
+        audio.tunnel.volume = musicVol();
         audio.edm = sound('assets/music/edm.mp3', 'none');
         audio.edm.loop = true;
-        audio.edm.volume = MUSIC_VOLUME;
+        audio.edm.volume = musicVol();
         Object.entries(EXTRA_MUSIC).forEach(([name, url]) => {
             audio[name] = sound(url, 'none');
             audio[name].loop = true;
-            audio[name].volume = MUSIC_VOLUME;
+            audio[name].volume = musicVol();
         });
         audio.menu = sound('assets/music/menu.mp3');
         audio.menu.loop = true;
-        audio.menu.volume = MUSIC_VOLUME * 0.8;
+        audio.menu.volume = musicVol() * 0.8;
         audio.focus = await focusSoundLoading;
         audio.focus.loop = true;
         audio.focus.volume = 0;
         audio.magnetUp = sound('assets/sfx/magnet-up.mp3');
         audio.magnetRunning = sound('assets/sfx/magnet-running.mp3');
         audio.magnetRunning.loop = true;
-        audio.magnetRunning.volume = 0.34;
+        audio.magnetRunning.volume = 0.3 * volumeSetting('sfxVolume');
         audio.magnetDown = sound('assets/sfx/magnet-down.mp3');
         audio.shieldOn = sound('assets/sfx/shield-on.mp3');
         audio.shieldBreak = sound('assets/sfx/shield-break.mp3');
@@ -1126,11 +1144,11 @@
                 // original 2.5-second explosion clip for every break.
                 if (!clip.paused && !clip.ended) return;
                 clip.currentTime = 0;
-                clip.volume = 0.42;
+                clip.volume = sfxVol();
                 clip.play().catch(() => {});
             } else {
                 const effect = clip.cloneNode();
-                effect.volume = 0.42;
+                effect.volume = sfxVol();
                 effect.play().catch(() => {});
             }
         } catch (_) {
@@ -1146,16 +1164,16 @@
             clip.currentTime = 0;
         });
         if (audio.music) {
-            audio.music.volume = MUSIC_VOLUME;
+            audio.music.volume = musicVol();
             audio.music.playbackRate = 1;
         }
         if (audio.tunnel) {
-            audio.tunnel.volume = MUSIC_VOLUME;
+            audio.tunnel.volume = musicVol();
             audio.tunnel.playbackRate = 1;
         }
-        if (audio.edm) audio.edm.volume = MUSIC_VOLUME;
+        if (audio.edm) audio.edm.volume = musicVol();
         Object.keys(EXTRA_MUSIC).forEach((name) => {
-            if (audio[name]) { audio[name].volume = MUSIC_VOLUME; audio[name].playbackRate = 1; }
+            if (audio[name]) { audio[name].volume = musicVol(); audio[name].playbackRate = 1; }
         });
         if (audio.focus) audio.focus.volume = 0;
     }
@@ -1175,7 +1193,7 @@
     function setMediaVolume(clip, value) {
         // HTMLMediaElement setters can reconfigure the mobile audio pipeline.
         // Keep the 2-second fades but only write when the change is audible.
-        if (clip && (Math.abs(clip.volume - value) >= 0.02 || value === 0 || value === MUSIC_VOLUME)) {
+        if (clip && (Math.abs(clip.volume - value) >= 0.02 || value === 0 || value === musicVol())) {
             if (clip.volume !== value) clip.volume = value;
         }
     }
@@ -1496,7 +1514,7 @@
         show('leaderboard-btn', desertBronze);
         document.querySelectorAll('.mode-tab').forEach((tab) => {
             const mode = tab.dataset.mode;
-            const visible = mode === 'classic' || (mode === 'adventure' ? flown : desertBronze);
+            const visible = mode === 'classic' || (mode === 'adventure' ? adventureOpen() : desertBronze);
             tab.classList.toggle('hidden', !visible);
         });
     }
@@ -1588,7 +1606,8 @@
                 : T`${hero.name} låst. ${hero.goal}. ${hero.current} af ${hero.target}. Alternativ pris ${hero.price} fjer.`);
             button.querySelector('small').textContent = hero.owned
                 ? hero.source === 'feathers' ? T('KØBT') : hero.source === 'name' ? T('EPISK') : hero.source === 'legacy' ? T('BEHOLDT') : hero.id === 'bert' ? T('ORIGINAL') : T('VUNDET')
-                : hero.secret ? T('HEMMELIG') : T('ÆG ELLER BEDRIFT');
+                : hero.secret ? T('HEMMELIG') : T('LÅST');
+            button.classList.toggle('locked', !hero.owned);
         });
         const active = catalog.find((hero) => hero.id === inspectedHero) || catalog[0];
         dom.heroDetailName.textContent = active.name.toUpperCase();
@@ -1600,12 +1619,32 @@
         // Heroes hatch from eggs in the nest now; the wardrobe only shows the way.
         dom.heroBuy.classList.add('hidden');
         dom.heroCancelBuy.classList.add('hidden');
-        if (!active.owned && !active.secret) {
-            const eggs = BertMeta.eggStatus?.();
-            dom.heroDetailGoal.textContent = eggs?.open
-                ? T`${active.goal} · ${active.current}/${active.target} · eller klæk den fra et æg i reden`
-                : T`${active.goal} · ${active.current}/${active.target} · æg i reden fra trin 4`;
+        // The detail line stays short; tapping a locked hero opens the full explanation.
+        if (!active.owned) dom.heroDetailGoal.textContent = T('Låst. Tryk på helten for at se, hvordan du får den.');
+    }
+
+    // A locked hero explains itself in a popup: the feat, the egg, and how to get feathers.
+    function showHeroLock(hero) {
+        document.getElementById('hero-lock-pop')?.remove();
+        const eggs = BertMeta.eggStatus?.();
+        const choice = BertMeta.starterChoice?.();
+        const lines = [];
+        if (hero.secret) lines.push(T('En hemmelig helt. Den hører til et særligt pilotnavn.'));
+        else if (hero.starter) lines.push(choice?.pending ? T('Du kan vælge en starthelt nu.') : T`Vælg den som starthelt efter ${choice?.nextAt || 10} ture. Du har fløjet ${choice?.runCount || 0}.`);
+        else if (hero.id === 'eggbert') lines.push(T`Klæk alle helte fra rugepladsen. ${hero.current}/${hero.target} klækket.`);
+        else if (!hero.eggOnly) lines.push(T`Bedrift: ${hero.goal} (${hero.current}/${hero.target}).`);
+        if (!hero.secret && !hero.starter && hero.id !== 'eggbert') {
+            lines.push(eggs?.open
+                ? T`Eller klæk den fra et æg i reden: sikret æg ${BertMeta.EGG_TIERS?.rare.includes(hero.id) ? eggs.rareSecuredPrice : eggs.securedPrice} fjer.`
+                : T('Eller klæk den fra et æg, når reden har nået trin 4.'));
+            lines.push(T`Du har ${BertMeta.snapshot().feathers} fjer. Fjer får du af dagens missioner, en tur om dagen og sjældne fjer i banerne.`);
         }
+        const pop = document.createElement('div');
+        pop.id = 'hero-lock-pop';
+        pop.className = 'hero-lock-pop';
+        pop.innerHTML = `<img src="assets/adventure/ui/lock.webp" alt=""><div><b>${hero.name}</b>${lines.map((line) => `<p>${line}</p>`).join('')}</div><button type="button" aria-label="${T('Luk')}">×</button>`;
+        pop.querySelector('button').addEventListener('click', () => pop.remove());
+        dom.heroModal.querySelector('.hero-wardrobe-card')?.appendChild(pop);
     }
 
     function updateMetaMenu() {
@@ -1951,8 +1990,8 @@
             state.speed = lerp(state.focusSnapshotSpeed, state.focusTargetSpeed, progress);
             state.difficulty = lerp(state.focusSnapshotDifficulty, state.focusTargetDifficulty, progress);
             const levelMusic = activeLevelMusic();
-            setMediaVolume(levelMusic, MUSIC_VOLUME * (1 - progress));
-            if (audio.focus) audio.focus.volume = FOCUS_VOLUME * progress;
+            setMediaVolume(levelMusic, musicVol() * (1 - progress));
+            if (audio.focus) audio.focus.volume = focusVol() * progress;
             if (progress >= 1) {
                 state.focusPhase = 'active';
                 state.focusTransition = 0;
@@ -1980,9 +2019,9 @@
         const progress = clamp(state.focusTransition / 2, 0, 1);
         state.speed = lerp(state.focusTargetSpeed, state.focusSnapshotSpeed, progress);
         state.difficulty = lerp(state.focusTargetDifficulty, state.focusSnapshotDifficulty, progress);
-        if (audio.focus) audio.focus.volume = FOCUS_VOLUME * (1 - progress);
+        if (audio.focus) audio.focus.volume = focusVol() * (1 - progress);
         const levelMusic = activeLevelMusic();
-        setMediaVolume(levelMusic, MUSIC_VOLUME * progress);
+        setMediaVolume(levelMusic, musicVol() * progress);
         if (progress >= 1) {
             audio.focus?.pause();
             if (audio.focus) {
@@ -1994,7 +2033,7 @@
             state.activePowerup = null;
             dom.powerup.classList.remove('active');
             if (levelMusic) {
-                levelMusic.volume = MUSIC_VOLUME;
+                levelMusic.volume = musicVol();
                 levelMusic.playbackRate = 1;
             }
         }
@@ -2785,16 +2824,26 @@
         }
         // Only every fourth Desert pair is narrow. The earliest two pairs stay generous.
         const narrowDesertPair = currentLevel.kind === 'desert' && id >= 2 && id % 4 === 2;
+        // Desert gets tighter over time (feedback): the gap shrinks with the run's clock,
+        // not only with difficulty, so a long run keeps getting harder.
+        const desertShrink = currentLevel.kind === 'desert' ? clamp(state.elapsed / 90, 0, 1) * 70 : 0;
         const desertGapFloor = narrowDesertPair
-            ? clamp(284 - state.difficulty * 10, 258, 280)
-            : clamp(325 - state.difficulty * 18, 278, 307);
+            ? clamp(284 - state.difficulty * 10 - desertShrink, 205, 280)
+            : clamp(325 - state.difficulty * 18 - desertShrink, 225, 307);
         const gap = currentLevel.mode === MODE.FLAPPY
             ? flappyGap()
             : currentLevel.kind === 'desert'
                 ? randomBetween(desertGapFloor, desertGapFloor + (narrowDesertPair ? 18 : 42))
                 : 285;
         const minimum = 120;
-        const gapTop = randomBetween(minimum, VIEW.height - minimum - gap);
+        let gapTop = randomBetween(minimum, VIEW.height - minimum - gap);
+        if (currentLevel.kind === 'desert') {
+            // Bigger vertical jumps between pairs, so Bert has to use the whole screen.
+            const lastTop = state.lastDesertGapTop ?? gapTop;
+            const span = VIEW.height - 2 * minimum - gap;
+            if (Math.abs(gapTop - lastTop) < span * 0.45) gapTop = lastTop < minimum + span / 2 ? minimum + span * (0.7 + gameRandom() * 0.3) : minimum + span * gameRandom() * 0.3;
+            state.lastDesertGapTop = gapTop;
+        }
 
         if (currentLevel.kind === 'tunnel') {
             const worldX = state.worldDistance + x;
@@ -3498,6 +3547,47 @@
         setVisible(dom.gameOver, true);
         revealResult(improved && state.score > 0);
         settleNest(opRun);
+        maybeOfferStarter();
+    }
+
+    // Starter heroes: after 10, 20, 30 and 40 flights the player picks one.
+    function maybeOfferStarter() {
+        const choice = BertMeta.starterChoice?.();
+        if (!choice?.pending || !choice.remaining.length) return;
+        setTimeout(() => openStarterChoice(choice), 1800);
+    }
+    function openStarterChoice(choice) {
+        document.getElementById('starter-modal')?.remove();
+        const modal = document.createElement('section');
+        modal.id = 'starter-modal';
+        modal.className = 'modal-backdrop';
+        const card = document.createElement('div');
+        card.className = 'challenge-card starter-card';
+        card.innerHTML = `<p class="edition-label">${T`${choice.runCount} TURE FLØJET`}</p><h2>${T('VÆLG EN NY HELT')}</h2><p>${T('Du må vælge én. De andre kan vælges efter 10 ture mere.')}</p>`;
+        const row = document.createElement('div');
+        row.className = 'starter-row';
+        choice.remaining.forEach((id) => {
+            const hero = BertHeroStore.catalog.find((entry) => entry.id === id);
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'starter-option';
+            const heroArt = ['assets/heroes', V2_HERO_FOLDER[id] || id, 'glide.webp'].join('/');
+            button.innerHTML = `<img src="${heroArt}" alt=""><b>${hero?.name || id}</b>`;
+            button.addEventListener('click', () => {
+                const result = BertMeta.chooseStarter(id);
+                if (result.ok) { playAudio('fanfare'); window.BertApp?.showToast(T`${hero?.name || id} er din nu`); }
+                modal.remove();
+                updateMetaMenu();
+            });
+            row.appendChild(button);
+        });
+        card.appendChild(row);
+        const later = document.createElement('button');
+        later.type = 'button'; later.className = 'text-button'; later.textContent = T('SENERE');
+        later.addEventListener('click', () => modal.remove());
+        card.appendChild(later);
+        modal.appendChild(card);
+        document.body.appendChild(modal);
     }
 
     // The egg cracks open on the result screen, and the new hero pops out of it.
@@ -6402,7 +6492,8 @@
         if (t >= 1) { state.comboText = null; return; }
         const pop = t < 0.15 ? 0.6 + (t / 0.15) * 0.5 : 1.1 - (t - 0.15) * 0.1;
         ctx.save();
-        ctx.translate(bird.x + BIRD.width / 2 + 40, bird.y - 30 - t * 40);
+        // Top centre, under the HUD, so it never sits on top of Bert (feedback).
+        ctx.translate(VIEW.width / 2, 150 - t * 20);
         ctx.scale(pop, pop);
         ctx.rotate(-0.08);
         ctx.globalAlpha = t > 0.7 ? (1 - t) / 0.3 : 1;
@@ -6938,11 +7029,19 @@
         document.querySelectorAll('.hero-option').forEach((button) => button.addEventListener('click', () => {
             inspectedHero = button.dataset.hero;
             pendingHeroPurchase = null;
-            if (BertMeta.heroCatalog().some((hero) => hero.id === inspectedHero && hero.owned)) {
+            const hero = BertMeta.heroCatalog().find((entry) => entry.id === inspectedHero);
+            if (hero?.owned) {
                 BertMeta.setHero(inspectedHero);
                 playAudio('pop');
+            } else if (hero) {
+                showHeroLock(hero);
             }
             updateMetaMenu();
+        }));
+        // Arrows scroll the hero row one card at a time.
+        document.querySelectorAll('.hero-scroll').forEach((arrow) => arrow.addEventListener('click', () => {
+            const grid = document.getElementById('hero-grid');
+            grid?.scrollBy({ left: (arrow.dataset.dir === 'left' ? -1 : 1) * grid.clientWidth * 0.8, behavior: 'smooth' });
         }));
         dom.heroBuy.addEventListener('click', () => {
             if (pendingHeroPurchase !== inspectedHero) {
@@ -7000,6 +7099,27 @@
             if (event.target === dom.settingsModal) closeSettings();
         });
         dom.settingMusic.addEventListener('change', () => applySetting('music', dom.settingMusic.checked));
+        ['musicVolume', 'sfxVolume'].forEach((name) => {
+            const slider = document.getElementById(`setting-${name}`);
+            if (!slider) return;
+            slider.value = String(Math.round(volumeSetting(name) * 100));
+            slider.addEventListener('input', () => {
+                BertMeta.setSetting(name, Number(slider.value) / 100);
+                MUSIC_NAMES.forEach((key) => { if (audio[key] && key !== 'focus' && !audio[key].paused) audio[key].volume = musicVol(); });
+                if (name === 'sfxVolume') playAudio('coin');
+            });
+        });
+        document.getElementById('reset-all-btn')?.addEventListener('click', () => {
+            const button = document.getElementById('reset-all-btn');
+            if (button.dataset.confirm !== '1') {
+                button.dataset.confirm = '1';
+                button.textContent = T('ER DU SIKKER? TRYK IGEN');
+                setTimeout(() => { button.dataset.confirm = ''; button.textContent = T('START FORFRA'); }, 4000);
+                return;
+            }
+            BertMeta.resetAll();
+            location.reload();
+        });
         dom.settingSfx.addEventListener('change', () => applySetting('sfx', dom.settingSfx.checked));
         dom.settingHaptics.addEventListener('change', () => applySetting('haptics', dom.settingHaptics.checked));
         const languageSelect = document.getElementById('setting-language');
@@ -7589,12 +7709,19 @@
             await loadAssets();
             setVisible(dom.loading, false);
             showMainMenu();
+            // Flyv hver dag counts the day you open the game, so day 1 is filled at once.
+            if (BertMeta.hasPlayerName?.()) {
+                const day = BertMeta.noteDailyFlight?.();
+                if (day?.ok) setTimeout(() => window.BertApp?.showToast(T`Dag ${day.streak} i træk · +${day.reward} fjer til reden`), 900);
+                updateMetaMenu();
+            }
+            maybeOfferStarter();
             const incomingChallenge = await BertSocial.challengeFromLocation();
             if (incomingChallenge) showIncomingChallenge(incomingChallenge);
             requestAnimationFrame(loop);
         } catch (error) {
             console.error(error);
-            dom.loading.querySelector('p').textContent = 'Original Unity-assets kunne ikke indlæses.';
+            dom.loading.querySelector('p').textContent = 'Spillet kunne ikke indlæses. Prøv igen.';
         }
     }
 

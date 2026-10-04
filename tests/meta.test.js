@@ -50,9 +50,7 @@ assert.equal(dailyA.levelId, dailyB.levelId, 'Today’s route must remain stable
 assert([1, 2, 3].includes(dailyA.levelId));
 
 meta.recordRun({ levelId: dailyA.levelId, mode: 'classic', score: dailyA.target, stars: 7, dailyKey: dailyA.key, dailyTarget: dailyA.target, createdAt: runDate });
-assert.equal(meta.heroCatalog().find((hero) => hero.id === 'blue').source, 'achievement');
-meta.setHero('blue');
-assert.equal(meta.currentHero(), 'blue');
+assert.equal(meta.heroCatalog().find((hero) => hero.id === 'blue').owned, false, 'BlueBert is a starter choice now.');
 meta.recordRun({ levelId: 6, mode: 'flappy', score: 75, stars: 2, createdAt: runDate });
 assert.equal(meta.snapshot().totalStars, 9);
 assert.equal(meta.dailyChallenge(date, [1, 2, 3]).completed, true);

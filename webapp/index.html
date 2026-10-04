@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bert The Bird">
     <title>Bert The Bird – flyvespil og præcisionsverdener</title>
-    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-76">
+    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-77">
     <link rel="apple-touch-icon" href="icons/bert-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/bert-192.png">
-    <link rel="stylesheet" href="style.css?v=worlds-relay-76">
+    <link rel="stylesheet" href="style.css?v=worlds-relay-77">
 </head>
 <body>
     <main id="game-shell" aria-label="Bert The Bird">
@@ -107,6 +107,7 @@
                     <button id="close-hero-modal" type="button" aria-label="Luk garderoben">×</button>
                 </header>
                 <p class="hero-wardrobe-note">Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.</p>
+                <button class="hero-scroll" data-dir="left" type="button" aria-label="Forrige helte">‹</button><button class="hero-scroll right" data-dir="right" type="button" aria-label="Næste helte">›</button>
                 <div id="hero-grid" class="hero-grid" role="listbox" aria-label="Tilgængelige helte">
                     <button class="hero-option selected" data-hero="bert" type="button" role="option" aria-selected="true" aria-label="Vælg Bert"><img src="assets/heroes/bert/flap-03.webp" alt="Bert"><b>BERT</b><small>ORIGINAL</small></button>
                     <button class="hero-option" data-hero="blue" type="button" role="option" aria-selected="false" aria-label="Vælg BlueBert"><img src="assets/unity/bird-blue/fly-04.webp" alt="BlueBert"><b>BLUEBERT</b><small>ORIGINAL</small></button>
@@ -235,11 +236,12 @@
                 <p class="edition-label">INDSTILLINGER</p>
                 <h2 id="settings-title">LYD & FEEDBACK</h2>
                 <label class="name-setting"><span>Pilotnavn</span><input id="player-name" type="text" maxlength="24" value="" placeholder="Skriv dit navn" autocomplete="off" autocorrect="off" autocapitalize="words" spellcheck="false" enterkeyhint="done"></label>
-                <label><span>Musik</span><input id="setting-music" type="checkbox" checked></label>
-                <label><span>Lydeffekter</span><input id="setting-sfx" type="checkbox" checked></label>
+                <label><span>Musik</span><input id="setting-musicVolume" class="volume-slider" type="range" min="0" max="100" step="5" value="70" aria-label="Musikstyrke"><input id="setting-music" type="checkbox" checked></label>
+                <label><span>Lydeffekter</span><input id="setting-sfxVolume" class="volume-slider" type="range" min="0" max="100" step="5" value="70" aria-label="Lydstyrke for effekter"><input id="setting-sfx" type="checkbox" checked></label>
                 <label><span>Haptisk feedback</span><input id="setting-haptics" type="checkbox" checked></label>
                 <label><span>Bevægelse i koncertlys</span><input id="setting-lights" type="checkbox" checked></label>
                 <label class="name-setting"><span>Sprog</span><select id="setting-language" aria-label="Sprog"><option value="auto">Automatisk (som telefonen)</option><option value="da">Dansk</option><option value="en">Engelsk</option><option value="nb">Norsk</option><option value="sv">Svensk</option><option value="de">Tysk</option><option value="es">Spansk</option><option value="fr">Fransk</option><option value="pt">Portugisisk</option></select></label>
+                <button id="reset-all-btn" class="text-button reset-all" type="button">START FORFRA</button>
                 <button id="close-settings" class="primary-menu-button" type="button">FÆRDIG</button>
             </div>
         </section>
@@ -396,34 +398,34 @@
 
         <div id="app-status" class="app-status" role="status" aria-live="polite"></div>
     </main>
-    <script src="bert-i18n.js?v=worlds-relay-76"></script>
-    <script src="lang-en.js?v=worlds-relay-76"></script>
-    <script src="lang-nb.js?v=worlds-relay-76"></script>
-    <script src="lang-sv.js?v=worlds-relay-76"></script>
-    <script src="lang-de.js?v=worlds-relay-76"></script>
-    <script src="lang-es.js?v=worlds-relay-76"></script>
-    <script src="lang-fr.js?v=worlds-relay-76"></script>
-    <script src="lang-pt.js?v=worlds-relay-76"></script>
+    <script src="bert-i18n.js?v=worlds-relay-77"></script>
+    <script src="lang-en.js?v=worlds-relay-77"></script>
+    <script src="lang-nb.js?v=worlds-relay-77"></script>
+    <script src="lang-sv.js?v=worlds-relay-77"></script>
+    <script src="lang-de.js?v=worlds-relay-77"></script>
+    <script src="lang-es.js?v=worlds-relay-77"></script>
+    <script src="lang-fr.js?v=worlds-relay-77"></script>
+    <script src="lang-pt.js?v=worlds-relay-77"></script>
     <script>window.BertI18n.apply();</script>
-    <script src="app-shell.js?v=worlds-relay-76"></script>
-    <script src="unity-collision.js?v=worlds-relay-76"></script>
-    <script src="bert-physics.js?v=worlds-relay-76"></script>
-    <script src="bert-progression.js?v=worlds-relay-76"></script>
-    <script src="bert-tunnel.js?v=worlds-relay-76"></script>
-    <script src="bert-edm.js?v=worlds-relay-76"></script>
-    <script src="bert-bird-run.js?v=worlds-relay-76"></script>
-    <script src="bert-stormline.js?v=worlds-relay-76"></script>
-    <script src="bert-world-mastery.js?v=worlds-relay-76"></script>
-    <script src="bert-sky-relay.js?v=worlds-relay-76"></script>
-    <script src="bert-event-powerups.js?v=worlds-relay-76"></script>
-    <script src="bert-collectible-motion.js?v=worlds-relay-76"></script>
-    <script src="bert-haptics.js?v=worlds-relay-76"></script>
-    <script src="bert-hero-store.js?v=worlds-relay-76"></script>
-    <script src="bert-meta.js?v=worlds-relay-76"></script>
-    <script src="bert-social.js?v=worlds-relay-76"></script>
-    <script src="bert-focus-audio.js?v=worlds-relay-76"></script>
-    <script src="bert-star-audio.js?v=worlds-relay-76"></script>
-    <script src="bert-adventure.js?v=worlds-relay-76"></script>
-    <script src="unity-faithful.js?v=worlds-relay-76"></script>
+    <script src="app-shell.js?v=worlds-relay-77"></script>
+    <script src="unity-collision.js?v=worlds-relay-77"></script>
+    <script src="bert-physics.js?v=worlds-relay-77"></script>
+    <script src="bert-progression.js?v=worlds-relay-77"></script>
+    <script src="bert-tunnel.js?v=worlds-relay-77"></script>
+    <script src="bert-edm.js?v=worlds-relay-77"></script>
+    <script src="bert-bird-run.js?v=worlds-relay-77"></script>
+    <script src="bert-stormline.js?v=worlds-relay-77"></script>
+    <script src="bert-world-mastery.js?v=worlds-relay-77"></script>
+    <script src="bert-sky-relay.js?v=worlds-relay-77"></script>
+    <script src="bert-event-powerups.js?v=worlds-relay-77"></script>
+    <script src="bert-collectible-motion.js?v=worlds-relay-77"></script>
+    <script src="bert-haptics.js?v=worlds-relay-77"></script>
+    <script src="bert-hero-store.js?v=worlds-relay-77"></script>
+    <script src="bert-meta.js?v=worlds-relay-77"></script>
+    <script src="bert-social.js?v=worlds-relay-77"></script>
+    <script src="bert-focus-audio.js?v=worlds-relay-77"></script>
+    <script src="bert-star-audio.js?v=worlds-relay-77"></script>
+    <script src="bert-adventure.js?v=worlds-relay-77"></script>
+    <script src="unity-faithful.js?v=worlds-relay-77"></script>
 </body>
 </html>

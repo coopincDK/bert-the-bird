@@ -24,7 +24,7 @@
         stats: { deaths: 0, feathersEver: 0, bestPoopStreak: 0, relayPerfect: 0 },
         eggs: { bought: 0, incubating: null, hatched: [] },
         economy: { continueSpins: 0, revivesWon: 0, feathersSpent: 0 },
-        settings: { music: true, sfx: true, haptics: true, lights: true },
+        settings: { music: true, sfx: true, haptics: true, lights: true, musicVolume: 0.7, sfxVolume: 0.7 },
         daily: {},
         dailyLevels: {},
         missionClaims: {},
@@ -123,6 +123,7 @@
     function snapshot() { return JSON.parse(JSON.stringify(data)); }
     function currentHero() { return data.hero; }
     function settingEnabled(name) { return Boolean(data.settings[name]); }
+    function settingValue(name) { return data.settings[name]; }
     /** Secret heroes belong to a pilot name: granted when it matches, removed when it no longer does. */
     function syncSecretHeroes() {
         const store = window.BertHeroStore;
@@ -208,7 +209,8 @@
 
     function setSetting(name, enabled) {
         if (!Object.prototype.hasOwnProperty.call(DEFAULTS.settings, name)) return snapshot();
-        data.settings[name] = Boolean(enabled);
+        // Volumes are numbers 0..1; everything else is on/off.
+        data.settings[name] = /Volume$/.test(name) ? Math.max(0, Math.min(1, Number(enabled) || 0)) : Boolean(enabled);
         if (name === 'haptics') window.BertHaptics?.setEnabled(data.settings.haptics);
         return save();
     }
@@ -450,7 +452,7 @@
     // ---------- Rugepladsen: eggs hatch new heroes ----------
     // Opens at nest step 4 (one egg, slow), improves at step 7 (faster, two eggs is a later idea).
     const EGG_TIERS = Object.freeze({
-        common: ['blue', 'block', 'brain', 'sugar', 'moss', 'ink', 'pingo', 'mogens', 'ninja', 'pakke'],
+        common: ['moss', 'ink', 'pingo', 'mogens', 'ninja', 'pakke'],
         rare: ['eagle', 'mecha', 'noir', 'vulture', 'prism', 'gold'],
     });
     const EGG_BASE_PRICE = 40;
@@ -501,6 +503,24 @@
         save();
         return { ok: true, cost, secured: Boolean(heroId), status: eggStatus() };
     }
+    // Starter heroes: one choice after 10, 20, 30 and 40 flights.
+    function starterChoice() {
+        const store = window.BertHeroStore;
+        const remaining = store.STARTERS.filter((id) => !data.ownedHeroes[id]);
+        const earned = Math.min(store.STARTERS.length, Math.floor((Number(data.runCount) || 0) / 10));
+        const taken = store.STARTERS.length - remaining.length;
+        const pending = Math.max(0, earned - taken);
+        return { pending, remaining, nextAt: (taken + 1) * 10, runCount: data.runCount };
+    }
+    function chooseStarter(heroId) {
+        const choice = starterChoice();
+        if (!choice.pending || !choice.remaining.includes(heroId)) return { ok: false, choice };
+        data.ownedHeroes[heroId] = { source: 'choice', at: new Date().toISOString() };
+        data.hero = heroId;
+        save();
+        return { ok: true, hero: heroId, choice: starterChoice() };
+    }
+
     /** An egg found out on a level: free and random. */
     function grantFoundEgg() {
         const status = eggStatus();
@@ -739,9 +759,10 @@
     window.BertHaptics?.setEnabled(data.settings.haptics);
     save();
     window.BertMeta = Object.freeze({
-        addFeathers, hasPlayerName, hasTestAccess, hasOpMode,
+        addFeathers, hasPlayerName, hasTestAccess, hasOpMode, settingValue,
         NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
-        EGG_TIERS, eggStatus, buyEgg, incubate, grantFoundEgg,
+        EGG_TIERS, eggStatus, buyEgg, incubate, grantFoundEgg, starterChoice, chooseStarter,
+        resetAll() { try { localStorage.clear(); } catch (_) { /* ignore */ } },
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,
         continueSpinOffer, buyContinueSpin, settleContinueSpin,
