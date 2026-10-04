@@ -458,4 +458,9 @@ window.BertI18n.register('en', {
     'FORMINDSK': 'SHRINK',
     'FORSTØR · POINT ×2': 'GROW · POINTS ×2',
     'FØLG TUNNELEN · HOLD VENSTRE = OP · HØJRE = NED': 'FOLLOW THE TUNNEL · HOLD LEFT = UP · RIGHT = DOWN',
+    'FLOT!': 'NICE!',
+    'PERFEKT!': 'PERFECT!',
+    'UTROLIGT!': 'AMAZING!',
+    'LEGENDARISK!': 'LEGENDARY!',
+    'BERT-NIVEAU!': 'BERT LEVEL!',
 });

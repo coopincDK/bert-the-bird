@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-67';
+    const BUILD_VERSION = 'worlds-relay-68';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1060,6 +1060,10 @@
         audio.wind = sound('assets/sfx/wind.mp3');
         audio.crack = sound('assets/sfx/crack.mp3');
         audio.miss = sound('assets/sfx/miss.mp3');
+        audio.ding = sound('assets/sfx/ding.mp3');
+        audio.combo = sound('assets/sfx/combo.mp3');
+        audio.fanfare = sound('assets/sfx/fanfare.mp3');
+        audio.tick = sound('assets/sfx/tick.mp3');
     }
 
     function primeFocusAudio() {
@@ -1704,6 +1708,12 @@
         state.smokeFog = [];
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
+        state.hitStop = 0;
+        state.shake = 0;
+        state.slowmoUntil = 0;
+        state.comboText = null;
+        state.flyingPickups = [];
+        state.ambient = [];
         state.topCampTime = 0;
         state.nextTopMeteorAt = 0;
         updatePoopButton();
@@ -2916,6 +2926,7 @@
     function collectFeather(collectible) {
         state.feathersPicked += 1;
         if (!opMode()) BertMeta.addFeathers(1);
+        (state.flyingPickups ||= []).push({ kind: 'feather', x: bird.x + BIRD.width / 2, y: bird.y, tx: 70, ty: 100, age: 0 });
         playAudio('point');
         BertMeta.haptic('star');
         burst(collectible.x, collectible.y, '#fff1c7', 10);
@@ -2951,10 +2962,14 @@
 
     function collectStar(collectible = null) {
         const value = collectible?.value || 1;
-        if (collectible) (state.sparkles ||= []).push({ x: collectible.x, y: collectible.y, age: 0 });
+        if (collectible) {
+            (state.sparkles ||= []).push({ x: collectible.x, y: collectible.y, age: 0 });
+            (state.flyingPickups ||= []).push({ kind: 'star', x: collectible.x, y: collectible.y, tx: HUD_SCORE_TARGET.x, ty: HUD_SCORE_TARGET.y, age: 0 });
+        }
         state.streak += 1;
         state.bestStreak = Math.max(state.bestStreak, state.streak);
         state.starsCollected += value;
+        noteCombo(state.streak);
         state.score += BertEventPowerups.score(state.streak * value, state.activePowerup) * (state.activePowerup === POWERUP.GROW ? 2 : 1);
         if (!isEventLevel() && state.cleanRun && state.score >= 180 && BertMeta.noteCleanScore(state.score)) {
             window.BertApp?.showToast(T('NOIRWING LÅST OP · FEJLFRI FLYVNING'));
@@ -3159,6 +3174,10 @@
         // The hawk's catch frames show the bird in its talons, so the bird itself is hidden.
         state.birdsVisible = !captureCause && !(predatorHero && (assets.v2HawkCarry0?.naturalWidth || assets.v2HawkCatch0?.naturalWidth));
         state.deathFromWeb = obstacle?.kind === 'jungle-web';
+        state.hitStop = 0.11;
+        state.shake = Math.max(state.shake || 0, 0.6);
+        state.slowmoUntil = state.worldTime + 0.55;
+        BertMeta.haptic?.('death');
         if (!captureCause && !predatorHero) state.featherPuff = { x: bird.x + BIRD.width / 2, y: bird.y + BIRD.height / 2, age: 0 };
         state.deathCountdown = captureCause === 'jungle-spider' ? 3.8
             : captureCause === 'jungle-snake' ? 2.2 : predatorHero ? 2.1 : 1.5;
@@ -3424,6 +3443,37 @@
         state.phase = 'gameover';
         setVisible(dom.hud, false);
         setVisible(dom.gameOver, true);
+        revealResult(improved && state.score > 0);
+    }
+
+    // The result screen builds up: ribbon, board, then the medal with a ding.
+    // A new record adds a fanfare and confetti.
+    let resultTimers = [];
+    function revealResult(newRecord) {
+        resultTimers.forEach(clearTimeout);
+        resultTimers = [];
+        dom.gameOver.classList.remove('reveal');
+        void dom.gameOver.offsetWidth;
+        dom.gameOver.classList.add('reveal');
+        dom.gameOver.querySelectorAll('.confetti-piece').forEach((piece) => piece.remove());
+        resultTimers.push(setTimeout(() => { if (state.phase === 'gameover') playAudio('ding'); }, 480));
+        if (newRecord && !prefersReducedMotion()) {
+            resultTimers.push(setTimeout(() => {
+                if (state.phase !== 'gameover') return;
+                playAudio('fanfare');
+                for (let i = 0; i < 36; i += 1) {
+                    const piece = document.createElement('i');
+                    piece.className = 'confetti-piece';
+                    piece.style.left = `${Math.random() * 100}%`;
+                    piece.style.setProperty('--d', `${1.8 + Math.random() * 1.6}s`);
+                    piece.style.setProperty('--x', `${(Math.random() - 0.5) * 160}px`);
+                    piece.style.setProperty('--r', `${Math.random() * 720}deg`);
+                    piece.style.animationDelay = `${Math.random() * 0.6}s`;
+                    piece.style.background = ['#ffd93b', '#ff5a73', '#5ad1ff', '#b6ff3b', '#ff9ef0'][i % 5];
+                    dom.gameOver.appendChild(piece);
+                }
+            }, 700));
+        }
     }
 
     function animateResultNumber(element, target) {
@@ -3598,6 +3648,11 @@
 
     function update(delta) {
         if (state.phase === 'paused') return;
+        // Feel: a short freeze on impact (hit-stop), then half speed for a moment so the
+        // player sees what hit them. The camera shake decays on its own.
+        if (state.hitStop > 0) { state.hitStop -= delta; return; }
+        if (state.slowmoUntil && state.phase === 'dead' && state.worldTime < state.slowmoUntil) delta *= 0.45;
+        if (state.shake > 0) state.shake = Math.max(0, state.shake - delta * 1.8);
         state.worldTime += delta;
         if (state.phase === 'prewarm') {
             updatePrewarm(delta);
@@ -3664,6 +3719,7 @@
             const targetScale = SIZE_POWERUP[state.activePowerup] || 1;
             state.birdScale = (state.birdScale || 1) + (targetScale - (state.birdScale || 1)) * Math.min(1, delta * 6);
             window.BertSizeScale = state.birdScale;
+            updateAmbient(delta);
             // Sky Relay: from round 2 birds cross the route, from round 3 the hawk hunts too.
             if (currentLevel.kind === 'skyRelay' && state.phase === 'playing' && state.relayRoute) {
                 const round = state.relayRoute.round || 1;
@@ -5843,6 +5899,11 @@
         ctx.save();
         ctx.translate(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2);
         if (state.birdScale && state.birdScale !== 1) ctx.scale(state.birdScale, state.birdScale);
+        if (!dead && state.phase === 'playing' && !prefersReducedMotion()) {
+            // Squash & stretch: a touch wider when climbing, a touch taller when diving.
+            const k = clamp(bird.velocity / 900, -0.1, 0.1);
+            ctx.scale(1 - k * 0.6, 1 + k * 0.6);
+        }
         // Reversed controls show Bert on his head, so the twist is readable at a glance.
         const upsideDown = isReversed() && !dead;
         if (upsideDown) {
@@ -6021,7 +6082,13 @@
 
     function render() {
         ctx.clearRect(0, 0, VIEW.width, VIEW.height);
+        ctx.save();
+        if (state.shake > 0 && !prefersReducedMotion()) {
+            const amp = state.shake * state.shake * 14;
+            ctx.translate((Math.random() - 0.5) * amp, (Math.random() - 0.5) * amp);
+        }
         drawBackground();
+        drawAmbient();
         drawRelayCourse();
         obstacles.forEach(drawObstacle);
         drawEDMSmoke();
@@ -6079,9 +6146,136 @@
         // decorative scenery behind him. Only the outer, non-playable bands cover him.
         drawForeground();
         drawEDMFrontLasers();
+        drawFlyingPickups();
+        drawComboText();
         if (DEBUG_COLLIDERS && state.phase !== 'menu' && state.phase !== 'levels') {
             BertCollision.drawDebug(ctx, BertCollision.bertCollider(bird, BIRD), obstacles.filter((obstacle) => obstacle.harmful));
         }
+        ctx.restore();
+    }
+
+    // ---------- Feel: stars fly to the counter, combo text, ambient particles ----------
+    const HUD_SCORE_TARGET = { x: 450, y: 46 };
+    function drawFlyingPickups() {
+        if (!state.flyingPickups?.length) return;
+        const dt = 1 / 60;
+        ctx.save();
+        state.flyingPickups.forEach((fx) => {
+            fx.age += dt;
+            const t = Math.min(1, fx.age / 0.45);
+            const e = t * t * (3 - 2 * t);
+            const x = fx.x + (fx.tx - fx.x) * e;
+            const y = fx.y + (fx.ty - fx.y) * e - Math.sin(t * Math.PI) * 60;
+            const size = 34 * (1 - t * 0.55);
+            const art = fx.kind === 'feather' ? assets.goldFeather : assets.star;
+            ctx.globalAlpha = 1 - t * 0.3;
+            if (art?.naturalWidth) ctx.drawImage(art, x - size / 2, y - size / 2, size, size);
+            if (t >= 1 && !fx.landed) {
+                fx.landed = true;
+                dom.score?.classList.remove('bump'); void dom.score?.offsetWidth; dom.score?.classList.add('bump');
+                playAudio('tick');
+            }
+        });
+        state.flyingPickups = state.flyingPickups.filter((fx) => fx.age < 0.5);
+        ctx.restore();
+    }
+    // Combo text stays out of star-heavy modes (Tunnel, Sky Relay, magnet), per Martin.
+    const COMBO_STEPS = [[5, 'FLOT!'], [10, 'PERFEKT!'], [20, 'UTROLIGT!'], [30, 'LEGENDARISK!'], [50, 'BERT-NIVEAU!']];
+    function noteCombo(streak) {
+        if (['tunnel', 'skyRelay'].includes(currentLevel.kind) || state.activePowerup === POWERUP.MAGNET) return;
+        const step = COMBO_STEPS.find(([count]) => count === streak);
+        if (!step) return;
+        state.comboText = { text: T(step[1]), age: 0 };
+        playAudio('combo');
+        BertMeta.haptic?.('powerup');
+    }
+    function drawComboText() {
+        const combo = state.comboText;
+        if (!combo) return;
+        combo.age += 1 / 60;
+        const t = combo.age / 0.9;
+        if (t >= 1) { state.comboText = null; return; }
+        const pop = t < 0.15 ? 0.6 + (t / 0.15) * 0.5 : 1.1 - (t - 0.15) * 0.1;
+        ctx.save();
+        ctx.translate(bird.x + BIRD.width / 2 + 40, bird.y - 30 - t * 40);
+        ctx.scale(pop, pop);
+        ctx.rotate(-0.08);
+        ctx.globalAlpha = t > 0.7 ? (1 - t) / 0.3 : 1;
+        ctx.font = '900 34px "Bert Display", "Bert Rounded", sans-serif';
+        ctx.textAlign = 'center';
+        ctx.lineWidth = 7;
+        ctx.strokeStyle = '#1b2a44';
+        ctx.fillStyle = '#ffd93b';
+        ctx.strokeText(combo.text, 0, 0);
+        ctx.fillText(combo.text, 0, 0);
+        ctx.restore();
+    }
+    // Ambient particles: a few dozen soft shapes per world, cheap and alive.
+    const AMBIENT = {
+        desert: { count: 26, color: 'rgba(255, 226, 150, .55)', size: [2, 4], vx: [-160, -90], vy: [-6, 6], shape: 'dot' },
+        jungle: { count: 18, color: 'rgba(214, 255, 120, .9)', size: [2, 3.5], vx: [-30, 10], vy: [-14, 14], shape: 'glow', blink: true },
+        happySky: { count: 22, color: 'rgba(255, 255, 255, .7)', size: [2, 4], vx: [-60, -20], vy: [-10, 10], shape: 'dot' },
+        flappy: { count: 16, color: 'rgba(255, 240, 200, .45)', size: [1.5, 3], vx: [-120, -60], vy: [-6, 6], shape: 'dot' },
+        tunnel: { count: 24, color: 'rgba(190, 240, 255, .8)', size: [1.5, 3], vx: [-40, -10], vy: [-8, 8], shape: 'glow', blink: true },
+        iceberg: { count: 40, color: 'rgba(255, 255, 255, .85)', size: [2, 4.5], vx: [-70, -20], vy: [30, 70], shape: 'flake' },
+        volcano: { count: 30, color: 'rgba(255, 150, 60, .85)', size: [1.5, 3.5], vx: [-60, 10], vy: [-70, -25], shape: 'glow', blink: true },
+        harbor: { count: 14, color: 'rgba(255, 255, 255, .5)', size: [2, 3], vx: [-90, -40], vy: [-10, 10], shape: 'dot' },
+        nightcity: { count: 20, color: 'rgba(255, 220, 130, .8)', size: [1.5, 2.5], vx: [-20, 10], vy: [-12, 12], shape: 'glow', blink: true },
+        windfarm: { count: 16, color: 'rgba(120, 200, 90, .85)', size: [3, 5], vx: [-220, -120], vy: [-20, 40], shape: 'leaf' },
+        poop: { count: 14, color: 'rgba(255, 255, 255, .45)', size: [2, 3], vx: [-80, -40], vy: [-6, 6], shape: 'dot' },
+        edm: { count: 28, color: null, size: [2, 4], vx: [-40, 40], vy: [40, 90], shape: 'confetti' },
+        birdRun: { count: 18, color: 'rgba(255, 255, 255, .6)', size: [2, 3.5], vx: [-80, -30], vy: [-8, 8], shape: 'dot' },
+        skyRelay: { count: 18, color: 'rgba(255, 255, 255, .6)', size: [2, 3.5], vx: [-80, -30], vy: [-8, 8], shape: 'dot' },
+        stormline: { count: 22, color: 'rgba(120, 200, 90, .85)', size: [3, 5], vx: [-320, -180], vy: [-30, 50], shape: 'leaf' },
+    };
+    const CONFETTI_COLORS = ['rgba(255,110,220,.9)', 'rgba(90,230,255,.9)', 'rgba(255,230,90,.9)'];
+    function updateAmbient(delta) {
+        const cfg = AMBIENT[currentLevel.kind];
+        if (!cfg || prefersReducedMotion()) { state.ambient = []; return; }
+        state.ambient ||= [];
+        const spawn = () => {
+            const fromRight = cfg.vx[1] < -40;
+            return { x: fromRight ? VIEW.width + 10 : Math.random() * VIEW.width, y: cfg.vy[0] > 20 ? -10 : cfg.vy[1] < -20 ? VIEW.height + 10 : Math.random() * VIEW.height,
+                vx: cfg.vx[0] + Math.random() * (cfg.vx[1] - cfg.vx[0]), vy: cfg.vy[0] + Math.random() * (cfg.vy[1] - cfg.vy[0]),
+                size: cfg.size[0] + Math.random() * (cfg.size[1] - cfg.size[0]), phase: Math.random() * Math.PI * 2, color: cfg.color || CONFETTI_COLORS[Math.floor(Math.random() * 3)], spin: Math.random() * 6 };
+        };
+        while (state.ambient.length < cfg.count) {
+            const p = spawn();
+            if (state.ambient.length < cfg.count / 2) { p.x = Math.random() * VIEW.width; p.y = Math.random() * VIEW.height; }
+            state.ambient.push(p);
+        }
+        const scroll = BertProgression.scrollPixelsPerSecond(state.speed) * 0.25;
+        state.ambient.forEach((p) => {
+            p.x += (p.vx - scroll) * delta;
+            p.y += (p.vy + Math.sin(state.worldTime * 1.3 + p.phase) * 12) * delta;
+            p.phase += delta;
+            if (p.x < -20 || p.x > VIEW.width + 20 || p.y < -20 || p.y > VIEW.height + 20) Object.assign(p, spawn());
+        });
+    }
+    function drawAmbient() {
+        const cfg = AMBIENT[currentLevel.kind];
+        if (!cfg || !state.ambient?.length) return;
+        ctx.save();
+        state.ambient.forEach((p) => {
+            const blink = cfg.blink ? 0.4 + 0.6 * Math.abs(Math.sin(state.worldTime * 2.2 + p.phase * 3)) : 1;
+            ctx.globalAlpha = blink;
+            ctx.fillStyle = p.color;
+            if (cfg.shape === 'glow') {
+                const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
+                g.addColorStop(0, p.color); g.addColorStop(1, 'rgba(0,0,0,0)');
+                ctx.fillStyle = g;
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2); ctx.fill();
+            } else if (cfg.shape === 'leaf' || cfg.shape === 'confetti') {
+                ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.phase * p.spin * 0.3);
+                ctx.fillRect(-p.size, -p.size * 0.45, p.size * 2, p.size * 0.9);
+                ctx.restore();
+            } else if (cfg.shape === 'flake') {
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+            } else {
+                ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+            }
+        });
+        ctx.restore();
     }
 
     function burst(x, y, color, count, sprite = null) {

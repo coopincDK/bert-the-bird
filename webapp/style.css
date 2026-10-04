@@ -2224,3 +2224,16 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .missions-card .edition-label + h2 { font-size: 24px; }
 .challenge-button { padding: 10px 22px !important; font-size: 14px !important; }
 .challenge-button img { width: 64px !important; height: 32px !important; }
+
+/* ---- Runde B: feel ---- */
+#score.bump, .hud-score.bump { animation: score-pop .25s ease-out; }
+.game-over.reveal .result-kicker { animation: result-pop .45s cubic-bezier(.2,1.4,.4,1) both; }
+.game-over.reveal .scoreboard { animation: result-pop .5s .15s cubic-bezier(.2,1.4,.4,1) both; }
+.game-over.reveal .result-medal { animation: result-pop .55s .45s cubic-bezier(.2,1.6,.4,1) both; }
+.game-over.reveal .result-progress, .game-over.reveal .result-actions, .game-over.reveal .challenge-button { animation: result-rise .45s .7s ease-out both; }
+@keyframes result-pop { from { opacity: 0; transform: scale(.6); } to { opacity: 1; transform: scale(1); } }
+@keyframes result-rise { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+.confetti-piece { position: absolute; top: -12px; width: 10px; height: 14px; border-radius: 2px; pointer-events: none; z-index: 20;
+    animation: confetti-fall var(--d, 2.4s) ease-in forwards; }
+@keyframes confetti-fall { 0% { transform: translate(0, 0) rotate(0); opacity: 1; } 100% { transform: translate(var(--x, 0), 110vh) rotate(var(--r, 360deg)); opacity: .9; } }
+@media (prefers-reduced-motion: reduce) { .game-over.reveal * { animation: none !important; } }
