@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-77';
+    const BUILD_VERSION = 'worlds-relay-78';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1541,7 +1541,10 @@
             } else {
                 const completeScores = (status.requirements || []).filter((requirement) => requirement.complete).length;
                 const mission = status.missionRequirement;
-                lock.textContent = T`${completeScores}/${status.requirements.length} BANER · ${Math.min(mission.current, mission.target)}/${mission.target} MISS.`;
+                // Short and readable on the card; the full requirement opens on tap.
+                lock.innerHTML = '';
+                const icon = document.createElement('img'); icon.src = 'assets/adventure/ui/lock.webp'; icon.alt = ''; icon.className = 'lock-icon';
+                lock.append(icon, document.createTextNode(T`LÅST · ${completeScores + Math.min(mission.current, mission.target)}/${status.requirements.length + mission.target}`));
                 if (fill) fill.style.width = `${Math.round(status.progress * 100)}%`;
             }
         });

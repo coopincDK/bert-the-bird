@@ -2456,3 +2456,9 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .nest-card { display: block !important; grid-template-rows: none !important; }
 .nest-card > * { margin-bottom: 6px; }
 .nest-card .nest-economy { display: grid; grid-template-columns: auto 1fr; gap: 10px; }
+
+/* Mærker uden hvide firkanter, og FLYV VIDERE med teksten i midten */
+.badge { border: 0 !important; background-color: transparent !important; padding: 0 !important; outline: none; }
+.nest-card #close-missions, .missions-card #close-missions { display: flex !important; align-items: center; justify-content: center; line-height: 1 !important; padding: 0 !important; min-height: 52px !important; }
+.level-card .lock-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 5px; }
+.level-card.locked .level-card-copy { opacity: .85; }
