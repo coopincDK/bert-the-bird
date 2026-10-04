@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bert The Bird">
     <title>Bert The Bird – flyvespil og præcisionsverdener</title>
-    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-55">
+    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-56">
     <link rel="apple-touch-icon" href="icons/bert-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/bert-192.png">
-    <link rel="stylesheet" href="style.css?v=worlds-relay-55">
+    <link rel="stylesheet" href="style.css?v=worlds-relay-56">
 </head>
 <body>
     <main id="game-shell" aria-label="Bert The Bird">
@@ -52,8 +52,8 @@
             <h1 id="main-title" class="sr-only">Bert The Bird</h1>
             <img class="game-title" src="assets/unity/ui/game-title.webp" alt="Bert The Bird">
             <img id="menu-bird" class="menu-bird" data-hero="bert" src="assets/unity/ui/menu-bird.webp" alt="Bert flyver">
-            <button id="settings-btn" class="round-menu-button settings-gear" type="button" aria-label="Åbn indstillinger"><span aria-hidden="true">⚙</span></button>
-            <button id="missions-btn" class="missions-button" type="button" aria-label="Åbn dagens missioner"><img src="assets/unity/ui/chest.webp" alt="Missioner"><span>MISSIONER</span></button>
+            <button id="settings-btn" class="round-menu-button settings-gear" type="button" aria-label="Åbn indstillinger"><img src="assets/v2/ui/icon-gear.webp" alt=""></button>
+            <button id="missions-btn" class="missions-button" type="button" aria-label="Åbn dagens missioner"><img src="assets/v2/ui/icon-chest.webp" alt="Missioner"><span>MISSIONER</span></button>
 
             <div class="menu-actions">
                 <button id="play-btn" class="unity-button play-button" type="button" aria-label="Vælg bane">
@@ -63,24 +63,25 @@
                     <span class="ui-house ui-lime">QUICK PLAY</span>
                 </button>
                 <button id="install-btn" class="install-button" type="button">
-                    <span class="install-mark" aria-hidden="true">↓</span>
+                    <img class="install-mark" src="assets/v2/ui/install-badge.webp" alt="" aria-hidden="true">
                     <span><strong>HENT SPILLET</strong><small>Installér som webapp</small></span>
                 </button>
                 <p class="menu-controls">MOBIL: VENSTRE SIDE = OP · HØJRE SIDE = NED</p>
             </div>
 
             <aside class="menu-record" aria-label="Personlig highscore">
-                <img src="assets/unity/ui/crown.webp" alt="" aria-hidden="true">
+                <img src="assets/v2/ui/icon-crown.webp" alt="" aria-hidden="true">
                 <div>
                     <span>PERSONLIG REKORD</span>
                     <strong id="menu-highscore">0</strong>
                     <small id="menu-best-level">Ingen rekord endnu</small>
                 </div>
                 <div class="record-total"><img src="assets/unity/ui/menu-star.webp" alt=""><strong id="total-stars">0</strong></div>
-                <button id="leaderboard-btn" class="leaderboard-button" type="button" aria-label="Åbn highscore"><span class="ui-word ui-blue">RANGLISTE</span></button>
+                <button id="leaderboard-btn" class="leaderboard-button" type="button" aria-label="Åbn highscore"><img class="trophy" src="assets/v2/ui/icon-trophy.webp" alt="" aria-hidden="true"><span class="ui-word ui-blue">RANGLISTE</span></button>
             </aside>
 
             <button id="daily-btn" class="daily-card" type="button">
+                <img class="daily-icon" src="assets/v2/ui/icon-daily.webp" alt="" aria-hidden="true">
                 <span class="daily-kicker">DAGENS RUTE</span>
                 <strong id="daily-name">STJERNEREGN</strong>
                 <small id="daily-detail">Level 1 · Mål 30</small>
@@ -187,7 +188,7 @@
                 </div>
                 <div class="score-col score-icons" aria-hidden="true">
                     <img src="assets/unity/ui/menu-star.webp" alt="">
-                    <img src="assets/unity/ui/result-clock.webp" alt="">
+                    <img src="assets/v2/ui/icon-stopwatch.webp" alt="">
                     <span class="score-streak-label">STREAK</span>
                 </div>
                 <div class="score-col score-run">
@@ -199,14 +200,14 @@
                 <span id="new-highscore" class="new-highscore hidden">NY REKORD!</span>
             </div>
             <div class="result-summary">
-                <div id="result-medal" class="result-medal medal-flight"><img src="assets/unity/ui/menu-star.webp" alt=""><strong>FLYV IGEN</strong></div>
+                <div id="result-medal" class="result-medal medal-flight"><img src="assets/v2/ui/medal-none.webp" alt=""><strong>FLYV IGEN</strong></div>
                 <p id="result-progress" class="result-progress">20 point til bronze</p>
             </div>
             <div class="result-actions">
                 <button id="retry-btn" class="result-button result-again" type="button">FLYV IGEN</button>
                 <button id="menu-btn" class="result-button result-change" type="button">SKIFT BANE</button>
             </div>
-            <button id="challenge-btn" class="challenge-button" type="button">UDFORDR EN VEN</button>
+            <button id="challenge-btn" class="challenge-button" type="button"><img src="assets/v2/ui/icon-challenge.webp" alt="" aria-hidden="true">UDFORDR EN VEN</button>
         </section>
 
         <section id="pause-menu" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="pause-title">
@@ -257,7 +258,7 @@
 
         <section id="missions-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="missions-title">
             <div class="missions-card">
-                <header><img src="assets/unity/ui/chest.webp" alt=""><div><p class="edition-label">BERTS REDE</p><h2 id="missions-title">DAGENS MISSIONER</h2></div></header>
+                <header><img src="assets/v2/ui/icon-chest.webp" alt=""><div><p class="edition-label">BERTS REDE</p><h2 id="missions-title">DAGENS MISSIONER</h2></div></header>
                 <div class="nest-economy">
                     <div class="feather-wallet"><img src="assets/unity/particles/feather.webp" alt=""><span>FJER</span><strong id="feather-balance">0</strong></div>
                     <div class="rescue-upgrade">
@@ -365,34 +366,34 @@
 
         <div id="app-status" class="app-status" role="status" aria-live="polite"></div>
     </main>
-    <script src="bert-i18n.js?v=worlds-relay-55"></script>
-    <script src="lang-en.js?v=worlds-relay-55"></script>
-    <script src="lang-nb.js?v=worlds-relay-55"></script>
-    <script src="lang-sv.js?v=worlds-relay-55"></script>
-    <script src="lang-de.js?v=worlds-relay-55"></script>
-    <script src="lang-es.js?v=worlds-relay-55"></script>
-    <script src="lang-fr.js?v=worlds-relay-55"></script>
-    <script src="lang-pt.js?v=worlds-relay-55"></script>
+    <script src="bert-i18n.js?v=worlds-relay-56"></script>
+    <script src="lang-en.js?v=worlds-relay-56"></script>
+    <script src="lang-nb.js?v=worlds-relay-56"></script>
+    <script src="lang-sv.js?v=worlds-relay-56"></script>
+    <script src="lang-de.js?v=worlds-relay-56"></script>
+    <script src="lang-es.js?v=worlds-relay-56"></script>
+    <script src="lang-fr.js?v=worlds-relay-56"></script>
+    <script src="lang-pt.js?v=worlds-relay-56"></script>
     <script>window.BertI18n.apply();</script>
-    <script src="app-shell.js?v=worlds-relay-55"></script>
-    <script src="unity-collision.js?v=worlds-relay-55"></script>
-    <script src="bert-physics.js?v=worlds-relay-55"></script>
-    <script src="bert-progression.js?v=worlds-relay-55"></script>
-    <script src="bert-tunnel.js?v=worlds-relay-55"></script>
-    <script src="bert-edm.js?v=worlds-relay-55"></script>
-    <script src="bert-bird-run.js?v=worlds-relay-55"></script>
-    <script src="bert-stormline.js?v=worlds-relay-55"></script>
-    <script src="bert-world-mastery.js?v=worlds-relay-55"></script>
-    <script src="bert-sky-relay.js?v=worlds-relay-55"></script>
-    <script src="bert-event-powerups.js?v=worlds-relay-55"></script>
-    <script src="bert-collectible-motion.js?v=worlds-relay-55"></script>
-    <script src="bert-haptics.js?v=worlds-relay-55"></script>
-    <script src="bert-hero-store.js?v=worlds-relay-55"></script>
-    <script src="bert-meta.js?v=worlds-relay-55"></script>
-    <script src="bert-social.js?v=worlds-relay-55"></script>
-    <script src="bert-focus-audio.js?v=worlds-relay-55"></script>
-    <script src="bert-star-audio.js?v=worlds-relay-55"></script>
-    <script src="bert-adventure.js?v=worlds-relay-55"></script>
-    <script src="unity-faithful.js?v=worlds-relay-55"></script>
+    <script src="app-shell.js?v=worlds-relay-56"></script>
+    <script src="unity-collision.js?v=worlds-relay-56"></script>
+    <script src="bert-physics.js?v=worlds-relay-56"></script>
+    <script src="bert-progression.js?v=worlds-relay-56"></script>
+    <script src="bert-tunnel.js?v=worlds-relay-56"></script>
+    <script src="bert-edm.js?v=worlds-relay-56"></script>
+    <script src="bert-bird-run.js?v=worlds-relay-56"></script>
+    <script src="bert-stormline.js?v=worlds-relay-56"></script>
+    <script src="bert-world-mastery.js?v=worlds-relay-56"></script>
+    <script src="bert-sky-relay.js?v=worlds-relay-56"></script>
+    <script src="bert-event-powerups.js?v=worlds-relay-56"></script>
+    <script src="bert-collectible-motion.js?v=worlds-relay-56"></script>
+    <script src="bert-haptics.js?v=worlds-relay-56"></script>
+    <script src="bert-hero-store.js?v=worlds-relay-56"></script>
+    <script src="bert-meta.js?v=worlds-relay-56"></script>
+    <script src="bert-social.js?v=worlds-relay-56"></script>
+    <script src="bert-focus-audio.js?v=worlds-relay-56"></script>
+    <script src="bert-star-audio.js?v=worlds-relay-56"></script>
+    <script src="bert-adventure.js?v=worlds-relay-56"></script>
+    <script src="unity-faithful.js?v=worlds-relay-56"></script>
 </body>
 </html>

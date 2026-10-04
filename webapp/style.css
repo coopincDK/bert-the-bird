@@ -2087,3 +2087,32 @@ body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 .hero-option img { width: 64px !important; height: 52px !important; object-fit: contain; }
 .hero-option b { font-size: 12px; }
 .edition-label { color: #ffd98a; font-size: 12px; letter-spacing: .12em; }
+
+/* ---- Grafikrunde 2: panels, buttons and icons ---- */
+.settings-gear img { width: 34px; height: 34px; display: block; }
+.settings-gear { background: none !important; border: 0 !important; box-shadow: none !important; padding: 2px !important; }
+.hero-selector, .daily-card, .menu-record {
+    border: 12px solid transparent !important;
+    border-image: url(assets/v2/ui/panel-dark.webp) 60 fill / 12px stretch !important;
+    background: none !important; box-shadow: none !important;
+}
+.daily-card { background-image: none !important; padding: 4px 8px 4px 44px !important; }
+.daily-card strong { white-space: nowrap; }
+.daily-card { padding-right: 46px !important; }
+.daily-card .daily-icon { position: absolute; left: -2px; top: 50%; width: 40px; height: 40px; transform: translateY(-50%); }
+.play-button {
+    border: 24px solid transparent !important;
+    border-image: url(assets/v2/ui/button-primary.webp) 70 fill / 24px stretch !important;
+    background: none !important; box-shadow: none !important;
+}
+.play-button .ui-play { color: #123018 !important; -webkit-text-stroke: 0 !important; text-shadow: 0 2px 0 rgba(255,255,255,.45) !important; }
+.install-button .install-mark { width: 42px; height: 42px; background: none !important; border: 0 !important; object-fit: contain; }
+.missions-button img { width: 60px !important; max-height: 60px; }
+.menu-record .leaderboard-button { display: flex; align-items: center; justify-content: center; gap: 6px; }
+.menu-record .leaderboard-button .trophy { width: 28px; height: 28px; }
+.result-medal img { width: 64px !important; height: 64px !important; object-fit: contain; }
+.challenge-button { display: inline-flex; align-items: center; gap: 8px; }
+.challenge-button img { width: 34px; height: 18px; object-fit: contain; }
+.result-kicker { background: url(assets/v2/ui/result-ribbon.webp) center / contain no-repeat; padding: 10px 70px; color: #1d3b5a !important; text-shadow: none !important; }
+.loading { background: #8fd3ff url(assets/v2/ui/splash.webp) center / cover no-repeat !important; }
+.hero-wardrobe-card header { background: url(assets/v2/ui/wardrobe-header.webp) left center / auto 100% no-repeat; padding-left: 16px; }

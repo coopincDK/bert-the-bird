@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-55';
+    const BUILD_VERSION = 'worlds-relay-56';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -435,12 +435,47 @@
         ASSET_PATHS[`snakeCatch${index}`] = `assets/unity/props/snake-catch-${String(index).padStart(2, '0')}.webp`;
     }
 
+    // ---------- Grafikrunde 2 (4. okt.): pickups, effects, deaths, EDM and Stormline ----------
+    Object.assign(ASSET_PATHS, {
+        star: 'assets/v2/pickups/star.webp',
+        goldFeather: 'assets/v2/pickups/feather.webp',
+        eventMetal: 'assets/v2/pickups/pu-heavy.webp',
+        eventHyper: 'assets/v2/pickups/pu-hyper.webp',
+        eventDouble: 'assets/v2/pickups/pu-double.webp',
+        eventFlap: 'assets/v2/pickups/pu-flap.webp',
+        reversePickup: 'assets/v2/pickups/pu-reverse.webp',
+        shieldPickup: 'assets/v2/pickups/pu-shield.webp',
+        magnetPickup: 'assets/v2/pickups/pu-magnet.webp',
+        focusPickup: 'assets/v2/pickups/pu-focus.webp',
+        edmStage: 'assets/v2/edm/sky.webp',
+        edmSpeaker: 'assets/v2/edm/speaker.webp',
+        edmCrowd: 'assets/v2/edm/crowd.webp',
+        stormSky: 'assets/v2/stormline/sky.webp',
+        stormSail: 'assets/v2/stormline/sail.webp',
+        stormUmbrella: 'assets/v2/stormline/umbrella.webp',
+        stormBranch: 'assets/v2/stormline/branch.webp',
+        v2EdmTruss: 'assets/v2/edm/truss.webp',
+        v2Warning: 'assets/v2/fx/warning.webp',
+        v2FeatherPuff: 'assets/v2/fx/feather-puff.webp',
+        v2Sparkle: 'assets/v2/fx/sparkle.webp',
+        v2Smoke0: 'assets/v2/fx/smoke-1.webp',
+        v2Smoke1: 'assets/v2/fx/smoke-2.webp',
+        v2Smoke2: 'assets/v2/fx/smoke-3.webp',
+        v2WindSwirl: 'assets/v2/fx/wind-swirl.webp',
+    });
+    for (let i = 0; i < 6; i += 1) {
+        ASSET_PATHS[`v2SpiderWrap${i}`] = `assets/v2/deaths/spider-wrap-${i + 1}.webp`;
+        ASSET_PATHS[`v2HawkCarry${i}`] = `assets/v2/deaths/hawk-carry-${i + 1}.webp`;
+    }
+    for (let i = 0; i < 3; i += 1) ASSET_PATHS[`v2WebStuck${i}`] = `assets/v2/deaths/web-stuck-${i + 1}.webp`;
+
     const BASE_ASSET_KEYS = [
         'desertSky', 'desertBg1', 'desertBg2', 'desertMg', 'desertFg',
         'star', 'blueGlow', 'whiteGlow', 'yellowGlow', 'lightning',
         'powerupWing', 'shieldPickup', 'magnetPickup', 'focusPickup', 'shieldCharge',
         'feather', 'shieldSplinter', 'shieldSplinterOrange',
         'eventMetal', 'eventHyper', 'eventDouble', 'eventFlap', 'reversePickup', 'goldFeather',
+        'v2Warning', 'v2FeatherPuff', 'v2Sparkle', 'v2Smoke0', 'v2Smoke1', 'v2Smoke2', 'v2WindSwirl',
     ];
     const LEVEL_ASSET_KEYS = Object.freeze({
         desert: ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'],
@@ -522,6 +557,12 @@
         const extra = [];
         if (kind === 'poop' && ASSET_PATHS.v2LampPost) extra.push('v2LampPost');
         if (kind === 'edm' && ASSET_PATHS.v2SmokeCannon) extra.push('v2SmokeCannon');
+        if (kind === 'edm') extra.push('v2EdmTruss');
+        if (kind === 'jungle') {
+            for (let i = 0; i < 6; i += 1) extra.push(`v2SpiderWrap${i}`);
+            for (let i = 0; i < 3; i += 1) extra.push(`v2WebStuck${i}`);
+        }
+        if (kind === 'birdRun') for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCarry${i}`);
         if ((kind === 'birdRun' || kind === 'skyRelay') && V2.levels.has('happySky')) extra.push(...v2LayerKeys('happySky'));
         if (kind === 'birdRun' && ASSET_PATHS.v2HawkFly0) {
             for (let i = 0; i < 4; i += 1) extra.push(`v2HawkFly${i}`);
@@ -2867,6 +2908,7 @@
 
     function collectStar(collectible = null) {
         const value = collectible?.value || 1;
+        if (collectible) (state.sparkles ||= []).push({ x: collectible.x, y: collectible.y, age: 0 });
         state.streak += 1;
         state.bestStreak = Math.max(state.bestStreak, state.streak);
         state.starsCollected += value;
@@ -3057,7 +3099,9 @@
         state.deathCaptureX = bird.x + BIRD.width / 2;
         state.deathCaptureY = bird.y + BIRD.height / 2;
         // The hawk's catch frames show the bird in its talons, so the bird itself is hidden.
-        state.birdsVisible = !captureCause && !(predatorHero && assets.v2HawkCatch0?.naturalWidth);
+        state.birdsVisible = !captureCause && !(predatorHero && (assets.v2HawkCarry0?.naturalWidth || assets.v2HawkCatch0?.naturalWidth));
+        state.deathFromWeb = obstacle?.kind === 'jungle-web';
+        if (!captureCause && !predatorHero) state.featherPuff = { x: bird.x + BIRD.width / 2, y: bird.y + BIRD.height / 2, age: 0 };
         state.deathCountdown = captureCause === 'jungle-spider' ? 3.8
             : captureCause === 'jungle-snake' ? 2.2 : predatorHero ? 2.1 : 1.5;
         if (predatorHero) bird.velocity = -165;
@@ -3252,6 +3296,8 @@
         dom.recordTime.textContent = formatTime(record.time);
         dom.resultMedal.className = `result-medal medal-${medal.id}`;
         dom.resultMedal.querySelector('strong').textContent = medal.label;
+        const medalImage = dom.resultMedal.querySelector('img');
+        if (medalImage) medalImage.src = `assets/v2/ui/medal-${medal.id === 'flight' ? 'none' : medal.id}.webp`;
         const unlockAfterRun = nextLevel ? progressionSnapshot()[nextLevel.id] : null;
         const medalText = medal.next
             ? T`${Math.max(0, medal.next - state.score)} point til næste medalje`
@@ -3915,6 +3961,15 @@
             ctx.restore();
             return;
         }
+        if (currentLevel.kind === 'edm' && assets.v2EdmTruss?.naturalWidth) {
+            // New-style stage: horizontal light truss at the top, new crowd at the bottom.
+            drawTiled(assets.v2EdmTruss, -14, 72, 0.16);
+            if (assets.edmCrowd?.naturalWidth) {
+                const frame = crowdFrames[BertEDM.crowdFrame(state.worldTime, prefersReducedMotion())];
+                drawTiled(frame || assets.edmCrowd, 566, 160, 0.38);
+            }
+            return;
+        }
         if (currentLevel.kind === 'edm') {
             const truss = assets.edmTruss;
             if (truss?.naturalWidth) {
@@ -4157,13 +4212,18 @@
             ctx.arc(spot.x, spot.y, spot.radius * (0.7 + o.warn * 0.5), 0, Math.PI * 2);
             ctx.fill();
             ctx.globalAlpha = Math.min(1, o.warn * 1.4);
-            ctx.font = '900 34px "Bert Rounded", sans-serif';
-            ctx.textAlign = 'center';
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = 'rgba(20, 20, 30, .85)';
-            ctx.fillStyle = '#fff';
-            ctx.strokeText('!', spot.x, spot.y + 12);
-            ctx.fillText('!', spot.x, spot.y + 12);
+            if (assets.v2Warning?.naturalWidth) {
+                const size = 52 + o.warn * 10;
+                ctx.drawImage(assets.v2Warning, spot.x - size / 2, spot.y - size / 2, size, size);
+            } else {
+                ctx.font = '900 34px "Bert Rounded", sans-serif';
+                ctx.textAlign = 'center';
+                ctx.lineWidth = 6;
+                ctx.strokeStyle = 'rgba(20, 20, 30, .85)';
+                ctx.fillStyle = '#fff';
+                ctx.strokeText('!', spot.x, spot.y + 12);
+                ctx.fillText('!', spot.x, spot.y + 12);
+            }
             ctx.restore();
         }
         if (o.behaviour === 'stack') {
@@ -4497,6 +4557,30 @@
 
     // One soft puff is rendered once and reused; per-puff gradients stalled phones.
     let fogSprite = null;
+    // Short art effects: a sparkle where a star was taken, feathers where Bert hit something.
+    function drawArtEffects(delta) {
+        ctx.save();
+        (state.sparkles || []).forEach((fx) => {
+            fx.age += delta;
+            const t = fx.age / 0.45;
+            if (!assets.v2Sparkle?.naturalWidth || t >= 1) return;
+            const size = 50 + t * 70;
+            ctx.globalAlpha = 1 - t;
+            ctx.drawImage(assets.v2Sparkle, fx.x - size / 2, fx.y - size / 2, size, size);
+        });
+        state.sparkles = (state.sparkles || []).filter((fx) => fx.age < 0.45);
+        if (state.featherPuff && assets.v2FeatherPuff?.naturalWidth) {
+            state.featherPuff.age += delta;
+            const t = state.featherPuff.age / 0.7;
+            if (t < 1) {
+                const size = 90 + t * 110;
+                ctx.globalAlpha = 1 - t;
+                ctx.drawImage(assets.v2FeatherPuff, state.featherPuff.x - size / 2, state.featherPuff.y - size / 2, size, size);
+            } else state.featherPuff = null;
+        }
+        ctx.restore();
+    }
+
     function drawSmokeFog() {
         if (!state.smokeFog?.length) return;
         if (!fogSprite) {
@@ -4510,9 +4594,11 @@
             g.fillRect(0, 0, 128, 128);
         }
         ctx.save();
-        state.smokeFog.forEach((puff) => {
+        state.smokeFog.forEach((puff, index) => {
             ctx.globalAlpha = puff.age < 0.4 ? puff.age / 0.4 : Math.max(0, 1 - (puff.age - 0.4) / 3.6);
-            ctx.drawImage(fogSprite, puff.x - puff.r, puff.y - puff.r, puff.r * 2, puff.r * 2);
+            const art = assets[`v2Smoke${index % 3}`];
+            if (art?.naturalWidth) ctx.drawImage(art, puff.x - puff.r, puff.y - puff.r, puff.r * 2, puff.r * 2);
+            else ctx.drawImage(fogSprite, puff.x - puff.r, puff.y - puff.r, puff.r * 2, puff.r * 2);
         });
         ctx.restore();
     }
@@ -4914,8 +5000,13 @@
             }
         } else if (BertStormline.isHazard(obstacle)) {
             const art = assets[obstacle.artKey];
-            if (art?.naturalWidth) ctx.drawImage(art,
-                obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            if (art?.naturalWidth) {
+                // New art has its own proportions: fit it inside the hazard box, centred.
+                const scale = Math.min(obstacle.width / art.naturalWidth, obstacle.height / art.naturalHeight) * 1.15;
+                const w = art.naturalWidth * scale;
+                const h = art.naturalHeight * scale;
+                ctx.drawImage(art, obstacle.x + (obstacle.width - w) / 2, obstacle.y + (obstacle.height - h) / 2, w, h);
+            }
         } else if (obstacle.kind === 'edm-center-rig') {
             if (assets.edmCenterRig?.naturalWidth) ctx.drawImage(assets.edmCenterRig,
                 obstacle.x, obstacle.y, obstacle.width, obstacle.height);
@@ -4928,7 +5019,16 @@
             }
         } else if (obstacle.kind === 'edm-tower') {
             const art = assets[obstacle.artKey];
-            if (art) ctx.drawImage(art, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+            if (art && obstacle.artKey === 'edmSpeaker') {
+                // Speaker stacks: tile the speaker art along the tower so it never stretches.
+                const w = obstacle.width;
+                const tileH = w * art.naturalHeight / art.naturalWidth;
+                ctx.save();
+                ctx.beginPath(); ctx.rect(obstacle.x - 10, obstacle.y, w + 20, obstacle.height); ctx.clip();
+                if (obstacle.top) for (let y = obstacle.y + obstacle.height - tileH; y > obstacle.y - tileH; y -= tileH) ctx.drawImage(art, obstacle.x, y, w, tileH);
+                else for (let y = obstacle.y; y < obstacle.y + obstacle.height; y += tileH) ctx.drawImage(art, obstacle.x, y, w, tileH);
+                ctx.restore();
+            } else if (art) ctx.drawImage(art, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
         } else if (obstacle.kind === 'edm-orb') {
             // The cord is decorative; only the visible ball has a solid circular hitbox.
             ctx.strokeStyle = 'rgba(169, 218, 226, .65)';
@@ -5135,6 +5235,39 @@
 
     function drawEnemyCapture() {
         if (state.phase !== 'dead' || !state.deathCause) return;
+        // Round 2 deaths: the scene art has no bird in it; the player's own hero is drawn in.
+        const heroPose = (pose) => {
+            const frames = birdFrames[BertMeta.currentHero()];
+            if (frames?.v2) return pose === 'dead' ? frames[9] : frames[8];
+            return frames?.[pose === 'dead' ? 13 : 4] || birdFrames.bert?.[4];
+        };
+        const fitHero = (img, x, y, w, h, angle = 0) => {
+            if (!img?.naturalWidth) return;
+            const scale = Math.min(w / img.naturalWidth, h / img.naturalHeight);
+            const dw = img.naturalWidth * scale;
+            const dh = img.naturalHeight * scale;
+            ctx.save();
+            ctx.translate(x + w / 2, y + h / 2);
+            ctx.rotate(angle);
+            ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
+            ctx.restore();
+        };
+        if (state.deathPredatorHero && assets.v2HawkCarry0?.naturalWidth) {
+            const progress = clamp(state.deathCaptureElapsed / 1.3, 0, 1);
+            const frame = assets[`v2HawkCarry${Math.min(5, Math.floor(state.deathCaptureElapsed / 0.2))}`];
+            const size = 240;
+            const x = state.deathCaptureX - size / 2 + progress * 320;
+            const y = state.deathCaptureY - size * 0.62 - Math.sin(progress * Math.PI) * 60;
+            ctx.save();
+            ctx.globalAlpha = clamp((2.1 - state.deathCaptureElapsed) / 0.55, 0, 1);
+            ctx.translate(x + size, y);
+            ctx.scale(-1, 1);
+            // The hero dangles from the talons (lower middle of the art), then the hawk on top.
+            fitHero(heroPose('glide'), size * 0.3, size * 0.7, size * 0.42, size * 0.38, 0.5);
+            ctx.drawImage(frame, 0, 0, size, size);
+            ctx.restore();
+            return;
+        }
         if (state.deathPredatorHero && assets.v2HawkCatch0?.naturalWidth) {
             const progress = clamp(state.deathCaptureElapsed / 1.3, 0, 1);
             const frame = assets[`v2HawkCatch${Math.min(5, Math.floor(state.deathCaptureElapsed / 0.22))}`];
@@ -5183,6 +5316,35 @@
             ctx.translate(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2);
             ctx.rotate((bird.rotation * Math.PI) / 180);
             ctx.drawImage(frame, -width / 2, -height / 2, width, height);
+            ctx.restore();
+            return;
+        }
+        if (state.deathCause === 'jungle-spider' && assets.v2SpiderWrap0?.naturalWidth) {
+            const size = 250;
+            const x = state.deathCaptureX - size * 0.65;
+            const y = state.deathCaptureY - size * 0.58;
+            let elapsed = state.deathCaptureElapsed;
+            // From the big web: first the strands close around the hero, then the spider comes.
+            if (state.deathFromWeb && assets.v2WebStuck0?.naturalWidth) {
+                if (elapsed < 0.9) {
+                    const s2 = 220;
+                    fitHero(heroPose('glide'), state.deathCaptureX - s2 * 0.28, state.deathCaptureY - s2 * 0.24, s2 * 0.56, s2 * 0.48);
+                    ctx.drawImage(assets[`v2WebStuck${Math.min(2, Math.floor(elapsed / 0.3))}`], state.deathCaptureX - s2 / 2, state.deathCaptureY - s2 / 2, s2, s2);
+                    return;
+                }
+                elapsed -= 0.9;
+            }
+            const frameIndex = Math.min(5, Math.floor(elapsed / 0.28));
+            ctx.save();
+            ctx.shadowColor = 'rgba(0,0,0,.28)';
+            ctx.shadowBlur = 9;
+            // Mask hole in frame 3: x 264–402, y 228–326 of the 512 art. The hero sits there
+            // while the cocoon is still open (frames 1–3); the closed cocoon hides it.
+            if (frameIndex <= 2) {
+                const k = size / 512;
+                fitHero(heroPose('glide'), x + 258 * k, y + 214 * k, 150 * k, 120 * k);
+            }
+            ctx.drawImage(assets[`v2SpiderWrap${frameIndex}`], x, y, size, size);
             ctx.restore();
             return;
         }
@@ -5328,7 +5490,9 @@
             ctx.drawImage(glow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
             ctx.globalAlpha = 1;
 
-            if (collectible.type !== POWERUP.FOCUS) {
+            // Round-2 pickups are bubbles of their own; the old wings are only for old art.
+            const bubbleArt = body?.src?.includes('/v2/pickups/');
+            if (collectible.type !== POWERUP.FOCUS && !bubbleArt) {
                 const flap = Math.sin(collectible.spin * 4.2) * 0.22;
                 ctx.save();
                 ctx.translate(-32, -2);
@@ -5343,8 +5507,8 @@
                 ctx.restore();
             }
 
-            const bodyHeight = collectible.type === POWERUP.SHIELD ? 70 : 64;
-            const bodyWidth = collectible.type === POWERUP.SHIELD ? 57 : 64;
+            const bodyHeight = bubbleArt ? 74 : collectible.type === POWERUP.SHIELD ? 70 : 64;
+            const bodyWidth = bubbleArt ? 74 : collectible.type === POWERUP.SHIELD ? 57 : 64;
             if (body?.naturalWidth) ctx.drawImage(body, -bodyWidth / 2, -bodyHeight / 2, bodyWidth, bodyHeight);
             if (collectible.type === POWERUP.GUARD) ctx.drawImage(assets.star, -15, -13, 30, 30);
         } else {
@@ -5631,6 +5795,7 @@
         collectibles.forEach(drawCollectible);
         drawPowerupAura();
         drawSmokeFog();
+        drawArtEffects(1 / 60);
         drawGhost();
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
         drawRelayNearEdge();
