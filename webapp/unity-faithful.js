@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-62';
+    const BUILD_VERSION = 'worlds-relay-63';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -3737,9 +3737,10 @@
             const dj = assets[djPoses[beat % djPoses.length]];
             if (dj?.naturalWidth) {
                 const bob = prefersReducedMotion() ? 0 : Math.abs(Math.sin(state.worldTime * Math.PI * 2.2)) * 5;
-                ctx.drawImage(dj, 540, 357 - bob, 200, 200);
+                // Stage 720×225 standing on the crowd line (base ≈ y 705); booth top ≈ y 604.
+                ctx.drawImage(dj, 558, 480 - bob, 164, 164);
             }
-            ctx.drawImage(assets.v2EdmStage, 200, 356, 880, 275);
+            ctx.drawImage(assets.v2EdmStage, 280, 480, 720, 225);
         } else {
         // A stage in the background: deck, glowing front edge, DJ booth and side screens.
         ctx.save();
