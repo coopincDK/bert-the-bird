@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-69';
+    const BUILD_VERSION = 'worlds-relay-70';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -468,6 +468,17 @@
         v2Smoke2: 'assets/v2/fx/smoke-3.webp',
         v2WindSwirl: 'assets/v2/fx/wind-swirl.webp',
         v2Bubble: 'assets/v2/pickups/bubble.webp',
+        g4AmbDust: 'assets/v2/g4/fx/ambient-dust.webp',
+        g4AmbFirefly: 'assets/v2/g4/fx/ambient-firefly.webp',
+        g4AmbSnow: 'assets/v2/g4/fx/ambient-snow.webp',
+        g4AmbEmber: 'assets/v2/g4/fx/ambient-ember.webp',
+        g4AmbLeaf: 'assets/v2/g4/fx/ambient-leaf.webp',
+        g4AmbConfetti: 'assets/v2/g4/fx/ambient-confetti.webp',
+        g4Trail: 'assets/v2/g4/fx/trail.webp',
+        g4ComboBurst: 'assets/v2/g4/fx/combo-burst.webp',
+        g4StarPop: 'assets/v2/g4/fx/star-pop.webp',
+        g4Festival: 'assets/v2/g4/edm/festival-bg.webp',
+        g4MedalRing: 'assets/v2/g4/ui/medal-ring.webp',
         v2PuGrow: 'assets/v2/pickups/pu-grow.webp',
         v2PuShrink: 'assets/v2/pickups/pu-shrink.webp',
         v2Bonk: 'assets/v2/fx/bonk.webp',
@@ -494,6 +505,7 @@
         'eventMetal', 'eventHyper', 'eventDouble', 'eventFlap', 'reversePickup', 'goldFeather',
         'v2Warning', 'v2FeatherPuff', 'v2Sparkle', 'v2Smoke0', 'v2Smoke1', 'v2Smoke2', 'v2WindSwirl', 'v2Bubble',
         'v2PuGrow', 'v2PuShrink', 'v2Bonk',
+        'g4AmbDust', 'g4AmbFirefly', 'g4AmbSnow', 'g4AmbEmber', 'g4AmbLeaf', 'g4AmbConfetti', 'g4Trail', 'g4ComboBurst', 'g4StarPop',
     ];
     const LEVEL_ASSET_KEYS = Object.freeze({
         desert: ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'],
@@ -575,7 +587,7 @@
         const extra = [];
         if (kind === 'poop' && ASSET_PATHS.v2LampPost) extra.push('v2LampPost');
         if (kind === 'edm' && ASSET_PATHS.v2SmokeCannon) extra.push('v2SmokeCannon');
-        if (kind === 'edm') extra.push('v2EdmTruss', 'v2EdmStage', 'v2Crowd0', 'v2Crowd1', 'v2Crowd2', 'v2DjMix', 'v2DjMove1', 'v2DjMove2', 'v2DjUp');
+        if (kind === 'edm') extra.push('v2EdmTruss', 'v2EdmStage', 'v2Crowd0', 'v2Crowd1', 'v2Crowd2', 'v2DjMix', 'v2DjMove1', 'v2DjMove2', 'v2DjUp', 'g4Festival');
         if (kind === 'jungle') {
             for (let i = 0; i < 6; i += 1) extra.push(`v2SpiderWrap${i}`);
             for (let i = 0; i < 3; i += 1) extra.push(`v2WebStuck${i}`);
@@ -984,6 +996,10 @@
                 const dead = await optional('dead', flaps[2]);
                 const frames = [...flaps, glide, dead];
                 frames.v2 = true;
+                // Round 4: eyes closed (blink) and wide-eyed (scared), optional.
+                const g4 = `assets/v2/g4/heroes/${V2_HERO_FOLDER[hero]}`;
+                try { frames.blink = await image(`${g4}/blink.webp`); } catch (_) { /* none */ }
+                try { frames.scared = await image(`${g4}/scared.webp`); } catch (_) { /* none */ }
                 birdFrames[hero] = frames;
             } catch (_) { /* Keeps the original frames. */ }
         };
@@ -3720,6 +3736,7 @@
             state.birdScale = (state.birdScale || 1) + (targetScale - (state.birdScale || 1)) * Math.min(1, delta * 6);
             window.BertSizeScale = state.birdScale;
             updateAmbient(delta);
+            noteNearMiss();
             // Sky Relay: from round 2 birds cross the route, from round 3 the hawk hunts too.
             if (currentLevel.kind === 'skyRelay' && state.phase === 'playing' && state.relayRoute) {
                 const round = state.relayRoute.round || 1;
@@ -3785,6 +3802,7 @@
             return;
         }
         ctx.drawImage(assets.edmStage, 0, 0, VIEW.width, VIEW.height);
+        if (assets.g4Festival?.naturalWidth) ctx.drawImage(assets.g4Festival, 0, 440, VIEW.width, 300);
         if (assets.v2EdmStage?.naturalWidth) {
             // Festival searchlights behind the stage: slow coloured sweeps that bring back
             // the busy concert backdrop of the old design without covering play.
@@ -4791,7 +4809,7 @@
             if (!assets.v2Sparkle?.naturalWidth || t >= 1) return;
             const size = 26 + t * 30;
             ctx.globalAlpha = 1 - t;
-            ctx.drawImage(assets.v2Sparkle, fx.x - size / 2, fx.y - size / 2, size, size);
+            ctx.drawImage(assets.g4StarPop?.naturalWidth ? assets.g4StarPop : assets.v2Sparkle, fx.x - size / 2, fx.y - size / 2, size, size);
         });
         state.sparkles = (state.sparkles || []).filter((fx) => fx.age < 0.45);
         (state.bonks || []).forEach((fx) => {
@@ -5893,6 +5911,21 @@
         return sample;
     }
 
+    // A blink every few seconds, and wide eyes when something harmful is right ahead.
+    function heroExpression(frames) {
+        if (state.phase !== 'playing') return null;
+        if (frames.scared && state.elapsed < (state.scaredUntil || 0)) return frames.scared;
+        const cycle = (state.worldTime + 1.7) % 4.3;
+        if (frames.blink && cycle < 0.13) return frames.blink;
+        return null;
+    }
+    function noteNearMiss() {
+        const bx = bird.x + BIRD.width;
+        const by = bird.y + BIRD.height / 2;
+        const close = obstacles.some((o) => o.harmful && o.x > bx - 20 && o.x < bx + 120 && by > (o.y ?? 0) - 70 && by < (o.y ?? 0) + (o.height || o.size || 0) + 70);
+        if (close) state.scaredUntil = state.elapsed + 0.35;
+    }
+
     function drawBird() {
         const dead = state.phase === 'dead' || state.phase === 'gameover';
         const hero = BertMeta.currentHero();
@@ -5913,7 +5946,10 @@
             ctx.rotate((bird.rotation * Math.PI) / 180);
         }
         if (state.elapsed < state.invulnerableUntil && Math.floor(state.worldTime * 12) % 2 === 0) ctx.globalAlpha = 0.45;
-        drawHeroAnimation(hero, bird.animationTime, dead, -BIRD.width / 2, -BIRD.height / 2, BIRD.width, BIRD.height);
+        const frames = birdFrames[hero];
+        const expression = !dead && frames?.v2 ? heroExpression(frames) : null;
+        if (expression) ctx.drawImage(expression, -BIRD.width / 2, -BIRD.height / 2, BIRD.width, BIRD.height);
+        else drawHeroAnimation(hero, bird.animationTime, dead, -BIRD.width / 2, -BIRD.height / 2, BIRD.width, BIRD.height);
         // Isbjerget: a frosty rim while the ice is slippery (no grip crystal active).
         if (currentLevel.kind === 'iceberg' && !dead && state.phase === 'playing' && state.elapsed >= (state.gripUntil || 0) && assets.iceFrost?.naturalWidth) {
             ctx.globalAlpha = 0.85;
@@ -6134,6 +6170,11 @@
             ctx.restore();
         }
         drawGhost();
+        if (state.activePowerup === POWERUP.HYPER && state.phase === 'playing' && assets.g4Trail?.naturalWidth) {
+            ctx.save(); ctx.globalAlpha = 0.75;
+            ctx.drawImage(assets.g4Trail, bird.x - 200, bird.y + BIRD.height * 0.3, 230, 60);
+            ctx.restore();
+        }
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
         drawRelayNearEdge();
         drawRelayLabels();
@@ -6201,6 +6242,11 @@
         ctx.scale(pop, pop);
         ctx.rotate(-0.08);
         ctx.globalAlpha = t > 0.7 ? (1 - t) / 0.3 : 1;
+        if (assets.g4ComboBurst?.naturalWidth) {
+            ctx.save(); ctx.globalAlpha *= 0.85; ctx.rotate(t * 1.5);
+            ctx.drawImage(assets.g4ComboBurst, -110, -110, 220, 220);
+            ctx.restore();
+        }
         ctx.font = '900 34px "Bert Display", "Bert Rounded", sans-serif';
         ctx.textAlign = 'center';
         ctx.lineWidth = 7;
@@ -6212,21 +6258,21 @@
     }
     // Ambient particles: a few dozen soft shapes per world, cheap and alive.
     const AMBIENT = {
-        desert: { count: 26, color: 'rgba(255, 226, 150, .55)', size: [2, 4], vx: [-160, -90], vy: [-6, 6], shape: 'dot' },
-        jungle: { count: 18, color: 'rgba(214, 255, 120, .9)', size: [2, 3.5], vx: [-30, 10], vy: [-14, 14], shape: 'glow', blink: true },
+        desert: { count: 26, color: 'rgba(255, 226, 150, .55)', size: [2, 4], vx: [-160, -90], vy: [-6, 6], shape: 'dot', art: 'g4AmbDust' },
+        jungle: { count: 18, color: 'rgba(214, 255, 120, .9)', size: [2, 3.5], vx: [-30, 10], vy: [-14, 14], shape: 'glow', blink: true, art: 'g4AmbFirefly' },
         happySky: { count: 22, color: 'rgba(255, 255, 255, .7)', size: [2, 4], vx: [-60, -20], vy: [-10, 10], shape: 'dot' },
         flappy: { count: 16, color: 'rgba(255, 240, 200, .45)', size: [1.5, 3], vx: [-120, -60], vy: [-6, 6], shape: 'dot' },
         tunnel: { count: 24, color: 'rgba(190, 240, 255, .8)', size: [1.5, 3], vx: [-40, -10], vy: [-8, 8], shape: 'glow', blink: true },
-        iceberg: { count: 40, color: 'rgba(255, 255, 255, .85)', size: [2, 4.5], vx: [-70, -20], vy: [30, 70], shape: 'flake' },
-        volcano: { count: 30, color: 'rgba(255, 150, 60, .85)', size: [1.5, 3.5], vx: [-60, 10], vy: [-70, -25], shape: 'glow', blink: true },
+        iceberg: { count: 40, color: 'rgba(255, 255, 255, .85)', size: [2, 4.5], vx: [-70, -20], vy: [30, 70], shape: 'flake', art: 'g4AmbSnow' },
+        volcano: { count: 30, color: 'rgba(255, 150, 60, .85)', size: [1.5, 3.5], vx: [-60, 10], vy: [-70, -25], shape: 'glow', blink: true, art: 'g4AmbEmber' },
         harbor: { count: 14, color: 'rgba(255, 255, 255, .5)', size: [2, 3], vx: [-90, -40], vy: [-10, 10], shape: 'dot' },
         nightcity: { count: 20, color: 'rgba(255, 220, 130, .8)', size: [1.5, 2.5], vx: [-20, 10], vy: [-12, 12], shape: 'glow', blink: true },
-        windfarm: { count: 16, color: 'rgba(120, 200, 90, .85)', size: [3, 5], vx: [-220, -120], vy: [-20, 40], shape: 'leaf' },
+        windfarm: { count: 16, color: 'rgba(120, 200, 90, .85)', size: [3, 5], vx: [-220, -120], vy: [-20, 40], shape: 'leaf', art: 'g4AmbLeaf' },
         poop: { count: 14, color: 'rgba(255, 255, 255, .45)', size: [2, 3], vx: [-80, -40], vy: [-6, 6], shape: 'dot' },
-        edm: { count: 28, color: null, size: [2, 4], vx: [-40, 40], vy: [40, 90], shape: 'confetti' },
+        edm: { count: 28, color: null, size: [2, 4], vx: [-40, 40], vy: [40, 90], shape: 'confetti', art: 'g4AmbConfetti' },
         birdRun: { count: 18, color: 'rgba(255, 255, 255, .6)', size: [2, 3.5], vx: [-80, -30], vy: [-8, 8], shape: 'dot' },
         skyRelay: { count: 18, color: 'rgba(255, 255, 255, .6)', size: [2, 3.5], vx: [-80, -30], vy: [-8, 8], shape: 'dot' },
-        stormline: { count: 22, color: 'rgba(120, 200, 90, .85)', size: [3, 5], vx: [-320, -180], vy: [-30, 50], shape: 'leaf' },
+        stormline: { count: 22, color: 'rgba(120, 200, 90, .85)', size: [3, 5], vx: [-320, -180], vy: [-30, 50], shape: 'leaf', art: 'g4AmbLeaf' },
     };
     const CONFETTI_COLORS = ['rgba(255,110,220,.9)', 'rgba(90,230,255,.9)', 'rgba(255,230,90,.9)'];
     function updateAmbient(delta) {
@@ -6260,7 +6306,14 @@
             const blink = cfg.blink ? 0.4 + 0.6 * Math.abs(Math.sin(state.worldTime * 2.2 + p.phase * 3)) : 1;
             ctx.globalAlpha = blink;
             ctx.fillStyle = p.color;
-            if (cfg.shape === 'glow') {
+            const art = cfg.art ? assets[cfg.art] : null;
+            if (art?.naturalWidth) {
+                const size = p.size * 4.5;
+                ctx.save(); ctx.translate(p.x, p.y);
+                if (cfg.shape === 'leaf' || cfg.shape === 'confetti' || cfg.shape === 'flake') ctx.rotate(p.phase * p.spin * 0.3);
+                ctx.drawImage(art, -size / 2, -size / 2, size, size);
+                ctx.restore();
+            } else if (cfg.shape === 'glow') {
                 const g = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 3);
                 g.addColorStop(0, p.color); g.addColorStop(1, 'rgba(0,0,0,0)');
                 ctx.fillStyle = g;

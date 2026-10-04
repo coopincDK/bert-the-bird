@@ -2283,3 +2283,33 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .settings-card .primary-menu-button { min-height: 40px !important; }
 .hero-wardrobe-card header > div { padding: 4px 56px 6px 44px; }
 .hero-wardrobe-card .hero-grid, .hero-wardrobe-card .hero-options { max-height: 34vh; overflow-y: auto; }
+
+/* ======================================================================
+   Grafikrunde 4, pakke 1 + 4: forsidebaggrund, paneler, faner, kontakter,
+   ikoner, medaljering og lysstråler bag resultatet.
+   ====================================================================== */
+.main-menu { background: #78c8ea url(assets/v2/g4/menu/background.webp) center / cover no-repeat !important; }
+.main-menu::before { display: none; }
+.hero-wardrobe-card, .pause-card, .settings-card, .leaderboard-card, .missions-card, .rescue-wheel-card, .challenge-card, .qualification-card, .install-card {
+    border-width: 22px !important;
+    border-image: url(assets/v2/g4/ui/panel-modal.webp) 80 fill / 22px stretch !important;
+}
+.mode-tab { border: 10px solid transparent !important; border-image: url(assets/v2/g4/ui/tab-idle.webp) 36 fill / 10px stretch !important; background: none !important; box-shadow: none !important; }
+.mode-tab.selected, .mode-tab.active { border-image: url(assets/v2/g4/ui/tab-active.webp) 36 fill / 10px stretch !important; color: #123018 !important; }
+.mode-tab.selected *, .mode-tab.active * { color: #123018 !important; text-shadow: none !important; }
+.settings-card input[type="checkbox"] { appearance: none; -webkit-appearance: none; width: 54px; height: 28px; margin: 0; border: 0; cursor: pointer;
+    background: url(assets/v2/g4/ui/toggle-off.webp) center / contain no-repeat; }
+.settings-card input[type="checkbox"]:checked { background-image: url(assets/v2/g4/ui/toggle-on.webp); }
+.leaderboard-row.me, .leaderboard-row.own, .leaderboard-row[data-me="true"] { background: url(assets/v2/g4/ui/row-highlight.webp) center / 100% 100% no-repeat !important; }
+.hud-menu img { width: 22px; height: 22px; vertical-align: middle; margin-right: 4px; }
+.challenge-button img { width: 72px !important; height: 36px !important; }
+.result-medal { background: url(assets/v2/g4/ui/medal-ring.webp) center / contain no-repeat !important; border: 0 !important; box-shadow: none !important; }
+.result-medal img { width: 60px !important; height: 60px !important; }
+.game-over::before { content: ''; position: absolute; inset: -20%; background: url(assets/v2/g4/result/light-rays.webp) center / 120% no-repeat; opacity: .55; pointer-events: none; z-index: 0;
+    animation: rays-spin 40s linear infinite; }
+.game-over > * { position: relative; z-index: 1; }
+@keyframes rays-spin { to { transform: rotate(360deg); } }
+.confetti-piece { background: url(assets/v2/g4/result/confetti-1.webp) center / contain no-repeat !important; width: 22px; height: 22px; border-radius: 0; }
+.confetti-piece:nth-child(3n) { background-image: url(assets/v2/g4/result/confetti-2.webp) !important; }
+.confetti-piece:nth-child(3n+1) { background-image: url(assets/v2/g4/result/confetti-3.webp) !important; }
+@media (prefers-reduced-motion: reduce) { .game-over::before { animation: none; } }
