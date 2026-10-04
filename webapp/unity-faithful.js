@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-73';
+    const BUILD_VERSION = 'worlds-relay-74';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1608,7 +1608,7 @@
         if (dom.featherBalance) dom.featherBalance.textContent = String(meta.feathers);
         const nest = BertMeta.nestStatus();
         const nestArt = `assets/v2/g4/menu/nest-${nest.level + 1}.webp`;
-        ['nest-image', 'nest-header-icon', 'menu-nest-icon'].forEach((id) => { const el = document.getElementById(id); if (el && !el.src.endsWith(nestArt)) el.src = nestArt; });
+        ['nest-image', 'nest-header-icon', 'menu-nest-icon', 'menu-nest-image'].forEach((id) => { const el = document.getElementById(id); if (el && !el.src.endsWith(nestArt)) el.src = nestArt; });
         if (dom.rescueLevel) dom.rescueLevel.textContent = nest.next ? nest.next.label.toUpperCase() : T('REDEN ER FÆRDIG');
         const nextText = document.getElementById('nest-next-text');
         if (nextText) nextText.textContent = nest.next ? nest.next.text : T('Alle syv trin er bygget. Flot!');
@@ -6926,6 +6926,7 @@
             if (event.target === dom.leaderboardModal) setVisible(dom.leaderboardModal, false);
         });
         document.getElementById('missions-btn').addEventListener('click', openMissions);
+        document.getElementById('menu-nest')?.addEventListener('click', openMissions);
         dom.rescueUpgrade.addEventListener('click', () => {
             const result = BertMeta.buildNest();
             BertMeta.haptic(result.ok ? 'upgrade' : 'warning');
