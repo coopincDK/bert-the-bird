@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-64';
+    const BUILD_VERSION = 'worlds-relay-65';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -3729,6 +3729,25 @@
         }
         ctx.drawImage(assets.edmStage, 0, 0, VIEW.width, VIEW.height);
         if (assets.v2EdmStage?.naturalWidth) {
+            // Festival searchlights behind the stage: slow coloured sweeps that bring back
+            // the busy concert backdrop of the old design without covering play.
+            if (!prefersReducedMotion() && BertMeta.settingEnabled('lights')) {
+                ctx.save();
+                ctx.globalCompositeOperation = 'lighter';
+                [['rgba(255, 90, 210, .26)', 420, 0.7], ['rgba(90, 230, 255, .26)', 860, -0.6], ['rgba(255, 210, 90, .2)', 640, 0.45]].forEach(([color, baseX, speed], index) => {
+                    const angle = Math.sin(state.worldTime * speed + index * 2) * 0.55;
+                    ctx.save();
+                    ctx.translate(baseX, 640);
+                    ctx.rotate(angle);
+                    const beam = ctx.createLinearGradient(0, 0, 0, -620);
+                    beam.addColorStop(0, color);
+                    beam.addColorStop(1, 'rgba(0,0,0,0)');
+                    ctx.fillStyle = beam;
+                    ctx.beginPath(); ctx.moveTo(-18, 0); ctx.lineTo(18, 0); ctx.lineTo(120, -640); ctx.lineTo(-120, -640); ctx.closePath(); ctx.fill();
+                    ctx.restore();
+                });
+                ctx.restore();
+            }
             // Smaller and further back, so the stage sets the scene without crowding play.
             // The DJ stands behind the booth (booth top ≈ y 507 on screen): drawn first,
             // so the booth hides the lower body. Pose follows the beat; both wings up on the drop.
@@ -3738,7 +3757,8 @@
             if (dj?.naturalWidth) {
                 const bob = prefersReducedMotion() ? 0 : Math.abs(Math.sin(state.worldTime * Math.PI * 2.2)) * 5;
                 // Stage 720×225 standing on the crowd line (base ≈ y 705); booth top ≈ y 604.
-                ctx.drawImage(dj, 558, 480 - bob, 164, 164);
+                // DJ at half the previous size (feedback), still standing behind the booth.
+                ctx.drawImage(dj, 599, 550 - bob * 0.5, 82, 82);
             }
             ctx.drawImage(assets.v2EdmStage, 280, 480, 720, 225);
         } else {
