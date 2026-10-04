@@ -80,7 +80,7 @@
     /** Rock under a jungle snake: art 180×140, top just under the snake's coil. */
     function snakeRock(obstacle) {
         const width = Math.max(150, obstacle.width * 1.6);
-        const height = width * 140 / 180;
+        const height = width * (obstacle.rockAspect || 140 / 180);
         return { x: obstacle.x + (obstacle.width - width) / 2, y: obstacle.baseBottom - 18, width, height };
     }
 

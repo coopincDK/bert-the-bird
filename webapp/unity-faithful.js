@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-48';
+    const BUILD_VERSION = 'worlds-relay-49';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -475,6 +475,7 @@
     // assets/v2/manifest.json lists what has been delivered: { "heroes": [...], "levels": [...] }.
     // Anything listed overrides the original art; anything missing keeps the original.
     const V2 = { heroes: new Set(), levels: new Set(), ready: false };
+    const manifest_extras = new Set();
     const V2_LEVEL_FOLDER = Object.freeze({ desert: 'desert', jungle: 'jungle', happySky: 'happysky', flappy: 'tap', tunnel: 'tunnel' });
     const V2_HERO_FOLDER = Object.freeze({
         bert: 'bert', blue: 'blue', block: 'block', brain: 'brain', eagle: 'eagle', mecha: 'mecha', noir: 'noir', vulture: 'vulture',
@@ -484,25 +485,37 @@
     // Existing art keys that simply point at a new file once the level is delivered.
     const V2_KEY_SWAPS = Object.freeze({
         desert: { desertBanded: 'pillar-banded', desertEtched: 'pillar-etched', desertRuin: 'pillar-ruin' },
-        jungle: { jungleCanopyLeft: 'canopy-left', jungleCanopyRight: 'canopy-right', jungleStone: 'rock' },
-        happySky: { rainbowNormal: 'rainbow' },
+        jungle: { jungleStone: 'rock' },
+        happySky: { rainbow: 'rainbow', v2Tower0: 'tower-happy', v2Tower1: 'tower-sleepy', v2Tower2: 'tower-cheeky' },
         flappy: { flappyPipe: 'chimney-brick', flappyPipeBlue: 'chimney-stone', flappyPipeGold: 'tower-gold', flappyCopper: 'tower-copper', flappyPearl: 'chimney-stone' },
         tunnel: {},
     });
     const v2LayerKeys = (kind) => ['Sky', 'Bg1', 'Bg2', 'Mg', 'Fg'].map((part) => `v2_${kind}_${part}`);
+    // Layer y positions are measured per level: each layer reaches down to where
+    // the nearer layer becomes solid, so no sky shows through as a band.
+    const V2_LAYER_Y = Object.freeze({
+        desert: [252, 181, 445, 520], jungle: [237, 185, 439, 520], happySky: [382, 239, 480, 520],
+        flappy: [159, 111, 364, 520], tunnel: [188, 176, 428, 520],
+    });
     const v2Layers = (kind) => {
         const [sky, bg1, bg2, mg, fg] = v2LayerKeys(kind);
+        const [y1, y2, y3, y4] = V2_LAYER_Y[kind];
         return [
             { image: sky, y: 0, height: 720, factor: 0.03 },
-            { image: bg1, y: 250, height: 190, factor: 0.06 },
-            { image: bg2, y: 275, height: 400, factor: 0.1 },
-            { image: mg, y: 470, height: 200, factor: 0.18 },
-            { image: fg, y: 545, height: 200, factor: 0.55 },
+            { image: bg1, y: y1, height: 190, factor: 0.06 },
+            { image: bg2, y: y2, height: 400, factor: 0.1 },
+            { image: mg, y: y3, height: 200, factor: 0.18 },
+            { image: fg, y: y4, height: 200, factor: kind === 'flappy' ? 1.0 : 0.55 },
         ];
     };
     function levelAssetKeys(kind) {
         const base = LEVEL_ASSET_KEYS[kind] || [];
-        return V2.levels.has(kind) ? [...base, ...v2LayerKeys(kind)] : base;
+        const extra = [];
+        if (kind === 'poop' && ASSET_PATHS.v2LampPost) extra.push('v2LampPost');
+        if (kind === 'edm' && ASSET_PATHS.v2SmokeCannon) extra.push('v2SmokeCannon');
+        if (!V2.levels.has(kind)) return [...base, ...extra];
+        const swaps = Object.keys(V2_KEY_SWAPS[kind] || {}).filter((key) => !base.includes(key));
+        return [...base, ...v2LayerKeys(kind), ...swaps, ...extra];
     }
     async function loadV2Manifest() {
         try {
@@ -511,6 +524,7 @@
             const manifest = await response.json();
             (manifest.heroes || []).forEach((hero) => { if (V2_HERO_FOLDER[hero]) V2.heroes.add(hero); });
             (manifest.levels || []).forEach((kind) => { if (V2_LEVEL_FOLDER[kind]) V2.levels.add(kind); });
+            (manifest.extras || []).forEach((name) => manifest_extras.add(name));
         } catch (_) { /* No manifest: original art everywhere. */ }
         V2.levels.forEach((kind) => {
             const folder = `assets/v2/levels/${V2_LEVEL_FOLDER[kind]}`;
@@ -518,8 +532,10 @@
             Object.entries(V2_KEY_SWAPS[kind] || {}).forEach(([key, file]) => { ASSET_PATHS[key] = `${folder}/${file}.webp`; });
             UNITY_LEVELS.filter((level) => level.kind === kind).forEach((level) => { level.layers = v2Layers(kind); });
             const band = FOREGROUND_BANDS[kind];
-            if (band) { band.image = v2LayerKeys(kind)[4]; band.y = 545; band.height = 200; }
+            if (band) { band.image = v2LayerKeys(kind)[4]; band.y = 520; band.height = 200; }
         });
+        if (manifest_extras.has('lamp-post')) ASSET_PATHS.v2LampPost = 'assets/v2/adventure/poop/lamp-post.webp';
+        if (manifest_extras.has('smoke-cannon')) ASSET_PATHS.v2SmokeCannon = 'assets/v2/adventure/edm/smoke-cannon.webp';
         V2.ready = true;
     }
     const loadedAssetKeys = new Set();
@@ -857,25 +873,29 @@
         await ensureAssetKeys(BASE_ASSET_KEYS);
         warmStarGlow();
         const generatedFrames = (folder) => Promise.all(['up', 'mid', 'glide', 'dead'].map((pose) => image(`assets/${folder}/${pose}.webp`)));
+        // Heroes with new-style art skip their original frames entirely.
+        const original = (hero, load) => (V2.heroes.has(hero) ? Promise.resolve(null) : load());
+        const unityFrames = (folder) => () => Promise.all(Array.from({ length: 14 }, (_, index) => image(`assets/unity/${folder}/fly-${String(index).padStart(2, '0')}.webp`)));
         const [bert, blue, block, brain, eagle, mecha, noir, vulture, sugar, moss, ink, prism] = await Promise.all([
-            Promise.all(Array.from({ length: 14 }, (_, index) => image(`assets/unity/bird/fly-${String(index).padStart(2, '0')}.webp`))),
-            Promise.all(Array.from({ length: 14 }, (_, index) => image(`assets/unity/bird-blue/fly-${String(index).padStart(2, '0')}.webp`))),
-            generatedFrames('klodsbert'),
-            generatedFrames('brainbird'),
-            generatedFrames('skyclaw'),
-            generatedFrames('mechabert'),
-            generatedFrames('noirwing'),
-            generatedFrames('bonebeak'),
-            generatedFrames('sugarrush'),
-            generatedFrames('mosshex'),
-            generatedFrames('inkbird'),
-            generatedFrames('prismwing'),
+            original('bert', unityFrames('bird')),
+            original('blue', unityFrames('bird-blue')),
+            original('block', () => generatedFrames('klodsbert')),
+            original('brain', () => generatedFrames('brainbird')),
+            original('eagle', () => generatedFrames('skyclaw')),
+            original('mecha', () => generatedFrames('mechabert')),
+            original('noir', () => generatedFrames('noirwing')),
+            original('vulture', () => generatedFrames('bonebeak')),
+            original('sugar', () => generatedFrames('sugarrush')),
+            original('moss', () => generatedFrames('mosshex')),
+            original('ink', () => generatedFrames('inkbird')),
+            original('prism', () => generatedFrames('prismwing')),
         ]);
-        birdFrames.bert.push(...bert);
-        birdFrames.blue.push(...blue);
+        if (bert) birdFrames.bert.push(...bert);
+        if (blue) birdFrames.blue.push(...blue);
         // New-style heroes: 8 wingbeat frames + glide + dead in assets/heroes/<id>/.
         // Loaded after the originals so an incomplete set falls back silently.
-        await Promise.all([...V2.heroes].map(async (hero) => {
+        // Only the chosen hero is waited for; the rest load quietly in the background.
+        const loadV2Hero = async (hero) => {
             const folder = `heroes/${V2_HERO_FOLDER[hero]}`;
             try {
                 const flaps = await Promise.all(Array.from({ length: 8 }, (_, index) => image(`assets/${folder}/flap-${String(index + 1).padStart(2, '0')}.webp`)));
@@ -886,8 +906,14 @@
                 frames.v2 = true;
                 birdFrames[hero] = frames;
             } catch (_) { /* Keeps the original frames. */ }
-        }));
-        const setGeneratedAnimation = (hero, [up, mid, glide, dead]) => {
+        };
+        const chosenHero = BertMeta.currentHero();
+        if (V2.heroes.has(chosenHero)) await loadV2Hero(chosenHero);
+        if (chosenHero !== 'bert' && V2.heroes.has('bert')) await loadV2Hero('bert');
+        Promise.all([...V2.heroes].filter((hero) => hero !== chosenHero && hero !== 'bert').map(loadV2Hero));
+        const setGeneratedAnimation = (hero, frames) => {
+            if (!frames || birdFrames[hero]?.v2) return;
+            const [up, mid, glide, dead] = frames;
             birdFrames[hero].push(up, up, mid, mid, glide, glide, glide, glide, mid, mid, up, up, mid, dead);
         };
         setGeneratedAnimation('block', block);
@@ -901,11 +927,12 @@
         setGeneratedAnimation('ink', ink);
         setGeneratedAnimation('prism', prism);
         // Newer heroes load after the core set so they never delay the first flight.
-        Promise.all(Object.entries(EXTRA_HERO_FOLDERS).map(async ([hero, folder]) => {
+        Promise.all(Object.entries(EXTRA_HERO_FOLDERS).filter(([hero]) => !V2.heroes.has(hero)).map(async ([hero, folder]) => {
             try { setGeneratedAnimation(hero, await generatedFrames(folder)); } catch (_) { /* Falls back to Bert. */ }
         }));
         // folder null = own art not delivered yet: borrow the stand-in without a failed request.
         Object.entries(EPIC_HEROES).forEach(async ([hero, { folder, standIn }]) => {
+            if (V2.heroes.has(hero)) return;
             if (!folder) { birdFrames[hero] = birdFrames[standIn]; return; }
             try {
                 setGeneratedAnimation(hero, await generatedFrames(folder));
@@ -2481,7 +2508,13 @@
         ctx.save();
         ctx.lineWidth = 4;
         ctx.strokeStyle = '#1b2230';
-        if (hazard.type === 'lamp') {
+        if (hazard.type === 'lamp' && assets.v2LampPost?.naturalWidth) {
+            // Art is cropped to the lamp: keep its aspect, pole centred on the hit box.
+            const art = assets.v2LampPost;
+            const height = hazard.height - 40;
+            const width = height * art.naturalWidth / art.naturalHeight;
+            ctx.drawImage(art, hazard.x + hazard.width / 2 - width / 2, hazard.y, width, height + 40);
+        } else if (hazard.type === 'lamp') {
             ctx.fillStyle = '#3d4655';
             ctx.fillRect(hazard.x + 12, hazard.y + 30, 16, hazard.height); ctx.strokeRect(hazard.x + 12, hazard.y + 30, 16, hazard.height);
             ctx.fillStyle = '#ffe28a';
@@ -3883,7 +3916,34 @@
         return assets[`happyPipe${title}${top ? 'Top' : ''}`];
     }
 
+    // New-style Happy Sky: candy towers. The face sits at the gap end in its true
+    // proportions; the rest of the length is filled with the tower's plain body.
+    const V2_TOWERS = ['v2Tower0', 'v2Tower1', 'v2Tower2'];
+    function drawCandyTower(obstacle) {
+        const art = assets[V2_TOWERS[Math.abs(obstacle.id || 0) % 3]];
+        if (!art?.naturalWidth) return false;
+        const w = obstacle.width;
+        const H = art.naturalHeight;
+        const scale = w / art.naturalWidth;
+        // Art: cap + face (0–45 %), plain stripes (50–75 %), flange foot (80–100 %).
+        const slice = (from, to, y, height) => ctx.drawImage(art, 0, H * from, art.naturalWidth, H * (to - from), obstacle.x, y, w, height);
+        if (obstacle.top) {
+            // Hanging: stripes from the top, the flange at the gap end (faces only on standing towers).
+            const foot = Math.min(obstacle.height, H * 0.2 * scale);
+            const rest = obstacle.height - foot;
+            if (rest > 0) slice(0.5, 0.75, obstacle.y, rest + 2);
+            slice(0.8, 1, obstacle.y + rest, foot);
+        } else {
+            const head = Math.min(obstacle.height, H * 0.45 * scale);
+            const rest = obstacle.height - head;
+            if (rest > 0) slice(0.5, 0.75, obstacle.y + head - 2, rest + 2);
+            slice(0, 0.45, obstacle.y, head);
+        }
+        return true;
+    }
+
     function drawHappyPipe(obstacle) {
+        if (V2.levels.has('happySky') && drawCandyTower(obstacle)) return;
         if (obstacle.color === 'coral') {
             if (obstacle.top) {
                 ctx.save();
@@ -3995,9 +4055,7 @@
                     ctx.fillStyle = '#1b1f2e';
                     ctx.strokeStyle = '#7cf3ff';
                     ctx.lineWidth = 3;
-                    const ny = o.fromTop ? 0 : o.lavaTop - 34;
-                    ctx.fillRect(cx - 26, ny, 52, 34);
-                    ctx.strokeRect(cx - 26, ny, 52, 34);
+                    drawCannonNozzle(o, cx);
                     ctx.restore();
                     return;
                 }
@@ -4309,10 +4367,29 @@
         ctx.fillStyle = '#1b1f2e';
         ctx.strokeStyle = '#7cf3ff';
         ctx.lineWidth = 3;
+        drawCannonNozzle(o, cx);
+        ctx.restore();
+    }
+
+    function drawCannonNozzle(o, cx) {
+        const art = assets.v2SmokeCannon;
+        if (art?.naturalWidth) {
+            const width = 54;
+            const height = width * art.naturalHeight / art.naturalWidth;
+            ctx.save();
+            if (o.fromTop) {
+                ctx.translate(cx, 0);
+                ctx.scale(1, -1);
+                ctx.drawImage(art, -width / 2, -height + 6, width, height);
+            } else {
+                ctx.drawImage(art, cx - width / 2, o.lavaTop - height + 6, width, height);
+            }
+            ctx.restore();
+            return;
+        }
         const ny = o.fromTop ? 0 : o.lavaTop - 34;
         ctx.fillRect(cx - 26, ny, 52, 34);
         ctx.strokeRect(cx - 26, ny, 52, 34);
-        ctx.restore();
     }
 
     // Vulkanen: the lava floor rises; cooling stones push it back down.
@@ -4758,6 +4835,7 @@
         } else if (obstacle.kind === 'jungle-snake') {
             if (assets.jungleStone && obstacle.baseBottom != null) {
                 // The snake coils on top of a real rock (art 180×140, kept in proportion).
+                obstacle.rockAspect = assets.jungleStone.naturalHeight / assets.jungleStone.naturalWidth;
                 const rock = BertCollision.snakeRock(obstacle);
                 ctx.drawImage(assets.jungleStone, rock.x, rock.y, rock.width, rock.height);
             }
