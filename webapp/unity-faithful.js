@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-59';
+    const BUILD_VERSION = 'worlds-relay-60';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -262,7 +262,9 @@
     const ADVENTURE_BG1_Y = Object.freeze({ iceberg: 310, harbor: 335, nightcity: 350, volcano: 361, windfarm: 238, poop: 250 });
     const adventureLayers = (theme) => [
         { image: `${theme}Sky`, y: 0, height: 720, factor: 0.03 },
-        { image: `${theme}Bg1`, y: ADVENTURE_BG1_Y[theme], height: 190, factor: 0.06 },
+        // Vindmøller: bg2 carries its own horizon, so bg1's sea band made a second
+        // horizon (sea, sky, sea). The far islands layer is left out there.
+        ...(theme === 'windfarm' ? [] : [{ image: `${theme}Bg1`, y: ADVENTURE_BG1_Y[theme], height: 190, factor: 0.06 }]),
         { image: `${theme}Bg2`, y: 275, height: 400, factor: 0.1 },
         { image: `${theme}Mg`, y: 470, height: 200, factor: 0.18 },
         { image: `${theme}Fg`, y: 545, height: 200, factor: 0.55 },
@@ -553,8 +555,7 @@
             { image: bg1, y: y1, height: 190, factor: 0.06 },
             { image: bg2, y: y2, height: 400, factor: 0.1 },
             { image: mg, y: y3, height: 200, factor: 0.18 },
-            // The near layer sits behind obstacles and Bert, so flying low never hides him.
-            { image: fg, y: y4, height: 200, factor: kind === 'flappy' ? 1.0 : 0.55 },
+            // The near layer is drawn in front by drawForeground(), set low so only its top shows.
         ];
     };
     function levelAssetKeys(kind) {
@@ -1689,6 +1690,10 @@
         state.poopMessage = '';
         state.poopMessageUntil = 0;
         state.smokeFog = [];
+        state.nextRelayBirdAt = 0;
+        state.relayBirdCount = 0;
+        state.topCampTime = 0;
+        state.nextTopMeteorAt = 0;
         updatePoopButton();
         state.nextLanternAt = 5;
         state.nextCrystalAt = 7;
@@ -2037,21 +2042,29 @@
             if (interactive && obstacle.attackState === 'idle' && distanceAhead < 430 && distanceAhead > 35) {
                 obstacle.attackState = 'attacking';
                 obstacle.attackElapsed = 0;
-                obstacle.attackWindup = 0.52;
+                obstacle.attackWindup = 0.6;
                 obstacle.targetY = clamp(bird.y + BIRD.height * 0.5 - obstacle.height * 0.45, 118, VIEW.height - obstacle.height - 65);
+            }
+            // Smoother spider (feedback): a gentle idle bob, a wind-up where it pulls
+            // itself up, a springy drop that slightly overshoots, then a calm climb back.
+            const easeOutBack = (t) => 1 + 2.2 * Math.pow(t - 1, 3) + 1.2 * Math.pow(t - 1, 2);
+            if (obstacle.attackState === 'idle' || obstacle.attackState === 'spent') {
+                obstacle.y = obstacle.baseY + Math.sin(obstacle.age * 2.1 + (obstacle.animationPhase || 0)) * 6;
             }
             if (obstacle.attackState === 'attacking') {
                 obstacle.attackElapsed += delta;
                 const elapsed = obstacle.attackElapsed;
-                const windup = obstacle.attackWindup ?? 0.52;
+                const windup = obstacle.attackWindup ?? 0.6;
+                const drop = 0.55;
                 if (elapsed < windup) {
-                    obstacle.y = obstacle.baseY + Math.sin((elapsed / windup) * Math.PI * 4) * 5;
-                } else if (elapsed < windup + 0.44) {
-                    obstacle.y = lerp(obstacle.baseY, obstacle.targetY, smoothStep((elapsed - windup) / 0.44));
-                } else if (elapsed < windup + 0.66) {
-                    obstacle.y = obstacle.targetY;
-                } else if (elapsed < windup + 1.16) {
-                    obstacle.y = lerp(obstacle.targetY, obstacle.baseY, smoothStep((elapsed - windup - 0.66) / 0.5));
+                    obstacle.y = obstacle.baseY - Math.sin((elapsed / windup) * Math.PI * 0.5) * 16;
+                } else if (elapsed < windup + drop) {
+                    const t = (elapsed - windup) / drop;
+                    obstacle.y = lerp(obstacle.baseY - 16, obstacle.targetY, easeOutBack(t));
+                } else if (elapsed < windup + drop + 0.3) {
+                    obstacle.y = obstacle.targetY + Math.sin((elapsed - windup - drop) * 14) * 3;
+                } else if (elapsed < windup + drop + 1.0) {
+                    obstacle.y = lerp(obstacle.targetY, obstacle.baseY, smoothStep((elapsed - windup - drop - 0.3) / 0.7));
                 } else {
                     obstacle.y = obstacle.baseY;
                     obstacle.attackState = 'spent';
@@ -2746,8 +2759,10 @@
             const bottomSkin = currentLevel.kind === 'desert'
                 ? skinChoices[Math.floor(gameRandom() * skinChoices.length)]
                 : topSkin;
-            const conveyor = movingPair && gameRandom() < 0.5
-                ? (gameRandom() < 0.5 ? -1 : 1) * clamp(70 + state.difficulty * 30, 70, 140) : 0;
+            // Moving columns always roll one way now (no up-down 'kick'), fast enough
+            // that it reads as a column travelling all the way through.
+            const conveyor = movingPair
+                ? (gameRandom() < 0.5 ? -1 : 1) * clamp(115 + state.difficulty * 35, 115, 185) : 0;
             const pairData = { gap, baseGapTop: gapTop, motionAmplitude, motionSpeed, motionPhase, moving: movingPair, conveyor };
             obstacles.push({ x: pairCenter - topWidth / 2, y: 0, width: topWidth, height: gapTop, kind, top: true, harmful: true, age: 0, id, variant: topVariant, artKey: topSkin, ...pairData });
             obstacles.push({ x: pairCenter - bottomWidth / 2, y: gapTop + gap, width: bottomWidth, height: VIEW.height - gapTop - gap, kind, top: false, harmful: true, age: 0, id, variant: bottomVariant, artKey: bottomSkin, ...pairData });
@@ -2805,7 +2820,7 @@
                 // Variety (feedback 4. okt.): some columns roll steadily one way, some lean.
                 const style = gameRandom();
                 const conveyor = state.elapsed > 8 && style < 0.3
-                    ? (gameRandom() < 0.5 ? -1 : 1) * clamp(65 + state.difficulty * 30, 65, 130) : 0;
+                    ? (gameRandom() < 0.5 ? -1 : 1) * clamp(100 + state.difficulty * 30, 100, 165) : 0;
                 const tilt = !conveyor && state.elapsed > 8 && style < 0.6 ? (gameRandom() < 0.5 ? -1 : 1) * randomBetween(0.12, 0.2) : 0;
                 const extra = { conveyor, tilt };
                 obstacles.push({ x, y: 0, width, height: baseGapTop, gap: pipeGap, baseGapTop, kind: 'happy-pipe', color, top: true, harmful: true, age: 0, id, motionAmplitude, motionSpeed, motionPhase, ...extra });
@@ -3400,7 +3415,11 @@
             const eased = 1 - Math.pow(1 - progress, 3);
             element.textContent = String(Math.round(target * eased));
             if (progress < 1 && state.phase === 'gameover') requestAnimationFrame(tick);
-            else element.classList.remove('counting');
+            else {
+                // Always land on the real number, even if the screen changed mid-count.
+                element.textContent = String(target);
+                element.classList.remove('counting');
+            }
         };
         requestAnimationFrame(tick);
     }
@@ -3624,6 +3643,18 @@
             const targetScale = SIZE_POWERUP[state.activePowerup] || 1;
             state.birdScale = (state.birdScale || 1) + (targetScale - (state.birdScale || 1)) * Math.min(1, delta * 6);
             window.BertSizeScale = state.birdScale;
+            // Sky Relay: from round 2 birds cross the route, from round 3 the hawk hunts too.
+            if (currentLevel.kind === 'skyRelay' && state.phase === 'playing' && state.relayRoute) {
+                const round = state.relayRoute.round || 1;
+                if (round >= 2 && state.elapsed >= (state.nextRelayBirdAt || 6)) {
+                    state.relayBirdCount = (state.relayBirdCount || 0) + 1;
+                    const hawk = round >= 3 && state.relayBirdCount % 4 === 0;
+                    const encounter = BertBirdRun.createEncounter(hawk ? 5 : 4 + Math.floor(gameRandom() * 2) * 3, VIEW.width + 140, gameRandom);
+                    encounter.obstacle.id = state.obstacleId++;
+                    obstacles.push(encounter.obstacle);
+                    state.nextRelayBirdAt = state.elapsed + clamp(7.5 - round * 1.1, 2.6, 6);
+                }
+            }
             updateObjects(delta);
             updateVolcanoLava(delta);
             updateIceAndWind(delta);
@@ -3677,6 +3708,26 @@
             return;
         }
         ctx.drawImage(assets.edmStage, 0, 0, VIEW.width, VIEW.height);
+        // A stage in the background: deck, glowing front edge, DJ booth and side screens.
+        ctx.save();
+        const cx = VIEW.width / 2;
+        ctx.fillStyle = '#120b2e';
+        ctx.beginPath(); ctx.moveTo(cx - 470, 600); ctx.lineTo(cx - 390, 470); ctx.lineTo(cx + 390, 470); ctx.lineTo(cx + 470, 600); ctx.closePath(); ctx.fill();
+        ctx.fillStyle = '#1d1446';
+        ctx.fillRect(cx - 120, 420, 240, 56);
+        ctx.strokeStyle = 'rgba(124, 243, 255, .85)';
+        ctx.lineWidth = 4;
+        ctx.beginPath(); ctx.moveTo(cx - 390, 470); ctx.lineTo(cx + 390, 470); ctx.stroke();
+        ctx.strokeStyle = 'rgba(255, 110, 220, .8)';
+        ctx.strokeRect(cx - 120, 420, 240, 56);
+        [-1, 1].forEach((side) => {
+            ctx.fillStyle = '#0f0a26';
+            ctx.fillRect(cx + side * 520 - 70, 330, 140, 200);
+            const pulse = 0.35 + 0.25 * Math.sin(state.worldTime * 6 + side);
+            ctx.fillStyle = `rgba(124, 243, 255, ${pulse})`;
+            ctx.fillRect(cx + side * 520 - 58, 342, 116, 120);
+        });
+        ctx.restore();
         if (!BertMeta.settingEnabled('lights')) return;
         const reduced = prefersReducedMotion();
         const cue = BertEDM.lightCue(state.worldTime, reduced);
@@ -3869,7 +3920,6 @@
             ctx.fillRect(0, 0, VIEW.width, VIEW.height);
             if (newSky) {
                 drawTiled(assets.v2_happySky_Sky, 0, 720, 0.03);
-                if (assets.v2_happySky_Fg?.naturalWidth) drawTiled(assets.v2_happySky_Fg, 600, 200, 0.2);
             } else if (assets.happySky?.naturalWidth) ctx.drawImage(assets.happySky, 0, 0, VIEW.width, VIEW.height);
             return;
         }
@@ -3960,16 +4010,19 @@
             ctx.globalAlpha = 0.95;
             drawTiled(image, 0, 140, 0.4);
             ctx.restore();
-            if (bottom) drawTiled(image, 520, 200, kind === 'flappy' ? 1.0 : 0.55);
+            // In front of Bert again (feedback 4. okt.), but pushed down so only a low
+            // top edge shows: the art's half-covered row sits at y≈668, near the floor.
+            const FG_HALF = { desert: 107, jungle: 128, happySky: 109, flappy: 44, tunnel: 96 };
+            if (bottom) drawTiled(image, 668 - (FG_HALF[kind] ?? 100), 200, kind === 'flappy' ? 1.0 : 0.55);
             return true;
         };
         // Mirrored top edge only where it reads as natural (an ice overhang); a mirrored
         // quay or street looked upside down and made harbour read as water-sky-water-sky.
         if (currentLevel.kind === 'iceberg') v2Edge('iceberg', assets.icebergFg, false);
         if ((currentLevel.kind === 'birdRun' || currentLevel.kind === 'skyRelay') && V2.levels.has('happySky')) {
-            if (v2Edge('happySky', assets.v2_happySky_Fg, false)) return;
+            if (v2Edge('happySky', assets.v2_happySky_Fg)) return;
         }
-        if (V2.levels.has(currentLevel.kind) && v2Edge(currentLevel.kind, assets[`v2_${currentLevel.kind}_Fg`], false)) return;
+        if (V2.levels.has(currentLevel.kind) && v2Edge(currentLevel.kind, assets[`v2_${currentLevel.kind}_Fg`])) return;
         if (currentLevel.kind === 'birdRun') {
             if (!assets.birdRunCloud?.naturalWidth) return;
             ctx.save();
@@ -3992,8 +4045,12 @@
             // New-style stage: horizontal light truss at the top, new crowd at the bottom.
             drawTiled(assets.v2EdmTruss, -14, 72, 0.16);
             if (assets.edmCrowd?.naturalWidth) {
-                const frame = crowdFrames[BertEDM.crowdFrame(state.worldTime, prefersReducedMotion())];
-                drawTiled(frame || assets.edmCrowd, 566, 160, 0.38);
+                const reduced = prefersReducedMotion();
+                const frame = crowdFrames[BertEDM.crowdFrame(state.worldTime, reduced)];
+                // The crowd jumps to the beat (two offset rows so it never moves as one block).
+                const beat = reduced ? 0 : Math.abs(Math.sin(state.worldTime * Math.PI * 2));
+                drawTiled(frame || assets.edmCrowd, 574 - beat * 9, 160, 0.34);
+                drawTiled(frame || assets.edmCrowd, 590 - (1 - beat) * 7, 160, 0.42);
             }
             return;
         }
@@ -4308,6 +4365,22 @@
             drawLavaColumn(o);
             return;
         }
+        if (o.behaviour === 'bomb' && o.phase === 'warn') {
+            // Warning you can actually see: the bomb bulges up out of the lava, glowing.
+            const art = assets.volcBomb?.naturalWidth ? assets.volcBomb : image;
+            const lavaTop = o.lavaTop ?? BertAdventure.GROUND;
+            const rise = o.size * (0.15 + 0.45 * o.warn);
+            ctx.save();
+            const glow = ctx.createRadialGradient(o.x + o.size / 2, lavaTop, 4, o.x + o.size / 2, lavaTop, o.size * 0.9);
+            glow.addColorStop(0, `rgba(255, 200, 80, ${0.75 * o.warn})`);
+            glow.addColorStop(1, 'rgba(255, 120, 30, 0)');
+            ctx.fillStyle = glow;
+            ctx.fillRect(o.x - o.size * 0.4, lavaTop - o.size, o.size * 1.8, o.size * 1.4);
+            ctx.translate(o.x + o.size / 2, lavaTop - rise + o.size * 0.5 + Math.sin(state.worldTime * 30) * 2 * o.warn);
+            if (art?.naturalWidth) ctx.drawImage(art, -o.size / 2, -o.size / 2, o.size, o.size);
+            ctx.restore();
+            return;
+        }
         if (o.behaviour === 'bomb' || o.behaviour === 'meteor') {
             if (o.phase !== 'fly') return;
             ctx.save();
@@ -4610,6 +4683,8 @@
 
     function drawSmokeFog() {
         if (!state.smokeFog?.length) return;
+        // Fog belongs to the run; it never hangs over the result screen or menus.
+        if (!['prewarm', 'playing', 'dead'].includes(state.phase)) { state.smokeFog = []; return; }
         if (!fogSprite) {
             fogSprite = document.createElement('canvas');
             fogSprite.width = fogSprite.height = 128;
@@ -4698,6 +4773,16 @@
             const y = randomBetween(170, Math.max(220, state.lavaTop - 130));
             collectibles.push({ x: VIEW.width + 140, y, width: 74, height: 74, kind: 'cool', spin: 0, age: 0, collected: false });
             state.nextCoolingAt = state.elapsed + 9 + gameRandom() * 5;
+        }
+        // Hiding at the top for long brings a meteor aimed at Bert (feedback 4. okt.).
+        const topCenter = bird.y + BIRD.height / 2;
+        state.topCampTime = topCenter < 190 ? (state.topCampTime || 0) + delta : 0;
+        if (state.topCampTime > 1.8 && state.elapsed >= (state.nextTopMeteorAt || 0)) {
+            const meteor = BertAdventure.meteorAt('volcano', state.obstacleId++, bird.x + 520, state.difficulty, gameRandom);
+            meteor.kind = 'adventure';
+            obstacles.push(meteor);
+            state.nextTopMeteorAt = state.elapsed + 2.6;
+            state.topCampTime = 0.9;
         }
         const collider = BertCollision.bertCollider(bird, BIRD);
         if (!DEBUG_NOCLIP && state.elapsed >= state.invulnerableUntil && collider.y + collider.radius * 0.6 > state.lavaTop + 8) {
@@ -4926,18 +5011,7 @@
         ctx.save();
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, VIEW.width, VIEW.height);
-        // Faint rims so nothing lethal is ever fully invisible.
-        ctx.strokeStyle = 'rgba(140, 220, 255, .38)';
-        ctx.lineWidth = 2;
-        obstacles.filter((obstacle) => obstacle.harmful).forEach((obstacle) => {
-            BertCollision.obstacleShapes(obstacle).forEach((shape) => {
-                ctx.beginPath();
-                if (shape.type === 'circle') ctx.arc(shape.x, shape.y, shape.radius, 0, Math.PI * 2);
-                else if (shape.type === 'segment') { ctx.moveTo(shape.x1, shape.y1); ctx.lineTo(shape.x2, shape.y2); }
-                else ctx.rect(shape.x, shape.y, shape.width, shape.height);
-                ctx.stroke();
-            });
-        });
+        // Hazard rims were removed (feedback: they read as stray outlines on the art).
         // Lanterns glow through the dark too.
         collectibles.filter((item) => item.kind === 'lantern').forEach(drawLantern);
         // Light meter under the pause button.
@@ -5290,7 +5364,8 @@
             ctx.translate(x + size, y);
             ctx.scale(-1, 1);
             // The hero dangles from the talons (lower middle of the art), then the hawk on top.
-            fitHero(heroPose('glide'), size * 0.5 - BIRD.width * 0.5, size * 0.72, BIRD.width, BIRD.height, 0.45);
+            // The hawk carries off the grilled chicken (feedback: the roast-chicken pose fits here).
+            fitHero(heroPose('dead'), size * 0.5 - BIRD.width * 0.5, size * 0.72, BIRD.width, BIRD.height, 0.25);
             ctx.drawImage(frame, 0, 0, size, size);
             ctx.restore();
             return;
@@ -5365,6 +5440,15 @@
                 elapsed -= 0.9;
             }
             const frameIndex = Math.min(5, Math.floor(elapsed / 0.28));
+            // The spider's thread continues from the art (x 118, top ~y 50) all the way up.
+            ctx.save();
+            ctx.strokeStyle = 'rgba(240, 245, 250, .9)';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x + 118 * k, -10);
+            ctx.lineTo(x + 118 * k, y + 60 * k);
+            ctx.stroke();
+            ctx.restore();
             ctx.save();
             ctx.shadowColor = 'rgba(0,0,0,.28)';
             ctx.shadowBlur = 9;
@@ -5458,6 +5542,17 @@
     function drawCollectible(collectible) {
         ctx.save();
         ctx.translate(collectible.x, collectible.y);
+        // Bright sky levels: a warm halo and a dark ring make stars pop off the clouds.
+        if (collectible.kind === 'star' && ['skyRelay', 'birdRun', 'happySky'].includes(currentLevel.kind)) {
+            const halo = ctx.createRadialGradient(0, 0, 10, 0, 0, 46);
+            halo.addColorStop(0, 'rgba(255, 196, 40, .75)');
+            halo.addColorStop(1, 'rgba(255, 150, 0, 0)');
+            ctx.fillStyle = halo;
+            ctx.beginPath(); ctx.arc(0, 0, 46, 0, Math.PI * 2); ctx.fill();
+            ctx.strokeStyle = 'rgba(27, 42, 68, .55)';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
+        }
         if (currentLevel.kind === 'tunnel' && collectible.kind === 'star' && assets.v2StarGate?.naturalWidth) {
             ctx.globalAlpha = 0.5;
             ctx.drawImage(assets.v2StarGate, -42, -42, 84, 84);
@@ -6337,6 +6432,7 @@
         dom.rescueSpin.addEventListener('click', () => spinRescueWheel());
         dom.rescueEnd.addEventListener('click', declineRescueWheel);
         document.getElementById('close-missions').addEventListener('click', () => setVisible(dom.missionsModal, false));
+        document.getElementById('missions-x')?.addEventListener('click', () => setVisible(dom.missionsModal, false));
         dom.missionsModal.addEventListener('click', (event) => {
             if (event.target === dom.missionsModal) setVisible(dom.missionsModal, false);
         });

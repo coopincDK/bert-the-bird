@@ -22,10 +22,21 @@
     const clamp01 = (value) => clamp(value, 0, 1);
     const ease = (value) => { const t = clamp01(value); return t * t * (3 - 2 * t); };
 
+    // The predator returns more and more often (feedback 4. okt.): first at 5,
+    // then every 6th encounter, tightening to every 3rd late in the run.
+    function isPredator(id) {
+        if (id === 5) return true;
+        if (id < 11) return false;
+        const gap = Math.max(3, 6 - Math.floor((id - 11) / 12));
+        return (id - 5) % gap === 0;
+    }
+    // Five spread lanes, so a wave never bunches up in the middle.
+    const SPREAD = [150, 250, 350, 450, 550];
+
     function waveSize(id) {
         // The teaching flight, warning and predator stay solo. A rear arrival
         // is a short interlude between gradually larger *front* waves.
-        if (id <= 3 || id === 5 || id >= 3 && id % 5 === 3) return 1;
+        if (id <= 3 || isPredator(id) || id >= 3 && id % 5 === 3) return 1;
         if (id < 7) return 2;
         if (id < 10) return 3;
         if (id < 14) return 4;
@@ -33,9 +44,8 @@
         return 6;
     }
 
-    function createEncounter(id, spawnX, random, previousSpecies = null) {
-        // The sole boss-like encounter follows three teaching birds and a normal rear crossing.
-        const predator = id === 5;
+    function createEncounter(id, spawnX, random, previousSpecies = null, laneIndex = null) {
+        const predator = isPredator(id);
         const fromRear = predator || id >= 3 && id % 5 === 3;
         let species = predator ? (random() < 0.5 ? 'eagle' : 'vulture')
             : id < 3 ? ORDER[id] : ORDER[Math.floor(random() * ORDER.length)];
@@ -45,9 +55,12 @@
         }
         const profile = SPECIES[species];
         const lane = Math.floor(random() * profile.lanes.length);
-        const centerY = profile.lanes[lane] + (random() - 0.5) * 20;
-        const pathTravel = predator ? 0 : species === 'glider' && lane === 2
+        let centerY = laneIndex != null && !predator ? SPREAD[laneIndex] + (random() - 0.5) * 30 : profile.lanes[lane] + (random() - 0.5) * 20;
+        let pathTravel = predator ? 0 : species === 'glider' && lane === 2
             ? -profile.travel : profile.travel;
+        // Keep the drift on screen: birds low in the sky drift up, high ones down.
+        if (centerY + pathTravel > 590 || centerY + pathTravel < 130) pathTravel = -pathTravel;
+        centerY = clamp(centerY, 130, 590);
         const warningSeconds = fromRear ? predator ? PREDATOR_WARNING_SECONDS : WARNING_SECONDS : 0;
         const obstacle = {
             id,
@@ -64,7 +77,9 @@
             direction: fromRear ? 'rear' : 'front',
             warningRemaining: warningSeconds,
             warningSeconds,
-            forwardSpeed: fromRear ? predator ? 274 : 232 + random() * 24 : 0,
+            // Each later predator flies faster and hunts harder, within limits.
+            forwardSpeed: fromRear ? predator ? 274 + Math.min(150, Math.max(0, id - 5) * 5) : 232 + random() * 24 : 0,
+            hunt: predator ? Math.min(1, Math.max(0, id - 5) / 30) : 0,
             scrollFactor: fromRear ? 0 : 1.08 + random() * 0.1,
             pathTravel,
             pathDelay: profile.delay,
@@ -87,9 +102,15 @@
         const obstacles = [];
         let star = null;
         let x = spawnX;
+        // A shuffled set of lanes for the wave: members never share a lane.
+        const lanes = SPREAD.map((_, index) => index);
+        for (let i = lanes.length - 1; i > 0; i -= 1) {
+            const j = Math.floor(random() * (i + 1));
+            [lanes[i], lanes[j]] = [lanes[j], lanes[i]];
+        }
         for (let index = 0; index < count; index += 1) {
             if (index) x += count === 6 ? 210 + random() * 6 : 220 + random() * 36;
-            const encounter = createEncounter(id, x, random, obstacles.at(-1)?.species);
+            const encounter = createEncounter(id, x, random, obstacles.at(-1)?.species, count > 1 ? lanes[index % lanes.length] : null);
             encounter.obstacle.waveIndex = index;
             encounter.obstacle.waveSize = count;
             if (count > 1 && index) encounter.obstacle.scrollFactor = obstacles[0].scrollFactor;
@@ -114,10 +135,13 @@
             : -scroll * obstacle.scrollFactor;
         if (obstacle.predator) {
             // Short, bounded pursuit: the player can always break upward or downward.
-            if (obstacle.flightAge < 1.75 && obstacle.x < 340) {
+            const hunt = obstacle.hunt || 0;
+            if (obstacle.flightAge < 1.75 + hunt * 1.1 && obstacle.x < 340 + hunt * 220) {
+                const reach = 82 + hunt * 110;
                 const desired = clamp(targetCenterY - obstacle.height / 2,
-                    Math.max(155, obstacle.baseY - 82), Math.min(423, obstacle.baseY + 82));
-                obstacle.y += clamp(desired - obstacle.y, -70 * delta, 70 * delta);
+                    Math.max(120, obstacle.baseY - reach), Math.min(460, obstacle.baseY + reach));
+                const rate = 70 + hunt * 90;
+                obstacle.y += clamp(desired - obstacle.y, -rate * delta, rate * delta);
             }
             return;
         }
@@ -133,7 +157,7 @@
             : obstacle.x + obstacle.width < -145;
     }
 
-    window.BertBirdRun = Object.freeze({
+    window.BertBirdRun = Object.freeze({ isPredator,
         createEncounter, createWave, waveSize, advance, isGone,
         WARNING_SECONDS, PREDATOR_WARNING_SECONDS, LANES, SPECIES,
     });

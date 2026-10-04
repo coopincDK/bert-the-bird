@@ -986,7 +986,7 @@ body {
 .result-progress { margin: 5px 0 0; color: #fff8ce; font-size: 12px; font-weight: 900; letter-spacing: .11em; text-shadow: 0 2px #000; }
 .score-value.counting { animation: score-pop .22s ease-out; }
 
-@keyframes score-pop { 50% { transform: translate(-50%, -50%) scale(1.18); } }
+@keyframes score-pop { 50% { transform: scale(1.18); } }
 
 @media (orientation: landscape) and (max-height: 560px) {
     #game-shell { border-radius: 0; box-shadow: none; }
@@ -2122,3 +2122,20 @@ body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 .menu-record #menu-highscore, .menu-record .record-total strong { font-size: clamp(18px, 4.4cqh, 30px) !important; white-space: nowrap; }
 .menu-record .record-total { white-space: nowrap; gap: 4px; }
 .menu-record .record-total img { width: 26px; height: 26px; }
+
+/* ---- Gennemgang 4. okt. (2): symmetric menu, missions close, result board ---- */
+.missions-card header { position: relative; }
+.modal-x { position: absolute; right: 0; top: 0; width: 42px; height: 42px; border: 2px solid rgba(255,255,255,.45); border-radius: 50%;
+    background: rgba(255,255,255,.12); color: #fff; font-size: 26px; font-weight: 900; line-height: 1; cursor: pointer; }
+#hero-selector.hero-selector, #daily-btn.daily-card { top: 21% !important; width: min(250px, 28vw) !important; min-width: 0 !important; max-width: none !important; height: 96px !important; box-sizing: border-box; }
+.hero-selector { left: max(22px, calc(env(safe-area-inset-left) + 16px)) !important; }
+.daily-card { right: max(22px, calc(env(safe-area-inset-right) + 16px)) !important;
+    grid-template-columns: 1fr auto !important; align-content: center; text-align: left; }
+.daily-card .daily-kicker, .daily-card strong, .daily-card small { grid-column: 1; }
+.daily-card #daily-state { grid-column: 2; grid-row: 1 / 4; align-self: center; }
+aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important; max-width: none !important; box-sizing: border-box; right: max(22px, calc(env(safe-area-inset-right) + 16px)) !important; grid-template-columns: 46px 1fr auto !important; }
+.missions-button { left: max(16px, calc(env(safe-area-inset-left) + 10px)) !important; transform: scale(.85); transform-origin: left bottom; }
+.menu-bird { left: clamp(70px, 11vw, 190px) !important; }
+.result-medal { width: 104px !important; height: 104px !important; }
+.result-medal img { width: 86px !important; height: 86px !important; }
+.challenge-button img { width: 52px !important; height: 26px !important; }

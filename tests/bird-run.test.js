@@ -25,15 +25,19 @@ function capture(seed) {
 const a = capture(13579);
 const b = capture(13579);
 assert.deepEqual(JSON.parse(JSON.stringify(a)), JSON.parse(JSON.stringify(b)), 'The same seed must yield the same traffic.');
-assert.equal(a.filter(({ obstacle }) => obstacle.direction === 'rear').length, 7);
-assert.equal(a.filter(({ obstacle }) => obstacle.predator).length, 1,
-    'Only one large predator may chase Bert per event run.');
+const isRear = (id) => birdRun.isPredator(id) || id >= 3 && id % 5 === 3;
+assert.equal(a.filter(({ obstacle }) => obstacle.direction === 'rear').length,
+    Array.from({ length: 30 }, (_, id) => id).filter(isRear).length);
+// Feedback 4. okt.: the predator returns more and more often, never in the first teaching birds.
+const predatorIds = a.filter(({ obstacle }) => obstacle.predator).map(({ obstacle }) => obstacle.id);
+assert(predatorIds[0] === 5 && predatorIds.length >= 3, 'The predator returns several times per run.');
+assert(predatorIds.every((id, i) => i === 0 || id - predatorIds[i - 1] >= 3), 'Predators always leave room between them.');
 assert(a[5].obstacle.predator && ['eagle', 'vulture'].includes(a[5].obstacle.species));
 assert.deepEqual(a.slice(0, 3).map(({ obstacle }) => obstacle.species), ['glider', 'swift', 'kite']);
 assert.equal(new Set(a.map(({ obstacle }) => obstacle.artKey)).size, 3);
 for (let id = 0; id < a.length; id += 1) {
     const { obstacle, star } = a[id];
-    const rear = id === 5 || id >= 3 && id % 5 === 3;
+    const rear = isRear(id);
     assert.equal(obstacle.direction, rear ? 'rear' : 'front');
     assert(obstacle.y >= 120 && obstacle.y + obstacle.height <= 585, 'The upper and lower lanes stay open.');
     assert.equal(obstacle.artKey, birdRun.SPECIES[obstacle.species].asset);
@@ -129,7 +133,9 @@ for (const roll of [0.1, 0.9]) {
     assert(hunter.x < 0 && hunter.x > startX,
         'The predator enters visibly from behind instead of appearing on Bert.');
 }
-const expectedCapacities = [1, 1, 1, 1, 2, 1, 2, 3, 1, 3, 4, 4, 4, 1, 5, 5, 5, 5, 1, 6];
+// Predator encounters (5, 11, 17, ...) are solo like the rear-warning breaks.
+const expectedCapacities = Array.from({ length: 20 }, (_, id) => (id <= 3 || birdRun.isPredator(id) || id % 5 === 3 ? 1
+    : id < 7 ? 2 : id < 10 ? 3 : id < 14 ? 4 : id < 19 ? 5 : 6));
 assert.deepEqual(expectedCapacities.map((_, id) => birdRun.waveSize(id)), expectedCapacities,
     'The first birds teach safe controls; later waves build slowly with solo rear-warning breaks.');
 for (const id of [0, 4, 6, 7, 10, 14, 19, 32]) {

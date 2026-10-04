@@ -475,8 +475,8 @@
             }
             if (o.phase === 'warn') {
                 o.timer += delta;
-                o.warn = clamp(o.timer / 0.75, 0, 1);
-                if (o.timer >= 0.95) { o.phase = 'fly'; o.warn = 0; o.vy = -o.launchSpeed; o.harmful = true; }
+                o.warn = clamp(o.timer / 0.9, 0, 1);
+                if (o.timer >= 1.2) { o.phase = 'fly'; o.warn = 0; o.vy = -o.launchSpeed; o.harmful = true; }
             } else if (o.phase === 'fly') {
                 o.vy += 1500 * delta;
                 o.y += o.vy * delta;
@@ -662,7 +662,7 @@
     function isTheme(kind) { return THEMES.includes(kind); }
 
     const api = Object.freeze({
-        THEMES, TYPES, CHAIN_X, GROUND, WARN_COLOR, isTheme, createEncounter, columnAt, advance, shapes, warningSpot, rotatePoint,
+        THEMES, TYPES, CHAIN_X, GROUND, WARN_COLOR, isTheme, createEncounter, columnAt, meteorAt, advance, shapes, warningSpot, rotatePoint,
     });
     if (typeof window !== 'undefined') window.BertAdventure = api;
     if (typeof module !== 'undefined' && module.exports) module.exports = api;
