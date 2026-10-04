@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-57';
+    const BUILD_VERSION = 'worlds-relay-58';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -5266,7 +5266,7 @@
         if (state.deathPredatorHero && assets.v2HawkCarry0?.naturalWidth) {
             const progress = clamp(state.deathCaptureElapsed / 1.3, 0, 1);
             const frame = assets[`v2HawkCarry${Math.min(5, Math.floor(state.deathCaptureElapsed / 0.2))}`];
-            const size = 240;
+            const size = 300;
             const x = state.deathCaptureX - size / 2 + progress * 320;
             const y = state.deathCaptureY - size * 0.62 - Math.sin(progress * Math.PI) * 60;
             ctx.save();
@@ -5274,7 +5274,7 @@
             ctx.translate(x + size, y);
             ctx.scale(-1, 1);
             // The hero dangles from the talons (lower middle of the art), then the hawk on top.
-            fitHero(heroPose('glide'), size * 0.3, size * 0.7, size * 0.42, size * 0.38, 0.5);
+            fitHero(heroPose('glide'), size * 0.5 - BIRD.width * 0.5, size * 0.72, BIRD.width, BIRD.height, 0.45);
             ctx.drawImage(frame, 0, 0, size, size);
             ctx.restore();
             return;
@@ -5331,15 +5331,18 @@
             return;
         }
         if (state.deathCause === 'jungle-spider' && assets.v2SpiderWrap0?.naturalWidth) {
-            const size = 250;
-            const x = state.deathCaptureX - size * 0.65;
-            const y = state.deathCaptureY - size * 0.58;
+            // Scene scaled so the cocoon opening (x 264–402 of 512) fits a full-size hero:
+            // the caught bird keeps its in-game size instead of shrinking to a micro bird.
+            const size = 380;
+            const k = size / 512;
+            const x = state.deathCaptureX - 333 * k;
+            const y = state.deathCaptureY - 277 * k;
             let elapsed = state.deathCaptureElapsed;
             // From the big web: first the strands close around the hero, then the spider comes.
             if (state.deathFromWeb && assets.v2WebStuck0?.naturalWidth) {
                 if (elapsed < 0.9) {
-                    const s2 = 220;
-                    fitHero(heroPose('glide'), state.deathCaptureX - s2 * 0.28, state.deathCaptureY - s2 * 0.24, s2 * 0.56, s2 * 0.48);
+                    const s2 = 300;
+                    fitHero(heroPose('glide'), state.deathCaptureX - BIRD.width / 2, state.deathCaptureY - BIRD.height / 2, BIRD.width, BIRD.height);
                     ctx.drawImage(assets[`v2WebStuck${Math.min(2, Math.floor(elapsed / 0.3))}`], state.deathCaptureX - s2 / 2, state.deathCaptureY - s2 / 2, s2, s2);
                     return;
                 }
@@ -5352,8 +5355,8 @@
             // Mask hole in frame 3: x 264–402, y 228–326 of the 512 art. The hero sits there
             // while the cocoon is still open (frames 1–3); the closed cocoon hides it.
             if (frameIndex <= 2) {
-                const k = size / 512;
-                fitHero(heroPose('glide'), x + 258 * k, y + 214 * k, 150 * k, 120 * k);
+                // Full-size hero in the open cocoon; its head pokes out over the rim.
+                fitHero(heroPose('glide'), state.deathCaptureX - BIRD.width * 0.5, state.deathCaptureY - BIRD.height * 0.62, BIRD.width, BIRD.height, -0.15);
             }
             ctx.drawImage(assets[`v2SpiderWrap${frameIndex}`], x, y, size, size);
             ctx.restore();
