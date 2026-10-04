@@ -23,6 +23,7 @@
         { id: 'ninja', name: T('Ninja-Bert'), price: 340, goal: T('Lydløs og hurtig · køb for fjer'), target: 1 },
         { id: 'pakke', name: T('Pakke-Bert'), price: 300, goal: T('Har altid en pakke med · køb for fjer'), target: 1 },
         { id: 'gold', name: T('Guld-Bert'), price: 1500, goal: T('Den sjældneste fugl · køb for fjer'), target: 1 },
+        { id: 'eggbert', name: T('Æggebert'), price: 0, goal: T('Klæk alle helte fra rugepladsen'), target: 16 },
         // Epic heroes: only for players with a specific pilot name. The names are
         // stored as hashes, so they are not readable in the public source code.
         { id: 'epicMalthe', name: 'Storm Royale', price: 0, goal: T('Hemmelig helt'), target: 1, secret: true, nameHash: 3598967373 },

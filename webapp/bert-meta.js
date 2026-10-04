@@ -501,6 +501,18 @@
         save();
         return { ok: true, cost, secured: Boolean(heroId), status: eggStatus() };
     }
+    /** An egg found out on a level: free and random. */
+    function grantFoundEgg() {
+        const status = eggStatus();
+        if (!status.open || status.incubating || !status.remaining) return { ok: false };
+        const pickRare = status.candidates.rare.length && (!status.candidates.common.length || Math.random() < 0.18);
+        const pool = pickRare ? status.candidates.rare : status.candidates.common;
+        const hero = pool[Math.floor(Math.random() * pool.length)];
+        data.eggs.incubating = { hero, secured: false, progress: 0, need: status.need, at: new Date().toISOString(), found: true };
+        save();
+        return { ok: true, hero };
+    }
+
     /** After a run: stars warm the egg. Returns the hatched hero id when it cracks open. */
     function incubate(stars) {
         const egg = data.eggs.incubating;
@@ -511,6 +523,11 @@
         if (!data.ownedHeroes[hero]) data.ownedHeroes[hero] = { source: 'egg', at: new Date().toISOString() };
         data.eggs.hatched = [...(data.eggs.hatched || []), hero];
         data.eggs.incubating = null;
+        // Æggebert: the reward for hatching every hero the nest can give.
+        const left = eggCandidates();
+        if (!left.common.length && !left.rare.length && !data.ownedHeroes.eggbert) {
+            data.ownedHeroes.eggbert = { source: 'egg', at: new Date().toISOString() };
+        }
         save();
         return hero;
     }
@@ -724,7 +741,7 @@
     window.BertMeta = Object.freeze({
         addFeathers, hasPlayerName, hasTestAccess, hasOpMode,
         NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
-        EGG_TIERS, eggStatus, buyEgg, incubate,
+        EGG_TIERS, eggStatus, buyEgg, incubate, grantFoundEgg,
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,
         continueSpinOffer, buyContinueSpin, settleContinueSpin,

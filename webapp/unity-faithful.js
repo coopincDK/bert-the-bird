@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-75';
+    const BUILD_VERSION = 'worlds-relay-76';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -484,6 +484,8 @@
         g4StarPop: 'assets/v2/g4/fx/star-pop.webp',
         g4Festival: 'assets/v2/g4/edm/festival-bg.webp',
         g4MedalRing: 'assets/v2/g4/ui/medal-ring.webp',
+        g5EggPickup: 'assets/v2/g5/egg/egg-pickup.webp',
+        g5Hatch0: 'assets/v2/g5/egg/hatch-1.webp', g5Hatch1: 'assets/v2/g5/egg/hatch-2.webp', g5Hatch2: 'assets/v2/g5/egg/hatch-3.webp', g5Hatch3: 'assets/v2/g5/egg/hatch-4.webp',
         v2PuGrow: 'assets/v2/pickups/pu-grow.webp',
         v2PuShrink: 'assets/v2/pickups/pu-shrink.webp',
         v2Bonk: 'assets/v2/fx/bonk.webp',
@@ -511,6 +513,7 @@
         'v2Warning', 'v2FeatherPuff', 'v2Sparkle', 'v2Smoke0', 'v2Smoke1', 'v2Smoke2', 'v2WindSwirl', 'v2Bubble',
         'v2PuGrow', 'v2PuShrink', 'v2Bonk',
         'g4AmbDust', 'g4AmbFirefly', 'g4AmbSnow', 'g4AmbEmber', 'g4AmbLeaf', 'g4AmbConfetti', 'g4Trail', 'g4ComboBurst', 'g4StarPop',
+        'g5EggPickup', 'g5Hatch0', 'g5Hatch1', 'g5Hatch2', 'g5Hatch3',
     ];
     const LEVEL_ASSET_KEYS = Object.freeze({
         desert: ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'],
@@ -549,7 +552,7 @@
     const V2_LEVEL_FOLDER = Object.freeze({ desert: 'desert', jungle: 'jungle', happySky: 'happysky', flappy: 'tap', tunnel: 'tunnel' });
     const V2_HERO_FOLDER = Object.freeze({
         bert: 'bert', blue: 'blue', block: 'block', brain: 'brain', eagle: 'eagle', mecha: 'mecha', noir: 'noir', vulture: 'vulture',
-        sugar: 'sugar', moss: 'moss', ink: 'ink', prism: 'prism', pingo: 'pingo', mogens: 'mogens', ninja: 'ninja', pakke: 'pakke', gold: 'gold',
+        sugar: 'sugar', moss: 'moss', ink: 'ink', prism: 'prism', pingo: 'pingo', mogens: 'mogens', ninja: 'ninja', pakke: 'pakke', gold: 'gold', eggbert: 'eggbert',
         epicMalthe: 'epic-malthe', epicJohan: 'epic-johan', epicSos: 'epic-sos', epicThor: 'epic-thor', epicFan: 'fanbert', epicCoop: 'coopinc',
     });
     // Existing art keys that simply point at a new file once the level is delivered.
@@ -738,7 +741,7 @@
     }));
     let edmSmokeStamp = null;
     const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [],
-        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
+        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], eggbert: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     // Heroes redrawn in the shared style (see docs: grafikplan). Folder under assets/.
     const V2_FPS = 12;
@@ -772,6 +775,7 @@
         ninja: 'assets/ninjabert/up.webp',
         pakke: 'assets/pakkeb/up.webp',
         gold: 'assets/goldbert/up.webp',
+        eggbert: 'assets/heroes/eggbert/flap-03.webp',
         epicMalthe: 'assets/epic-malthe/up.webp',
         epicJohan: 'assets/epic-johan/up.webp',
         epicSos: 'assets/epic-sos/up.webp',
@@ -1740,6 +1744,7 @@
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
         state.runFeathers = 0;
+        state.eggSpawned = false;
         state.hitStop = 0;
         state.shake = 0;
         state.slowmoUntil = 0;
@@ -2272,7 +2277,7 @@
         for (const collectible of collectibles) {
             collectible.x -= scroll * (collectible.motion?.scrollFactor || 1);
             collectible.spin += delta * 5;
-            if ((collectible.kind === 'powerup' || collectible.kind === 'feather') && collectible.motion) {
+            if ((collectible.kind === 'powerup' || collectible.kind === 'feather' || collectible.kind === 'egg') && collectible.motion) {
                 collectible.age += delta;
                 const corridor = collectible.motion.tunnel
                     ? BertTunnel.profileAt(state.worldDistance + collectible.x, state.difficulty, currentLevel.variant).center
@@ -2307,6 +2312,12 @@
                     collectible.collected = true;
                     if (collectible.kind === 'powerup') activatePowerup(collectible.type);
                     else if (collectible.kind === 'feather') collectFeather(collectible);
+                    else if (collectible.kind === 'egg') {
+                        const result = opMode() ? { ok: false } : BertMeta.grantFoundEgg?.();
+                        playAudio(result?.ok ? 'fanfare' : 'pop');
+                        if (result?.ok) window.BertApp?.showToast(T('Du fandt et æg! Det ligger i reden og ruger.'));
+                        BertMeta.haptic('reward');
+                    }
                     else if (collectible.kind === 'food') {
                         state.poopMeter = Math.min(POOP_MAX, (state.poopMeter || 0) + collectible.value);
                         playAudio('point');
@@ -2370,7 +2381,12 @@
 
             // A rare feather for the nest economy, about once a minute (not in events).
             if (!isEventLevel() && state.elapsed >= state.nextFeatherAt) {
-                spawnFeather();
+                // Now and then the feather is an egg instead: free, random, only when the nest can take one.
+                const eggs = BertMeta.eggStatus?.();
+                if (eggs?.open && !eggs.incubating && eggs.remaining && !state.eggSpawned && gameRandom() < 0.22) {
+                    spawnFeather('egg');
+                    state.eggSpawned = true;
+                } else spawnFeather();
                 state.nextFeatherAt = state.elapsed + 50 + gameRandom() * 25;
             }
 
@@ -2946,7 +2962,7 @@
         return true;
     }
 
-    function spawnFeather() {
+    function spawnFeather(kind = 'feather') {
         const rightmost = obstacles.reduce((x, obstacle) => Math.max(x, obstacle.x + obstacle.width), -Infinity);
         const y = randomBetween(170, VIEW.height - 170);
         const motion = BertCollectibleMotion.create(currentLevel.kind, y, gameRandom);
@@ -2955,7 +2971,7 @@
             ? BertTunnel.profileAt(state.worldDistance + x, state.difficulty, currentLevel.variant).center
             : motion.baseY;
         collectibles.push({ x, y: BertCollectibleMotion.yAt(motion, 0, corridor), width: 70, height: 70,
-            kind: 'feather', spin: 0, age: 0, motion, collected: false });
+            kind, spin: 0, age: 0, motion, collected: false });
     }
 
     function collectFeather(collectible) {
@@ -3484,6 +3500,19 @@
         settleNest(opRun);
     }
 
+    // The egg cracks open on the result screen, and the new hero pops out of it.
+    function showHatch(heroId) {
+        const stage = document.createElement('div');
+        stage.className = 'hatch-stage';
+        const egg = document.createElement('img'); egg.className = 'hatch-egg'; egg.alt = '';
+        const hero = document.createElement('img'); hero.className = 'hatch-hero'; hero.alt = '';
+        hero.src = `assets/heroes/${V2_HERO_FOLDER[heroId] || heroId}/glide.webp`;
+        stage.append(egg, hero);
+        dom.gameOver.appendChild(stage);
+        [0, 1, 2, 3].forEach((index) => setTimeout(() => { egg.src = `assets/v2/g5/egg/hatch-${index + 1}.webp`; if (index === 2) stage.classList.add('open'); }, index * 320));
+        setTimeout(() => stage.remove(), 4200);
+    }
+
     // Reden after a run: the daily flight, new badges, and feathers first on the screen.
     function settleNest(opRun) {
         if (opRun) return;
@@ -3501,7 +3530,7 @@
         if (hatched) {
             const heroName = BertHeroStore.catalog.find((hero) => hero.id === hatched)?.name || hatched;
             bits.push(T`Ægget klækkede: ${heroName}!`);
-            setTimeout(() => { playAudio('fanfare'); window.BertApp?.showToast(T`${heroName} er klækket og venter i garderoben`); }, 1200);
+            setTimeout(() => { playAudio('fanfare'); window.BertApp?.showToast(T`${heroName} er klækket og venter i garderoben`); showHatch(hatched); }, 1200);
         } else if (BertMeta.eggStatus?.().incubating) {
             const egg = BertMeta.eggStatus().incubating;
             bits.push(T`Ægget: ${egg.progress}/${egg.need} stjerner`);
@@ -5878,6 +5907,16 @@
             ctx.restore();
             return;
         }
+        if (collectible.kind === 'egg') {
+            const glowSize = 110;
+            ctx.globalAlpha = 0.5 + Math.sin(collectible.spin * 2) * 0.12;
+            ctx.drawImage(assets.yellowGlow || assets.whiteGlow, -glowSize / 2, -glowSize / 2, glowSize, glowSize);
+            ctx.globalAlpha = 1;
+            ctx.rotate(Math.sin(collectible.spin * 0.9) * 0.25);
+            if (assets.g5EggPickup?.naturalWidth) ctx.drawImage(assets.g5EggPickup, -32, -36, 64, 72);
+            ctx.restore();
+            return;
+        }
         if (collectible.kind === 'feather') {
             const glowSize = 96;
             ctx.globalAlpha = 0.42 + Math.sin(collectible.spin * 2) * 0.1;
@@ -6761,6 +6800,10 @@
         const secure = document.getElementById('egg-secure');
         const select = document.getElementById('egg-hero');
         view.className = `egg-view ${status.incubating ? `stage-${status.incubating.stage}` : 'empty'}`;
+        const eggImg = view.querySelector('img.egg-art') || view.insertBefore(Object.assign(document.createElement('img'), { className: 'egg-art', alt: '' }), view.firstChild);
+        eggImg.src = status.incubating ? `assets/v2/g5/egg/egg-${status.incubating.stage}.webp` : 'assets/v2/g5/egg/basket.webp';
+        const basket = document.getElementById('nest-basket');
+        if (basket) { basket.src = `assets/v2/g5/egg/${status.incubating ? 'basket-warm' : 'basket'}.webp`; basket.classList.toggle('hidden', !status.open); }
         if (status.incubating) {
             const egg = status.incubating;
             progress.textContent = T`${egg.progress}/${egg.need} STJERNER`;

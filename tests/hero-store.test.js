@@ -20,7 +20,7 @@ function load(seed = null, memory = new Map()) {
 const owned = (meta, id) => meta.heroCatalog().find((entry) => entry.id === id);
 
 let { meta, heroes } = load();
-assert.equal(meta.heroCatalog().length, 23);
+assert.equal(meta.heroCatalog().length, 24); // 23 + Æggebert
 assert.equal(meta.heroCatalog().filter((hero) => hero.owned).length, 1);
 assert.equal(owned(meta, 'block').price, 180);
 assert.equal(owned(meta, 'prism').price, 480);
