@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-72';
+    const BUILD_VERSION = 'worlds-relay-73';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -5583,6 +5583,22 @@
             ctx.drawImage(img, -dw / 2, -dh / 2, dw, dh);
             ctx.restore();
         };
+        const isBert = BertMeta.currentHero() === 'bert';
+        if (state.deathPredatorHero && isBert && assets.v2HawkCatch0?.naturalWidth) {
+            // Bert's own hawk catch (round 1 art with Bert drawn in), kept because it reads best.
+            const progress = clamp(state.deathCaptureElapsed / 1.3, 0, 1);
+            const frame = assets[`v2HawkCatch${Math.min(5, Math.floor(state.deathCaptureElapsed / 0.22))}`];
+            const size = 300;
+            const x = state.deathCaptureX - size / 2 + progress * 320;
+            const y = state.deathCaptureY - size * 0.55 - Math.sin(progress * Math.PI) * 60;
+            ctx.save();
+            ctx.globalAlpha = clamp((2.1 - state.deathCaptureElapsed) / 0.55, 0, 1);
+            ctx.translate(x + size, y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(frame, 0, 0, size, size);
+            ctx.restore();
+            return;
+        }
         if (state.deathPredatorHero && assets.v2HawkCarry0?.naturalWidth) {
             const progress = clamp(state.deathCaptureElapsed / 1.3, 0, 1);
             const frame = assets[`v2HawkCarry${Math.min(5, Math.floor(state.deathCaptureElapsed / 0.2))}`];
@@ -5648,6 +5664,22 @@
             ctx.translate(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2);
             ctx.rotate((bird.rotation * Math.PI) / 180);
             ctx.drawImage(frame, -width / 2, -height / 2, width, height);
+            ctx.restore();
+            return;
+        }
+        if (state.deathCause === 'jungle-spider' && isBert && assets.spiderCatch0?.naturalWidth && !(state.deathFromWeb && assets.v2WebStuck0?.naturalWidth)) {
+            // Bert's own spider catch (round 1 art, six frames with Bert drawn in).
+            const frameIndex = Math.min(17, Math.floor(state.deathCaptureElapsed * 8));
+            const frame = assets[`spiderCatch${frameIndex}`];
+            if (!frame) return;
+            const size = 300;
+            const x = state.deathCaptureX - size * 0.5;
+            const y = state.deathCaptureY - size * 0.58;
+            ctx.save();
+            ctx.strokeStyle = 'rgba(240, 245, 250, .9)';
+            ctx.lineWidth = 3;
+            ctx.beginPath(); ctx.moveTo(x + size * 0.5, -10); ctx.lineTo(x + size * 0.5, y + size * 0.1); ctx.stroke();
+            ctx.drawImage(frame, x, y, size, size);
             ctx.restore();
             return;
         }
