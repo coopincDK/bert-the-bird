@@ -31,7 +31,7 @@ async def run_phone(browser, port, width, height, foreground_screenshots=False):
     page = await browser.new_page(viewport={'width': width, 'height': height}, device_scale_factor=2)
     errors = []
     page.on('pageerror', lambda error: errors.append(str(error)))
-    await page.goto(f'http://127.0.0.1:{port}/?qa=1&noclip=1&rev=worlds-relay-49', wait_until='networkidle')
+    await page.goto(f'http://127.0.0.1:{port}/?qa=1&noclip=1&rev=worlds-relay-50', wait_until='networkidle')
     await page.wait_for_function("document.querySelector('#loading').classList.contains('hidden')")
     await page.locator('#play-btn').click()
     await page.locator('#edm-event-btn').click()

@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-49';
+    const BUILD_VERSION = 'worlds-relay-50';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -485,10 +485,17 @@
     // Existing art keys that simply point at a new file once the level is delivered.
     const V2_KEY_SWAPS = Object.freeze({
         desert: { desertBanded: 'pillar-banded', desertEtched: 'pillar-etched', desertRuin: 'pillar-ruin' },
-        jungle: { jungleStone: 'rock' },
-        happySky: { rainbow: 'rainbow', v2Tower0: 'tower-happy', v2Tower1: 'tower-sleepy', v2Tower2: 'tower-cheeky' },
+        jungle: {
+            jungleStone: 'rock',
+            ...Object.fromEntries([0, 1, 2].map((i) => [`spider${i}`, `fit-spider-idle-${i + 1}`])),
+            ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => [`spiderCatch${i}`, `fit-spider-catch-${Math.floor(i / 3) + 1}`])),
+            ...Object.fromEntries(Array.from({ length: 7 }, (_, i) => [`snake${i}`, `cut-snake-idle-${(i % 6) + 1}`])),
+            ...Object.fromEntries(Array.from({ length: 5 }, (_, i) => [`snakeJump${i}`, `cut-snake-jump-${i + 1}`])),
+            ...Object.fromEntries(Array.from({ length: 3 }, (_, i) => [`snakeCatch${i}`, `cut-snake-catch-${i + 1}`])),
+        },
+        happySky: { rainbow: 'rainbow', v2Tower0: 'tower-happy', v2Tower1: 'tower-sleepy', v2Tower2: 'tower-cheeky', v2Balloon: 'balloon' },
         flappy: { flappyPipe: 'chimney-brick', flappyPipeBlue: 'chimney-stone', flappyPipeGold: 'tower-gold', flappyCopper: 'tower-copper', flappyPearl: 'chimney-stone' },
-        tunnel: {},
+        tunnel: { v2TunnelGlow: 'tunnel-glow', v2StarGate: 'star-gate' },
     });
     const v2LayerKeys = (kind) => ['Sky', 'Bg1', 'Bg2', 'Mg', 'Fg'].map((part) => `v2_${kind}_${part}`);
     // Layer y positions are measured per level: each layer reaches down to where
@@ -513,6 +520,10 @@
         const extra = [];
         if (kind === 'poop' && ASSET_PATHS.v2LampPost) extra.push('v2LampPost');
         if (kind === 'edm' && ASSET_PATHS.v2SmokeCannon) extra.push('v2SmokeCannon');
+        if (kind === 'birdRun' && ASSET_PATHS.v2HawkFly0) {
+            for (let i = 0; i < 4; i += 1) extra.push(`v2HawkFly${i}`);
+            for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCatch${i}`);
+        }
         if (!V2.levels.has(kind)) return [...base, ...extra];
         const swaps = Object.keys(V2_KEY_SWAPS[kind] || {}).filter((key) => !base.includes(key));
         return [...base, ...v2LayerKeys(kind), ...swaps, ...extra];
@@ -535,6 +546,10 @@
             if (band) { band.image = v2LayerKeys(kind)[4]; band.y = 520; band.height = 200; }
         });
         if (manifest_extras.has('lamp-post')) ASSET_PATHS.v2LampPost = 'assets/v2/adventure/poop/lamp-post.webp';
+        if (manifest_extras.has('hawk')) {
+            for (let i = 0; i < 4; i += 1) ASSET_PATHS[`v2HawkFly${i}`] = `assets/v2/birdrun/predator-fly-${i + 1}.webp`;
+            for (let i = 0; i < 6; i += 1) ASSET_PATHS[`v2HawkCatch${i}`] = `assets/v2/birdrun/predator-catch-${i + 1}.webp`;
+        }
         if (manifest_extras.has('smoke-cannon')) ASSET_PATHS.v2SmokeCannon = 'assets/v2/adventure/edm/smoke-cannon.webp';
         V2.ready = true;
     }
@@ -2007,6 +2022,26 @@
                 obstacle.attackElapsed = 0;
             }
             const jumpSequence = [0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0];
+            if (V2.levels.has('jungle')) {
+                // New-style snake: the snake rises out of its coil and leaps off the rock,
+                // reaching as high as the old lunge did. The rock itself stays put.
+                obstacle.snakeHeight = obstacle.height * 1.05;
+                obstacle.renderWidth = obstacle.snakeHeight * 0.8;
+                obstacle.renderX = obstacle.x + obstacle.width / 2 - obstacle.renderWidth / 2;
+                let lift = 0;
+                obstacle.attackFrame = null;
+                if (obstacle.attackState === 'attacking') {
+                    obstacle.attackElapsed += delta;
+                    const progress = clamp(obstacle.attackElapsed / 0.733333, 0, 0.9999);
+                    obstacle.attackFrame = jumpSequence[Math.floor(progress * jumpSequence.length)];
+                    lift = Math.max(0, 272 * obstacle.scale - obstacle.snakeHeight) * Math.sin(Math.PI * progress);
+                    if (obstacle.attackElapsed >= 0.733333) obstacle.attackState = 'spent';
+                }
+                // The body stretches up from the rock, so the whole column is the snake.
+                obstacle.renderHeight = obstacle.snakeHeight + lift;
+                obstacle.renderY = obstacle.baseBottom + 4 - obstacle.renderHeight;
+                return;
+            }
             if (obstacle.attackState === 'attacking') {
                 obstacle.attackElapsed += delta;
                 const progress = clamp(obstacle.attackElapsed / 0.733333, 0, 0.9999);
@@ -2692,6 +2727,15 @@
                 collectibles.push(makeCollectible(x + width / 2, baseGapTop + pipeGap * (risk ? 0.25 : 0.5), risk));
                 return;
             }
+            // New-style Happy Sky: a hot-air balloon that drifts slowly up and down.
+            if (V2.levels.has('happySky') && assets.v2Balloon?.naturalWidth && gameRandom() < 0.4) {
+                const height = randomBetween(230, 280);
+                const width = height * assets.v2Balloon.naturalWidth / assets.v2Balloon.naturalHeight;
+                const baseY = randomBetween(110, VIEW.height - height - 140);
+                obstacles.push({ x, y: baseY, baseY, width, height, kind: 'happy-balloon', harmful: true, top: false, age: 0, bob: gameRandom() * Math.PI * 2, id });
+                collectibles.push(makeCollectible(x + width / 2, baseY > 300 ? baseY - 90 : baseY + height + 90));
+                return;
+            }
             // Unity size: the rainbow sprite is 9.19 × 4.33 world units (≈660 × 312 px),
             // a big arch rising from the clouds or hanging from the sky.
             const top = gameRandom() > 0.5;
@@ -2971,7 +3015,8 @@
         state.deathCaptureElapsed = 0;
         state.deathCaptureX = bird.x + BIRD.width / 2;
         state.deathCaptureY = bird.y + BIRD.height / 2;
-        state.birdsVisible = !captureCause;
+        // The hawk's catch frames show the bird in its talons, so the bird itself is hidden.
+        state.birdsVisible = !captureCause && !(predatorHero && assets.v2HawkCatch0?.naturalWidth);
         state.deathCountdown = captureCause === 'jungle-spider' ? 3.8
             : captureCause === 'jungle-snake' ? 2.2 : predatorHero ? 2.1 : 1.5;
         if (predatorHero) bird.velocity = -165;
@@ -3470,6 +3515,9 @@
             updateNightLight(delta);
             updatePoop(delta, BertProgression.scrollPixelsPerSecond(state.speed) * delta);
             updateSmokeFog(delta, BertProgression.scrollPixelsPerSecond(state.speed) * delta);
+            obstacles.forEach((obstacle) => {
+                if (obstacle.kind === 'happy-balloon') obstacle.y = obstacle.baseY + Math.sin(obstacle.age * 1.1 + obstacle.bob) * 55;
+            });
             updateHud();
             return;
         }
@@ -3861,6 +3909,8 @@
         wallGradient.addColorStop(1, pulse ? '#160d24' : stream ? '#071c2d' : '#171018');
         ctx.save();
         ctx.fillStyle = wallGradient;
+        // New-style Tunnel: the night world shows faintly through the walls.
+        if (V2.levels.has('tunnel')) ctx.globalAlpha = 0.72;
         ctx.beginPath();
         ctx.moveTo(samples[0].x, 0);
         samples.forEach((point) => ctx.lineTo(point.x, point.top));
@@ -3873,6 +3923,25 @@
         ctx.lineTo(samples.at(-1).x, VIEW.height);
         ctx.closePath();
         ctx.fill();
+        ctx.globalAlpha = 1;
+        if (V2.levels.has('tunnel') && assets.v2TunnelGlow?.naturalWidth) {
+            // Soft light streaks along both edges.
+            ctx.save();
+            ctx.globalCompositeOperation = 'lighter';
+            ctx.globalAlpha = 0.55;
+            for (let i = 1; i < samples.length - 1; i += 3) {
+                const a = samples[i - 1];
+                const b = samples[i + 1];
+                [['top', a.top, b.top], ['bottom', a.bottom, b.bottom]].forEach(([, y1, y2]) => {
+                    ctx.save();
+                    ctx.translate(samples[i].x, (y1 + y2) / 2);
+                    ctx.rotate(Math.atan2(y2 - y1, b.x - a.x));
+                    ctx.drawImage(assets.v2TunnelGlow, -80, -20, 160, 40);
+                    ctx.restore();
+                });
+            }
+            ctx.restore();
+        }
         const edgeColor = pulse ? 'rgba(237, 102, 255, .78)' : stream ? 'rgba(90, 245, 255, .82)' : 'rgba(92, 220, 237, .68)';
         ctx.strokeStyle = edgeColor;
         ctx.lineWidth = 8;
@@ -4715,7 +4784,14 @@
                 } else {
                     ctx.translate(obstacle.x, obstacle.y);
                 }
-                if (obstacle.heroId) drawHeroAnimation(obstacle.heroId,
+                if (obstacle.predator && assets.v2HawkFly0?.naturalWidth) {
+                    // The brown hawk: art faces left, so it is mirrored when it hunts from behind.
+                    const frame = assets[`v2HawkFly${Math.floor((obstacle.flightAge || 0) * 10) % 4}`];
+                    ctx.translate(obstacle.width, 0);
+                    ctx.scale(-1, 1);
+                    const pad = obstacle.width * 0.18;
+                    ctx.drawImage(frame, -pad, -pad, obstacle.width + pad * 2, obstacle.height + pad * 2);
+                } else if (obstacle.heroId) drawHeroAnimation(obstacle.heroId,
                     prefersReducedMotion() ? 0.18 : obstacle.flightAge + obstacle.animationOffset,
                     false, 0, 0, obstacle.width, obstacle.height);
                 else ctx.drawImage(birdArt, 0, 0, obstacle.width, obstacle.height);
@@ -4832,6 +4908,23 @@
                 }
                 ctx.restore();
             }
+        } else if (obstacle.kind === 'jungle-snake' && V2.levels.has('jungle')) {
+            const idleSequence = [0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 0];
+            const frame = obstacle.attackFrame == null
+                ? assets[`snake${idleSequence[Math.floor((obstacle.age + obstacle.animationPhase) * 8) % idleSequence.length]}`]
+                : assets[`snakeJump${obstacle.attackFrame}`];
+            if (frame) {
+                const head = obstacle.snakeHeight || obstacle.renderHeight;
+                const stretch = obstacle.renderHeight - head;
+                if (stretch > 1) {
+                    // Stretch the lower coil down to the rock while the snake strikes upward.
+                    const from = frame.naturalHeight * 0.74;
+                    ctx.drawImage(frame, 0, from, frame.naturalWidth, frame.naturalHeight - from,
+                        obstacle.renderX, obstacle.renderY + head * 0.74, obstacle.renderWidth, obstacle.renderHeight - head * 0.74);
+                }
+                ctx.drawImage(frame, obstacle.renderX, obstacle.renderY, obstacle.renderWidth, head);
+            }
+            drawSnakeRock(obstacle);
         } else if (obstacle.kind === 'jungle-snake') {
             if (assets.jungleStone && obstacle.baseBottom != null) {
                 // The snake coils on top of a real rock (art 180×140, kept in proportion).
@@ -4844,6 +4937,8 @@
                 ? assets[`snake${idleSequence[Math.floor((obstacle.age + obstacle.animationPhase) * 10) % idleSequence.length]}`]
                 : assets[`snakeJump${obstacle.attackFrame}`];
             ctx.drawImage(frame, obstacle.renderX, obstacle.renderY, obstacle.renderWidth, obstacle.renderHeight);
+        } else if (obstacle.kind === 'happy-balloon') {
+            if (assets.v2Balloon?.naturalWidth) ctx.drawImage(assets.v2Balloon, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
         } else if (obstacle.kind === 'happy-rainbow') {
             ctx.translate(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
             if (obstacle.top) ctx.scale(1, -1);
@@ -4852,8 +4947,29 @@
         ctx.restore();
     }
 
+    function drawSnakeRock(obstacle) {
+        if (!assets.jungleStone || obstacle.baseBottom == null) return;
+        obstacle.rockAspect = assets.jungleStone.naturalHeight / assets.jungleStone.naturalWidth;
+        const rock = BertCollision.snakeRock(obstacle);
+        ctx.drawImage(assets.jungleStone, rock.x, rock.y, rock.width, rock.height);
+    }
+
     function drawEnemyCapture() {
         if (state.phase !== 'dead' || !state.deathCause) return;
+        if (state.deathPredatorHero && assets.v2HawkCatch0?.naturalWidth) {
+            const progress = clamp(state.deathCaptureElapsed / 1.3, 0, 1);
+            const frame = assets[`v2HawkCatch${Math.min(5, Math.floor(state.deathCaptureElapsed / 0.22))}`];
+            const size = 230;
+            const x = state.deathCaptureX - size / 2 + progress * 320;
+            const y = state.deathCaptureY - size * 0.55 - Math.sin(progress * Math.PI) * 60;
+            ctx.save();
+            ctx.globalAlpha = clamp((2.1 - state.deathCaptureElapsed) / 0.55, 0, 1);
+            ctx.translate(x + size, y);
+            ctx.scale(-1, 1);
+            ctx.drawImage(frame, 0, 0, size, size);
+            ctx.restore();
+            return;
+        }
         if (state.deathPredatorHero) {
             const progress = clamp(state.deathCaptureElapsed / 1.1, 0, 1);
             const x = state.deathCaptureX - 155 + progress * 280;
@@ -4864,6 +4980,17 @@
                 prefersReducedMotion() ? 0.18 : state.deathCaptureElapsed,
                 false, x, y, 212, 158);
             ctx.restore();
+            return;
+        }
+        if (state.deathCause === 'jungle-snake' && V2.levels.has('jungle')) {
+            // The snake sits back on its rock with a happy, full belly.
+            const snake = obstacles.find((obstacle) => obstacle.id === state.deathObstacleId && obstacle.kind === 'jungle-snake');
+            const frame = assets[`snakeCatch${Math.min(2, Math.floor(state.deathCaptureElapsed / 0.3))}`];
+            if (!snake || !frame) return;
+            const height = snake.height * 1.05;
+            const width = height * 0.8;
+            ctx.drawImage(frame, snake.x + snake.width / 2 - width / 2, snake.baseBottom + 4 - height, width, height);
+            drawSnakeRock(snake);
             return;
         }
         if (state.deathCause === 'jungle-snake') {
@@ -4937,6 +5064,11 @@
     function drawCollectible(collectible) {
         ctx.save();
         ctx.translate(collectible.x, collectible.y);
+        if (currentLevel.kind === 'tunnel' && collectible.kind === 'star' && assets.v2StarGate?.naturalWidth) {
+            ctx.globalAlpha = 0.5;
+            ctx.drawImage(assets.v2StarGate, -42, -42, 84, 84);
+            ctx.globalAlpha = 1;
+        }
         if (collectible.kind === 'cool') {
             ctx.restore();
             drawCoolingStone(collectible);

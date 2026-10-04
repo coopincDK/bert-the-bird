@@ -1,6 +1,39 @@
 {
-  "heroes": ["bert", "blue", "block", "brain", "eagle", "mecha", "noir", "vulture", "sugar", "moss", "ink", "prism",
-             "pingo", "mogens", "ninja", "pakke", "gold", "epicMalthe", "epicJohan", "epicSos", "epicThor", "epicFan", "epicCoop"],
-  "levels": ["desert", "jungle", "happySky", "flappy", "tunnel"],
-  "extras": ["lamp-post", "smoke-cannon"]
+  "heroes": [
+    "bert",
+    "blue",
+    "block",
+    "brain",
+    "eagle",
+    "mecha",
+    "noir",
+    "vulture",
+    "sugar",
+    "moss",
+    "ink",
+    "prism",
+    "pingo",
+    "mogens",
+    "ninja",
+    "pakke",
+    "gold",
+    "epicMalthe",
+    "epicJohan",
+    "epicSos",
+    "epicThor",
+    "epicFan",
+    "epicCoop"
+  ],
+  "levels": [
+    "desert",
+    "jungle",
+    "happySky",
+    "flappy",
+    "tunnel"
+  ],
+  "extras": [
+    "lamp-post",
+    "smoke-cannon",
+    "hawk"
+  ]
 }

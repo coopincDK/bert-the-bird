@@ -244,6 +244,14 @@
             return shapes;
         }
 
+        if (obstacle.kind === 'happy-balloon') {
+            // Envelope (round, top 70 %) and the basket underneath.
+            const { x, y, width, height } = obstacle;
+            return [
+                circle(x + width / 2, y + height * 0.36, Math.min(width, height * 0.72) * 0.47),
+                box(x + width * 0.36, y + height * 0.8, width * 0.28, height * 0.18),
+            ];
+        }
         if (obstacle.kind === 'happy-rainbow') {
             return rainbowSegments(obstacle);
         }
