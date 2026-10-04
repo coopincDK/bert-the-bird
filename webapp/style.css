@@ -2073,3 +2073,15 @@ body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 
 .poop-button { background: none; border: 0; box-shadow: none; padding: 0; }
 .poop-button img { width: 92px; height: 92px; filter: drop-shadow(0 4px 0 rgba(0,0,0,.3)); }
+
+/* ---- Feedback pass 4. okt.: readable menu and result texts ---- */
+.settings-gear { min-width: 48px; min-height: 48px; padding: 6px 10px; font-size: 26px; line-height: 1; color: #ffd36b; }
+.menu-record { flex-wrap: wrap; }
+.menu-record .leaderboard-button { position: static; width: 100%; margin-top: 6px; padding: 6px 0 0; border-top: 1px solid rgba(255,255,255,.18); filter: none; }
+.menu-record .leaderboard-button .ui-word { font-size: clamp(13px, 2.6cqh, 18px); }
+.menu-record span { font-size: 11px; }
+.hero-wardrobe-card .edition-label { font-size: 13px; color: #ffe08a; letter-spacing: .12em; text-shadow: 0 2px 0 rgba(0,0,0,.6); }
+.hero-wardrobe-note { font-size: 13px !important; color: #eaf6f8 !important; }
+.result-progress { display: inline-block; margin-top: 8px; padding: 6px 12px; border-radius: 10px; background: rgba(8,20,32,.78); font-size: 14px !important; letter-spacing: .04em !important; }
+.hero-option img { width: 64px !important; height: 52px !important; object-fit: contain; }
+.hero-option b { font-size: 11px; }

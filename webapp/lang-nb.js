@@ -133,7 +133,7 @@ window.BertI18n.register('nb', {
     'ISTAPPER & SPIDSER': 'ISTAPPER & SPISSER',
     'Isbjerget': 'Isfjellet',
     'ISBJERGET': 'ISFJELLET',
-    'Indlæser originale Unity-assets …': 'Laster originale Unity-ressurser …',
+    'Bert gør klar til at flyve …': 'Bert gjør seg klar til å fly …',
     'Ingen rekord endnu': 'Ingen rekord ennå',
     'Installér som webapp': 'Installer som webapp',
     'Installér via browserens menu. Vent på “Klar til offline-spil”, og åbn appen én gang med net før du tester offline.': 'Installer via nettleserens meny. Vent på «Klar til offline-spill», og åpne appen én gang med nett før du tester offline.',
@@ -429,4 +429,6 @@ window.BertI18n.register('nb', {
     'PLASK!': 'PLASK!',
     'SPIS MAD · TRYK 💩 FOR AT RAMME MÅL NEDENUNDER': 'SPIS MAT · TRYKK 💩 FOR Å TREFFE MÅL UNDER DEG',
     'Slip en klat': 'Slipp en klatt',
+    'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Alle heltene flyr likt. Vinn dem i spillet eller spar fjær.',
+    'ÅBN GARDEROBE': 'ÅPNE GARDEROBEN',
 });

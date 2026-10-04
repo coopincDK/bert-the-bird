@@ -133,7 +133,7 @@ window.BertI18n.register('pt', {
     'ISTAPPER & SPIDSER': 'ESTALACTITES & PONTAS',
     'Isbjerget': 'O Iceberg',
     'ISBJERGET': 'O ICEBERG',
-    'Indlæser originale Unity-assets …': 'Carregando recursos originais do Unity …',
+    'Bert gør klar til at flyve …': 'Bert está se preparando para voar …',
     'Ingen rekord endnu': 'Ainda sem recorde',
     'Installér som webapp': 'Instalar como web app',
     'Installér via browserens menu. Vent på “Klar til offline-spil”, og åbn appen én gang med net før du tester offline.': 'Instale pelo menu do navegador. Aguarde “Pronto para jogar offline” e abra o app uma vez com internet antes de testar offline.',
@@ -429,4 +429,6 @@ window.BertI18n.register('pt', {
     'PLASK!': 'PLOFT!',
     'SPIS MAD · TRYK 💩 FOR AT RAMME MÅL NEDENUNDER': 'COMA · TOQUE 💩 PARA ACERTAR EMBAIXO',
     'Slip en klat': 'Soltar um cocô',
+    'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Todos os heróis voam igual. Ganhe-os no jogo ou junte penas.',
+    'ÅBN GARDEROBE': 'ABRIR GUARDA-ROUPA',
 });

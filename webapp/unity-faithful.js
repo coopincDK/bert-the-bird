@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-51';
+    const BUILD_VERSION = 'worlds-relay-52';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -269,7 +269,7 @@
     const ADVENTURE_LEVELS = Object.freeze(['iceberg', 'harbor', 'nightcity', 'volcano', 'windfarm', 'poop'].map((theme, index) => Object.freeze({
         id: 20 + index, modeGroup: 'adventure', modeOrder: index + 1, unlockScore: 0,
         name: ADVENTURE_INFO[theme].name, sourceName: ADVENTURE_INFO[theme].name, cardText: ADVENTURE_INFO[theme].card,
-        mode: MODE.DEFAULT, startSpeed: 0.8, kind: theme, variant: theme, spacing: 820,
+        mode: MODE.DEFAULT, startSpeed: 0.8, kind: theme, variant: theme, spacing: theme === 'windfarm' ? 980 : 820,
         stages: [
             { duration: 0.5, speed: 0.8, difficulty: 0.4 }, { duration: 30, speed: 1.0, difficulty: 0.6 },
             { duration: 35, speed: 1.25, difficulty: 0.8 }, { duration: 40, speed: 1.6, difficulty: 1.0 },
@@ -514,7 +514,7 @@
             { image: bg1, y: y1, height: 190, factor: 0.06 },
             { image: bg2, y: y2, height: 400, factor: 0.1 },
             { image: mg, y: y3, height: 200, factor: 0.18 },
-            { image: fg, y: y4, height: 200, factor: kind === 'flappy' ? 1.0 : 0.55 },
+            // The near layer (fg) is drawn in front of obstacles by drawForeground().
         ];
     };
     function levelAssetKeys(kind) {
@@ -664,6 +664,9 @@
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     // Heroes redrawn in the shared style (see docs: grafikplan). Folder under assets/.
     const V2_FPS = 12;
+    // Music sat too low against the effects (feedback 4. okt.).
+    const MUSIC_VOLUME = 0.5;
+    const FOCUS_VOLUME = 0.78;
     const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
     const EPIC_HEROES = Object.freeze({
         epicMalthe: { folder: 'epic-malthe', standIn: 'eagle' },
@@ -964,21 +967,21 @@
         audio.pop = sound('assets/sfx/pop.mp3');
         audio.music = sound('assets/music/classic.mp3', 'none');
         audio.music.loop = true;
-        audio.music.volume = 0.32;
+        audio.music.volume = MUSIC_VOLUME;
         audio.tunnel = sound('assets/music/tunnel.mp3', 'none');
         audio.tunnel.loop = true;
-        audio.tunnel.volume = 0.32;
+        audio.tunnel.volume = MUSIC_VOLUME;
         audio.edm = sound('assets/music/edm.mp3', 'none');
         audio.edm.loop = true;
-        audio.edm.volume = 0.32;
+        audio.edm.volume = MUSIC_VOLUME;
         Object.entries(EXTRA_MUSIC).forEach(([name, url]) => {
             audio[name] = sound(url, 'none');
             audio[name].loop = true;
-            audio[name].volume = 0.32;
+            audio[name].volume = MUSIC_VOLUME;
         });
         audio.menu = sound('assets/music/menu.mp3');
         audio.menu.loop = true;
-        audio.menu.volume = 0.24;
+        audio.menu.volume = MUSIC_VOLUME * 0.8;
         audio.focus = await focusSoundLoading;
         audio.focus.loop = true;
         audio.focus.volume = 0;
@@ -1053,16 +1056,16 @@
             clip.currentTime = 0;
         });
         if (audio.music) {
-            audio.music.volume = 0.32;
+            audio.music.volume = MUSIC_VOLUME;
             audio.music.playbackRate = 1;
         }
         if (audio.tunnel) {
-            audio.tunnel.volume = 0.32;
+            audio.tunnel.volume = MUSIC_VOLUME;
             audio.tunnel.playbackRate = 1;
         }
-        if (audio.edm) audio.edm.volume = 0.32;
+        if (audio.edm) audio.edm.volume = MUSIC_VOLUME;
         Object.keys(EXTRA_MUSIC).forEach((name) => {
-            if (audio[name]) { audio[name].volume = 0.32; audio[name].playbackRate = 1; }
+            if (audio[name]) { audio[name].volume = MUSIC_VOLUME; audio[name].playbackRate = 1; }
         });
         if (audio.focus) audio.focus.volume = 0;
     }
@@ -1082,7 +1085,7 @@
     function setMediaVolume(clip, value) {
         // HTMLMediaElement setters can reconfigure the mobile audio pipeline.
         // Keep the 2-second fades but only write when the change is audible.
-        if (clip && (Math.abs(clip.volume - value) >= 0.02 || value === 0 || value === 0.32)) {
+        if (clip && (Math.abs(clip.volume - value) >= 0.02 || value === 0 || value === MUSIC_VOLUME)) {
             if (clip.volume !== value) clip.volume = value;
         }
     }
@@ -1832,8 +1835,8 @@
             state.speed = lerp(state.focusSnapshotSpeed, state.focusTargetSpeed, progress);
             state.difficulty = lerp(state.focusSnapshotDifficulty, state.focusTargetDifficulty, progress);
             const levelMusic = activeLevelMusic();
-            setMediaVolume(levelMusic, 0.32 * (1 - progress));
-            if (audio.focus) audio.focus.volume = 0.56 * progress;
+            setMediaVolume(levelMusic, MUSIC_VOLUME * (1 - progress));
+            if (audio.focus) audio.focus.volume = FOCUS_VOLUME * progress;
             if (progress >= 1) {
                 state.focusPhase = 'active';
                 state.focusTransition = 0;
@@ -1861,9 +1864,9 @@
         const progress = clamp(state.focusTransition / 2, 0, 1);
         state.speed = lerp(state.focusTargetSpeed, state.focusSnapshotSpeed, progress);
         state.difficulty = lerp(state.focusTargetDifficulty, state.focusSnapshotDifficulty, progress);
-        if (audio.focus) audio.focus.volume = 0.56 * (1 - progress);
+        if (audio.focus) audio.focus.volume = FOCUS_VOLUME * (1 - progress);
         const levelMusic = activeLevelMusic();
-        setMediaVolume(levelMusic, 0.32 * progress);
+        setMediaVolume(levelMusic, MUSIC_VOLUME * progress);
         if (progress >= 1) {
             audio.focus?.pause();
             if (audio.focus) {
@@ -1875,7 +1878,7 @@
             state.activePowerup = null;
             dom.powerup.classList.remove('active');
             if (levelMusic) {
-                levelMusic.volume = 0.32;
+                levelMusic.volume = MUSIC_VOLUME;
                 levelMusic.playbackRate = 1;
             }
         }
@@ -3838,6 +3841,26 @@
             drawStormWindMeter(cue);
             return;
         }
+        // New-style art: the near layer is drawn whole at the bottom (no straight cut)
+        // and mirrored as a shallow top edge, so every level has a top and bottom frame.
+        const v2Edge = (kind, image, bottom = true) => {
+            if (!image?.naturalWidth) return false;
+            ctx.save();
+            ctx.translate(0, 70);
+            ctx.scale(1, -1);
+            ctx.globalAlpha = 0.95;
+            drawTiled(image, 0, 140, 0.4);
+            ctx.restore();
+            if (bottom) drawTiled(image, 520, 200, kind === 'flappy' ? 1.0 : 0.55);
+            return true;
+        };
+        // Mirrored top edge only where it reads as natural (an ice overhang); a mirrored
+        // quay or street looked upside down and made harbour read as water-sky-water-sky.
+        if (currentLevel.kind === 'iceberg') v2Edge('iceberg', assets.icebergFg, false);
+        if ((currentLevel.kind === 'birdRun' || currentLevel.kind === 'skyRelay') && V2.levels.has('happySky')) {
+            if (v2Edge('happySky', assets.v2_happySky_Fg)) return;
+        }
+        if (V2.levels.has(currentLevel.kind) && v2Edge(currentLevel.kind, assets[`v2_${currentLevel.kind}_Fg`])) return;
         if (currentLevel.kind === 'birdRun') {
             if (!assets.birdRunCloud?.naturalWidth) return;
             ctx.save();

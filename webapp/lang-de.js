@@ -133,7 +133,7 @@ window.BertI18n.register('de', {
     'ISTAPPER & SPIDSER': 'EISZAPFEN & SPITZEN',
     'Isbjerget': 'Der Eisberg',
     'ISBJERGET': 'DER EISBERG',
-    'Indlæser originale Unity-assets …': 'Lade originale Unity-Assets …',
+    'Bert gør klar til at flyve …': 'Bert macht sich startklar …',
     'Ingen rekord endnu': 'Noch kein Rekord',
     'Installér som webapp': 'Als Web-App installieren',
     'Installér via browserens menu. Vent på “Klar til offline-spil”, og åbn appen én gang med net før du tester offline.': 'Über das Browsermenü installieren. Warte auf „Bereit für Offline-Spiel“ und öffne die App einmal mit Internet, bevor du offline testest.',
@@ -429,4 +429,6 @@ window.BertI18n.register('de', {
     'PLASK!': 'PLATSCH!',
     'SPIS MAD · TRYK 💩 FOR AT RAMME MÅL NEDENUNDER': 'FRISS FUTTER · TIPPE 💩, UM ZIELE UNTEN ZU TREFFEN',
     'Slip en klat': 'Klecks fallen lassen',
+    'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Alle Helden fliegen gleich. Gewinne sie im Spiel oder spare Federn.',
+    'ÅBN GARDEROBE': 'GARDEROBE ÖFFNEN',
 });

@@ -133,7 +133,7 @@ window.BertI18n.register('en', {
     'ISTAPPER & SPIDSER': 'ICICLES & SPIKES',
     'Isbjerget': 'The Iceberg',
     'ISBJERGET': 'THE ICEBERG',
-    'Indlæser originale Unity-assets …': 'Loading original Unity assets …',
+    'Bert gør klar til at flyve …': 'Bert is getting ready to fly …',
     'Ingen rekord endnu': 'No record yet',
     'Installér som webapp': 'Install as web app',
     'Installér via browserens menu. Vent på “Klar til offline-spil”, og åbn appen én gang med net før du tester offline.': 'Install from the browser menu. Wait for “Ready for offline play”, and open the app once while online before testing offline.',
@@ -451,4 +451,6 @@ window.BertI18n.register('en', {
     'PLASK!': 'SPLAT!',
     'SPIS MAD · TRYK 💩 FOR AT RAMME MÅL NEDENUNDER': 'EAT FOOD · TAP 💩 TO HIT TARGETS BELOW',
     'Slip en klat': 'Drop a splat',
+    'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'All heroes fly the same. Win them in the game or save up feathers.',
+    'ÅBN GARDEROBE': 'OPEN WARDROBE',
 });

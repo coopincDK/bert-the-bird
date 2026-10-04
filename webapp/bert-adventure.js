@@ -178,13 +178,29 @@
                 star = { x: x + 150, y: lerp(260, 420, random()) };
             }
         } else {
-            if (pick < 0.45) {
+            // Kites fly high, so the top is no safe place to hide; rotors cover the bottom.
+            const kiteAt = (kx, low, high) => {
+                const kite = base('kite', theme, id, kx, lerp(230, 270, random()));
+                kite.behaviour = 'kite';
+                kite.baseY = lerp(low, high, random());
+                kite.y = kite.baseY;
+                kite.bob = lerp(50, 90, random());
+                kite.bobSpeed = clamp(1.1 + 0.25 * d, 1.1, 2.2);
+                kite.phaseOffset = random() * Math.PI * 2;
+                return kite;
+            };
+            if (pick < 0.3) {
                 obstacles.push(rotorAt(theme, id, x, lerp(300, 440, random()), d, random));
                 star = { x: x + 470, y: lerp(200, 520, random()) };
-            } else if (pick < 0.6) {
+            } else if (pick < 0.5) {
+                // A rotor below and a kite above: fly between them.
+                obstacles.push(rotorAt(theme, id, x, lerp(380, 450, random()), d, random));
+                obstacles.push(kiteAt(x + 520, -40, 40));
+                star = { x: x + 300, y: lerp(220, 320, random()) };
+            } else if (pick < 0.62) {
                 const kite = base('kite', theme, id, x, lerp(230, 270, random()));
                 kite.behaviour = 'kite';
-                kite.baseY = lerp(90, 330, random());
+                kite.baseY = lerp(-30, 200, random());
                 kite.y = kite.baseY;
                 kite.bob = lerp(60, 110, random());
                 kite.bobSpeed = clamp(1.1 + 0.25 * d, 1.1, 2.2);
