@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-71';
+    const BUILD_VERSION = 'worlds-relay-72';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1603,17 +1603,22 @@
 
     function updateMetaMenu() {
         const meta = BertMeta.snapshot();
-        const rescue = BertMeta.rescueUpgrade();
         const daily = BertMeta.dailyChallenge(new Date(), unlockedLevels().map((level) => level.id));
         dom.totalStars.textContent = String(meta.totalStars);
         if (dom.featherBalance) dom.featherBalance.textContent = String(meta.feathers);
-        if (dom.rescueLevel) dom.rescueLevel.textContent = `REDNINGSLIV ${rescue.level}/${rescue.maxLevel}`;
+        const nest = BertMeta.nestStatus();
+        const nestArt = `assets/v2/g4/menu/nest-${nest.level + 1}.webp`;
+        ['nest-image', 'nest-header-icon', 'menu-nest-icon'].forEach((id) => { const el = document.getElementById(id); if (el && !el.src.endsWith(nestArt)) el.src = nestArt; });
+        if (dom.rescueLevel) dom.rescueLevel.textContent = nest.next ? nest.next.label.toUpperCase() : T('REDEN ER FÆRDIG');
+        const nextText = document.getElementById('nest-next-text');
+        if (nextText) nextText.textContent = nest.next ? nest.next.text : T('Alle syv trin er bygget. Flot!');
+        const nextIcon = document.getElementById('nest-next-icon');
+        if (nextIcon && nest.next) nextIcon.src = `assets/v2/g4/${nest.next.icon.startsWith('nest-') ? 'menu' : 'nest'}/${nest.next.icon}.webp`;
         if (dom.rescueUpgrade) {
-            dom.rescueUpgrade.disabled = rescue.cost == null || !rescue.canBuy;
-            dom.rescueUpgrade.textContent = rescue.cost == null
-                ? T('MAKS LÅST OP')
-                : T`LÅS OP · ${rescue.cost} FJER`;
+            dom.rescueUpgrade.disabled = !nest.next || !nest.canBuild;
+            dom.rescueUpgrade.textContent = !nest.next ? T('FÆRDIG') : nest.canBuild ? T`BYG · ${nest.next.cost} FJER` : T`MANGLER ${nest.missing} FJER`;
         }
+        renderNestExtras(nest);
         dom.dailyName.textContent = daily.name.toUpperCase();
         const dailyLevel = UNITY_LEVELS.find((level) => level.id === daily.levelId);
         dom.dailyDetail.textContent = T`${dailyLevel?.name || `Level ${daily.levelId}`} · Mål ${daily.target}`;
@@ -1731,6 +1736,7 @@
         state.smokeFog = [];
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
+        state.runFeathers = 0;
         state.hitStop = 0;
         state.shake = 0;
         state.slowmoUntil = 0;
@@ -1866,6 +1872,8 @@
         if (state.phase !== 'prewarm') return;
         state.phase = 'playing';
         state.elapsed = 0;
+        // Nest perk "Hurtig start": the first five seconds are safe and a little faster.
+        if (BertMeta.nestPerks?.().boost && !isEventLevel()) state.invulnerableUntil = Math.max(state.invulnerableUntil, 5);
         state.stageIndex = -1;
         state.stageElapsed = 0;
         state.stageClock = 0;
@@ -1901,7 +1909,8 @@
         state.stageElapsed = values.progress;
 
         if (state.focusPhase === 'idle') {
-            state.speed = BertEventPowerups.speed(values.speed, state.activePowerup);
+            state.speed = BertEventPowerups.speed(values.speed, state.activePowerup)
+                * (BertMeta.nestPerks?.().boost && !isEventLevel() && state.elapsed < 5 ? 1.15 : 1);
             state.difficulty = values.difficulty;
             return;
         }
@@ -2278,7 +2287,7 @@
                 const dx = bird.x + BIRD.width / 2 - collectible.x;
                 const dy = bird.y + BIRD.height / 2 - collectible.y;
                 const distance = Math.hypot(dx, dy);
-                if (distance < 210) {
+                if (distance < (BertMeta.nestPerks?.().magnet ? 273 : 210)) {
                     collectible.x += (dx / Math.max(distance, 1)) * 430 * delta;
                     collectible.y += (dy / Math.max(distance, 1)) * 430 * delta;
                 }
@@ -2949,6 +2958,7 @@
     function collectFeather(collectible) {
         state.feathersPicked += 1;
         if (!opMode()) BertMeta.addFeathers(1);
+        state.runFeathers = (state.runFeathers || 0) + 1;
         (state.flyingPickups ||= []).push({ kind: 'feather', x: bird.x + BIRD.width / 2, y: bird.y, tx: 70, ty: 100, age: 0 });
         playAudio('point');
         BertMeta.haptic('star');
@@ -2993,7 +3003,8 @@
         state.bestStreak = Math.max(state.bestStreak, state.streak);
         state.starsCollected += value;
         noteCombo(state.streak);
-        state.score += BertEventPowerups.score(state.streak * value, state.activePowerup) * (state.activePowerup === POWERUP.GROW ? 2 : 1);
+        state.score += BertEventPowerups.score(state.streak * value, state.activePowerup) * (state.activePowerup === POWERUP.GROW ? 2 : 1)
+            + (BertMeta.nestPerks?.().gold && state.elapsed < 10 && !isEventLevel() ? 1 : 0);
         if (!isEventLevel() && state.cleanRun && state.score >= 180 && BertMeta.noteCleanScore(state.score)) {
             window.BertApp?.showToast(T('NOIRWING LÅST OP · FEJLFRI FLYVNING'));
             BertMeta.haptic('reward');
@@ -3028,7 +3039,7 @@
         const duration = type === POWERUP.FOCUS ? FOCUS_DURATION_SECONDS
             : type === POWERUP.REVERSE ? REVERSE_SECONDS
             : SIZE_POWERUP[type] ? 8
-            : BertEventPowerups.DURATION[type] || 10;
+            : (BertEventPowerups.DURATION[type] || 10) + (type === POWERUP.SHIELD && BertMeta.nestPerks?.().shield ? 2 : 0);
         state.powerupEndsAt = state.elapsed + duration + (type === POWERUP.FOCUS ? FOCUS_COUNTDOWN_SECONDS : 0);
         state.powerupReadyAt[type] = state.elapsed + 60;
         if (type === POWERUP.SHIELD) {
@@ -3467,6 +3478,37 @@
         setVisible(dom.hud, false);
         setVisible(dom.gameOver, true);
         revealResult(improved && state.score > 0);
+        settleNest(opRun);
+    }
+
+    // Reden after a run: the daily flight, new badges, and feathers first on the screen.
+    function settleNest(opRun) {
+        if (opRun) return;
+        const records = {};
+        UNITY_LEVELS.forEach((level) => { records[level.id] = loadHighscore(level.id); });
+        const earned = BertMeta.awardBadges?.({
+            levelId: currentLevel.id, score: state.score, streak: state.bestStreak, stars: state.starsCollected, time: state.elapsed,
+            deathCause: state.deathCause, rescueUsed: state.rescueUsed, spinUsed: Boolean(state.rescueSpinUsed),
+            relayGatesHit: state.relayResult?.gatesHit || 0, records, worldBadges: BertWorldMastery.read(localStorage),
+        }) || [];
+        const daily = BertMeta.noteDailyFlight?.() || { ok: false };
+        const nest = BertMeta.nestStatus?.();
+        const bits = [];
+        if (state.runFeathers > 0) bits.push(T`${state.runFeathers} fjer fundet`);
+        if (daily.ok) bits.push(T`Dag ${daily.streak} i træk: +${daily.reward} fjer`);
+        if (nest?.next) bits.push(T`Reden: ${nest.feathers}/${nest.next.cost} til ${nest.next.label}`);
+        const nestLine = document.getElementById('result-nest');
+        if (nestLine) {
+            nestLine.textContent = bits.join(' · ');
+            nestLine.classList.toggle('hidden', !bits.length || isEventLevel());
+        }
+        if (earned.length) {
+            const list = BertMeta.badgeList();
+            const names = earned.map((id) => list.find((badge) => badge.id === id)?.label || id);
+            setTimeout(() => window.BertApp?.showToast(T`Nyt mærke: ${names.join(', ')}`), 900);
+            BertMeta.haptic('reward');
+        }
+        updateMetaMenu();
     }
 
     // The result screen builds up: ribbon, board, then the medal with a ding.
@@ -6610,6 +6652,55 @@
         refreshLeaderboard();
     }
 
+    function renderNestExtras(nest) {
+        const steps = document.getElementById('nest-steps');
+        if (steps) {
+            steps.replaceChildren(...nest.steps.map((step, index) => {
+                const el = document.createElement('div');
+                el.className = `nest-step ${index <= nest.level ? 'done' : index === nest.level + 1 ? 'next' : 'locked'}`;
+                el.title = `${step.label} · ${step.cost} fjer`;
+                const img = document.createElement('img');
+                img.src = `assets/v2/g4/${step.icon.startsWith('nest-') ? 'menu' : 'nest'}/${step.icon}.webp`;
+                img.alt = '';
+                el.appendChild(img);
+                return el;
+            }));
+        }
+        const calendar = document.getElementById('nest-calendar');
+        if (calendar) {
+            const status = BertMeta.calendarStatus();
+            calendar.replaceChildren(...status.rewards.map((reward, index) => {
+                const el = document.createElement('div');
+                const done = index < status.daysThisWeek;
+                el.className = `cal-day${done ? ' done' : ''}${index === status.daysThisWeek && !status.today ? ' today' : ''}`;
+                el.textContent = `+${reward}`;
+                return el;
+            }));
+            const note = document.getElementById('calendar-note');
+            if (note) note.textContent = status.streak ? T`${status.streak} dage i træk` : T('Én tur om dagen giver fjer');
+        }
+        const grid = document.getElementById('badge-grid');
+        if (grid) {
+            const badges = BertMeta.badgeList();
+            const earned = badges.filter((badge) => badge.earned).length;
+            const count = document.getElementById('badge-count');
+            if (count) count.textContent = `${earned}/${badges.length}`;
+            grid.replaceChildren(...badges.map((badge) => {
+                const el = document.createElement('button');
+                el.type = 'button';
+                el.className = `badge${badge.earned ? '' : ' locked'}`;
+                el.dataset.haptic = 'none';
+                el.setAttribute('aria-label', `${badge.label}: ${badge.text}`);
+                const img = document.createElement('img');
+                img.src = `assets/v2/g4/nest/badges/${badge.id}.webp`;
+                img.alt = '';
+                el.appendChild(img);
+                el.addEventListener('click', () => window.BertApp?.showToast(`${badge.label}: ${badge.text}`));
+                return el;
+            }));
+        }
+    }
+
     function renderMissions() {
         dom.missionList.replaceChildren();
         BertMeta.missions().forEach((mission) => {
@@ -6804,9 +6895,10 @@
         });
         document.getElementById('missions-btn').addEventListener('click', openMissions);
         dom.rescueUpgrade.addEventListener('click', () => {
-            const result = BertMeta.buyRescueLife();
+            const result = BertMeta.buildNest();
             BertMeta.haptic(result.ok ? 'upgrade' : 'warning');
-            window.BertApp?.showToast(result.ok ? T('Nyt redningsliv låst op') : T('Du mangler fjer fra dagens missioner'));
+            if (result.ok) playAudio('fanfare');
+            window.BertApp?.showToast(result.ok ? T`Reden er bygget: ${result.step.label}` : T('Du mangler fjer. Flyv en tur, og klar dagens missioner.'));
             updateMetaMenu();
             renderMissions();
         });

@@ -2313,3 +2313,40 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .confetti-piece:nth-child(3n) { background-image: url(assets/v2/g4/result/confetti-2.webp) !important; }
 .confetti-piece:nth-child(3n+1) { background-image: url(assets/v2/g4/result/confetti-3.webp) !important; }
 @media (prefers-reduced-motion: reduce) { .game-over::before { animation: none; } }
+
+/* ---- Reden ---- */
+.nest-card { width: min(96vw, 1040px) !important; max-width: none !important; }
+.nest-layout { display: grid; grid-template-columns: 180px 1fr; gap: 12px; align-items: center; }
+.nest-scene { position: relative; height: 150px; }
+.nest-tree { position: absolute; left: -10px; bottom: 0; height: 150px; }
+.nest-image { position: absolute; left: 70px; bottom: 56px; width: 110px; filter: drop-shadow(0 4px 0 rgba(0,0,0,.3)); animation: nest-pop .5s cubic-bezier(.2,1.5,.4,1) both; }
+@keyframes nest-pop { from { transform: scale(.7); } to { transform: scale(1); } }
+.nest-side { min-width: 0; }
+.nest-next { display: grid !important; grid-template-columns: 56px 1fr auto !important; align-items: center; gap: 10px; }
+.nest-next img { width: 56px; height: 56px; object-fit: contain; }
+.nest-next em { display: block; font-style: normal; font-size: 11px; color: #c7e6f0; }
+.nest-steps { display: flex; gap: 6px; margin-top: 8px; }
+.nest-step { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: rgba(255,255,255,.08); border: 2px solid rgba(255,255,255,.18); }
+.nest-step img { width: 28px; height: 28px; object-fit: contain; }
+.nest-step.done { border-color: #b6ff3b; background: rgba(182,255,59,.18); }
+.nest-step.next { border-color: #ffd93b; box-shadow: 0 0 0 3px rgba(255,217,59,.25); }
+.nest-step.locked img { filter: grayscale(1) brightness(.6); }
+.nest-row-title { margin: 10px 0 4px; font-size: 11px; font-weight: 900; letter-spacing: .14em; color: #ffd98a; }
+.nest-row-title small { color: #c7e6f0; font-weight: 700; letter-spacing: .04em; margin-left: 8px; }
+.nest-calendar { display: flex; gap: 8px; }
+.cal-day { width: 44px; height: 44px; background: url(assets/v2/g4/nest/calendar-day.webp) center / contain no-repeat; display: grid; place-items: center; font-size: 11px; font-weight: 900; color: #fff; }
+.cal-day.done { background-image: url(assets/v2/g4/nest/calendar-day-done.webp); color: transparent; }
+.cal-day.today { filter: drop-shadow(0 0 6px #ffd93b); }
+.badge-grid { display: grid; grid-template-columns: repeat(10, 1fr); gap: 6px; }
+.badge { position: relative; aspect-ratio: 1; background: url(assets/v2/g4/nest/badge-frame.webp) center / contain no-repeat; display: grid; place-items: center; }
+.badge img { width: 62%; height: 62%; object-fit: contain; }
+.badge.locked { background-image: url(assets/v2/g4/nest/badge-locked.webp); }
+.badge.locked img { opacity: .25; filter: grayscale(1); }
+.badge.new { animation: nest-pop .5s cubic-bezier(.2,1.5,.4,1) both; }
+.badge-tip { position: fixed; z-index: 60; max-width: 240px; padding: 8px 10px; border-radius: 10px; background: rgba(8,20,32,.95); color: #fff; font-size: 12px; pointer-events: none; }
+.badge-tip b { display: block; color: #ffd98a; }
+#main-menu #missions-btn img { width: clamp(38px, 10vh, 50px) !important; height: clamp(38px, 10vh, 50px) !important; }
+@media (max-height: 460px) { .nest-scene { height: 120px; } .nest-tree { height: 120px; } .nest-image { width: 88px; left: 56px; bottom: 44px; } .badge-grid { grid-template-columns: repeat(15, 1fr); } }
+
+.result-nest { background: rgba(60, 30, 8, .78) !important; color: #ffd98a !important; margin-top: 4px !important; }
+.game-over.reveal .result-nest { animation: result-rise .45s .8s ease-out both; }

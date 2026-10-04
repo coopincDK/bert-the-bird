@@ -13,8 +13,8 @@ from pathlib import Path
 from playwright.async_api import async_playwright
 
 ROOT = Path(__file__).resolve().parents[1]
-OUTPUT = ROOT.parent / 'qa-sky-relay-worlds-relay-71'
-BUILD = 'worlds-relay-71'
+OUTPUT = ROOT.parent / 'qa-sky-relay-worlds-relay-72'
+BUILD = 'worlds-relay-72'
 
 
 def free_port():

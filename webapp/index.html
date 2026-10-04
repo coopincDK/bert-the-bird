@@ -19,10 +19,10 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Bert The Bird">
     <title>Bert The Bird – flyvespil og præcisionsverdener</title>
-    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-71">
+    <link rel="manifest" href="manifest.webmanifest?v=worlds-relay-72">
     <link rel="apple-touch-icon" href="icons/bert-192.png">
     <link rel="icon" type="image/png" sizes="192x192" href="icons/bert-192.png">
-    <link rel="stylesheet" href="style.css?v=worlds-relay-71">
+    <link rel="stylesheet" href="style.css?v=worlds-relay-72">
 </head>
 <body>
     <main id="game-shell" aria-label="Bert The Bird">
@@ -53,7 +53,7 @@
             <img class="game-title" src="assets/unity/ui/game-title.webp" alt="Bert The Bird">
             <img id="menu-bird" class="menu-bird" data-hero="bert" src="assets/unity/ui/menu-bird.webp" alt="Bert flyver">
             <button id="settings-btn" class="round-menu-button settings-gear" type="button" aria-label="Åbn indstillinger"><img src="assets/v2/ui/icon-gear.webp" alt=""></button>
-            <button id="missions-btn" class="missions-button" type="button" aria-label="Åbn dagens missioner"><img src="assets/v2/ui/icon-chest.webp" alt="Missioner"><span>MISSIONER</span></button>
+            <button id="missions-btn" class="missions-button" type="button" aria-label="Åbn reden"><img id="menu-nest-icon" src="assets/v2/g4/menu/nest-1.webp" alt="Reden"><span>REDEN</span></button>
 
             <div class="menu-actions">
                 <button id="play-btn" class="unity-button play-button" type="button" aria-label="Vælg bane">
@@ -202,6 +202,7 @@
             <div class="result-summary">
                 <div id="result-medal" class="result-medal medal-flight"><img src="assets/v2/ui/medal-none.webp" alt=""><strong>FLYV IGEN</strong></div>
                 <p id="result-progress" class="result-progress">20 point til bronze</p>
+                <p id="result-nest" class="result-progress result-nest hidden"></p>
             </div>
             <div class="result-actions">
                 <button id="retry-btn" class="result-button result-again" type="button">FLYV IGEN</button>
@@ -257,20 +258,32 @@
         </section>
 
         <section id="missions-modal" class="modal-backdrop hidden" role="dialog" aria-modal="true" aria-labelledby="missions-title">
-            <div class="missions-card">
-                <header><img src="assets/v2/ui/icon-chest.webp" alt=""><div><p class="edition-label">BERTS REDE</p><h2 id="missions-title">DAGENS MISSIONER</h2></div><button id="missions-x" class="modal-x" type="button" aria-label="Luk missionerne">×</button></header>
-                <div class="nest-economy">
-                    <div class="feather-wallet"><img src="assets/v2/pickups/feather.webp" alt=""><span>FJER</span><strong id="feather-balance">0</strong></div>
-                    <div class="rescue-upgrade">
-                        <div><small>PERMANENT REDE-FORDEL</small><strong id="rescue-level">REDNINGSLIV 0/3</strong></div>
-                        <button id="rescue-upgrade-btn" type="button">LÅS OP · 20 FJER</button>
+            <div class="missions-card nest-card">
+                <header><img id="nest-header-icon" src="assets/v2/g4/menu/nest-1.webp" alt=""><div><p class="edition-label">BERTS REDE</p><h2 id="missions-title">REDEN</h2></div><button id="missions-x" class="modal-x" type="button" aria-label="Luk reden">×</button></header>
+                <div class="nest-layout">
+                    <div class="nest-scene" aria-hidden="true">
+                        <img class="nest-tree" src="assets/v2/g4/menu/tree.webp" alt="">
+                        <img id="nest-image" class="nest-image" src="assets/v2/g4/menu/nest-1.webp" alt="">
+                    </div>
+                    <div class="nest-side">
+                        <div class="nest-economy">
+                            <div class="feather-wallet"><img src="assets/v2/g4/nest/feather-gold.webp" alt=""><span>FJER</span><strong id="feather-balance">0</strong></div>
+                            <div class="rescue-upgrade nest-next">
+                                <img id="nest-next-icon" src="assets/v2/g4/nest/upgrade-rescue.webp" alt="">
+                                <div><small id="nest-next-kicker">NÆSTE TRIN</small><strong id="rescue-level">REDNINGSFJER</strong><em id="nest-next-text"></em></div>
+                                <button id="rescue-upgrade-btn" type="button">BYG · 20 FJER</button>
+                            </div>
+                        </div>
+                        <div id="nest-steps" class="nest-steps" aria-label="Redens trin"></div>
                     </div>
                 </div>
-                <div class="economy-loop" aria-label="Sådan virker Berts rede">
-                    <span><b>1</b> KLAR DAGENS MÅL</span><i></i><span><b>2</b> HENT FJER</span><i></i><span><b>3</b> KØB FASTE LIV ELLER ET REDNINGSSPIN</span>
-                </div>
+                <div class="nest-row-title">DAGENS MISSIONER</div>
                 <div id="mission-list" class="mission-list"></div>
-                <p class="mission-note">Et permanent redningsliv absorberer ét sammenstød på hver tur. Efter døden kan du desuden bruge 12 fjer på ét redningsspin. Du kan altid spille videre uden energi eller ventetid.</p>
+                <div class="nest-row-title">FLYV HVER DAG <small id="calendar-note"></small></div>
+                <div id="nest-calendar" class="nest-calendar"></div>
+                <div class="nest-row-title">MÆRKER <small id="badge-count"></small></div>
+                <div id="badge-grid" class="badge-grid"></div>
+                <p class="mission-note">Fjer bygger reden. Hvert trin kan mærkes i spillet. Efter døden kan du bruge 12 fjer på ét redningsspin.</p>
                 <button id="close-missions" class="primary-menu-button" type="button">FLYV VIDERE</button>
             </div>
         </section>
@@ -366,34 +379,34 @@
 
         <div id="app-status" class="app-status" role="status" aria-live="polite"></div>
     </main>
-    <script src="bert-i18n.js?v=worlds-relay-71"></script>
-    <script src="lang-en.js?v=worlds-relay-71"></script>
-    <script src="lang-nb.js?v=worlds-relay-71"></script>
-    <script src="lang-sv.js?v=worlds-relay-71"></script>
-    <script src="lang-de.js?v=worlds-relay-71"></script>
-    <script src="lang-es.js?v=worlds-relay-71"></script>
-    <script src="lang-fr.js?v=worlds-relay-71"></script>
-    <script src="lang-pt.js?v=worlds-relay-71"></script>
+    <script src="bert-i18n.js?v=worlds-relay-72"></script>
+    <script src="lang-en.js?v=worlds-relay-72"></script>
+    <script src="lang-nb.js?v=worlds-relay-72"></script>
+    <script src="lang-sv.js?v=worlds-relay-72"></script>
+    <script src="lang-de.js?v=worlds-relay-72"></script>
+    <script src="lang-es.js?v=worlds-relay-72"></script>
+    <script src="lang-fr.js?v=worlds-relay-72"></script>
+    <script src="lang-pt.js?v=worlds-relay-72"></script>
     <script>window.BertI18n.apply();</script>
-    <script src="app-shell.js?v=worlds-relay-71"></script>
-    <script src="unity-collision.js?v=worlds-relay-71"></script>
-    <script src="bert-physics.js?v=worlds-relay-71"></script>
-    <script src="bert-progression.js?v=worlds-relay-71"></script>
-    <script src="bert-tunnel.js?v=worlds-relay-71"></script>
-    <script src="bert-edm.js?v=worlds-relay-71"></script>
-    <script src="bert-bird-run.js?v=worlds-relay-71"></script>
-    <script src="bert-stormline.js?v=worlds-relay-71"></script>
-    <script src="bert-world-mastery.js?v=worlds-relay-71"></script>
-    <script src="bert-sky-relay.js?v=worlds-relay-71"></script>
-    <script src="bert-event-powerups.js?v=worlds-relay-71"></script>
-    <script src="bert-collectible-motion.js?v=worlds-relay-71"></script>
-    <script src="bert-haptics.js?v=worlds-relay-71"></script>
-    <script src="bert-hero-store.js?v=worlds-relay-71"></script>
-    <script src="bert-meta.js?v=worlds-relay-71"></script>
-    <script src="bert-social.js?v=worlds-relay-71"></script>
-    <script src="bert-focus-audio.js?v=worlds-relay-71"></script>
-    <script src="bert-star-audio.js?v=worlds-relay-71"></script>
-    <script src="bert-adventure.js?v=worlds-relay-71"></script>
-    <script src="unity-faithful.js?v=worlds-relay-71"></script>
+    <script src="app-shell.js?v=worlds-relay-72"></script>
+    <script src="unity-collision.js?v=worlds-relay-72"></script>
+    <script src="bert-physics.js?v=worlds-relay-72"></script>
+    <script src="bert-progression.js?v=worlds-relay-72"></script>
+    <script src="bert-tunnel.js?v=worlds-relay-72"></script>
+    <script src="bert-edm.js?v=worlds-relay-72"></script>
+    <script src="bert-bird-run.js?v=worlds-relay-72"></script>
+    <script src="bert-stormline.js?v=worlds-relay-72"></script>
+    <script src="bert-world-mastery.js?v=worlds-relay-72"></script>
+    <script src="bert-sky-relay.js?v=worlds-relay-72"></script>
+    <script src="bert-event-powerups.js?v=worlds-relay-72"></script>
+    <script src="bert-collectible-motion.js?v=worlds-relay-72"></script>
+    <script src="bert-haptics.js?v=worlds-relay-72"></script>
+    <script src="bert-hero-store.js?v=worlds-relay-72"></script>
+    <script src="bert-meta.js?v=worlds-relay-72"></script>
+    <script src="bert-social.js?v=worlds-relay-72"></script>
+    <script src="bert-focus-audio.js?v=worlds-relay-72"></script>
+    <script src="bert-star-audio.js?v=worlds-relay-72"></script>
+    <script src="bert-adventure.js?v=worlds-relay-72"></script>
+    <script src="unity-faithful.js?v=worlds-relay-72"></script>
 </body>
 </html>

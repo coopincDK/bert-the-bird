@@ -18,7 +18,10 @@
         quickIndex: 0,
         runs: [],
         duels: { wins: 0, currentStreak: 0, bestStreak: 0 },
-        nest: { rescueLives: 0 },
+        nest: { rescueLives: 0, level: 0 },
+        calendar: { lastDay: '', streak: 0, days: [] },
+        badges: {},
+        stats: { deaths: 0, feathersEver: 0, bestPoopStreak: 0, relayPerfect: 0 },
         economy: { continueSpins: 0, revivesWon: 0, feathersSpent: 0 },
         settings: { music: true, sfx: true, haptics: true, lights: true },
         daily: {},
@@ -77,6 +80,9 @@
                 runs: Array.isArray(stored.runs) ? stored.runs.slice(0, 200) : [],
                 duels: { ...DEFAULTS.duels, ...(stored.duels || {}) },
                 nest: { ...DEFAULTS.nest, ...(stored.nest || {}) },
+                calendar: { ...DEFAULTS.calendar, ...(stored.calendar || {}) },
+                badges: stored.badges && typeof stored.badges === 'object' ? stored.badges : {},
+                stats: { ...DEFAULTS.stats, ...(stored.stats || {}) },
                 economy: { ...DEFAULTS.economy, ...(stored.economy || {}) },
                 settings: { ...DEFAULTS.settings, ...(stored.settings || {}) },
                 daily: stored.daily && typeof stored.daily === 'object' ? stored.daily : {},
@@ -391,8 +397,158 @@
     /** A feather picked up out on a level. Capped so it can never be farmed in bulk. */
     function addFeathers(amount = 1) {
         const value = Math.max(0, Math.min(5, Math.floor(Number(amount) || 0)));
-        if (value) data.feathers += value;
+        if (value) { data.feathers += value; data.stats.feathersEver = (data.stats.feathersEver || 0) + value; }
         return save();
+    }
+
+    // ---------- Reden: the nest ladder, the login calendar and the badges ----------
+    // Bert builds his nest with feathers. Each step is felt in the game; see nestPerks().
+    const NEST_STEPS = Object.freeze([
+        { id: 'soft', cost: 0, label: T('Blød rede'), text: T('Et sted at lande. Fjer bygger den videre.'), icon: 'nest-1' },
+        { id: 'rescue', cost: 20, label: T('Redningsfjer'), text: T('Ét redningsliv på hver tur.'), icon: 'upgrade-rescue' },
+        { id: 'magnet', cost: 35, label: T('Stærkere magnet'), text: T('Magneten trækker 30 % længere.'), icon: 'upgrade-magnet' },
+        { id: 'shield', cost: 50, label: T('Varmt skjold'), text: T('Skjoldet holder 2 sekunder længere.'), icon: 'upgrade-shield' },
+        { id: 'boost', cost: 70, label: T('Hurtig start'), text: T('Usårlig med ekstra fart de første 5 sekunder.'), icon: 'upgrade-boost' },
+        { id: 'lives', cost: 100, label: T('To redningsliv'), text: T('To redningsliv på hver tur.'), icon: 'upgrade-lives' },
+        { id: 'gold', cost: 150, label: T('Guldrede'), text: T('Stjerner giver +1 point de første 10 sekunder.'), icon: 'upgrade-gold' },
+    ]);
+    function nestLevel() {
+        // Players who already bought rescue lives before the nest existed keep what they paid for.
+        const stored = Math.max(0, Math.min(NEST_STEPS.length - 1, Math.floor(Number(data.nest.level) || 0)));
+        const legacy = data.nest.rescueLives >= 2 ? 5 : data.nest.rescueLives >= 1 ? 1 : 0;
+        return Math.max(stored, legacy);
+    }
+    function nestStatus() {
+        const level = nestLevel();
+        const next = NEST_STEPS[level + 1] || null;
+        return {
+            level, steps: NEST_STEPS, next,
+            canBuild: Boolean(next) && data.feathers >= next.cost,
+            feathers: data.feathers,
+            missing: next ? Math.max(0, next.cost - data.feathers) : 0,
+        };
+    }
+    function buildNest() {
+        const status = nestStatus();
+        if (!status.next || !status.canBuild) return { ok: false, status };
+        data.feathers -= status.next.cost;
+        data.economy.feathersSpent += status.next.cost;
+        data.nest.level = status.level + 1;
+        if (status.next.id === 'rescue') data.nest.rescueLives = Math.max(data.nest.rescueLives, 1);
+        if (status.next.id === 'lives') data.nest.rescueLives = Math.max(data.nest.rescueLives, 2);
+        save();
+        return { ok: true, step: status.next, status: nestStatus() };
+    }
+    function nestPerks() {
+        const level = nestLevel();
+        const has = (id) => NEST_STEPS.findIndex((step) => step.id === id) <= level;
+        return { magnet: has('magnet'), shield: has('shield'), boost: has('boost'), gold: has('gold') };
+    }
+
+    // Login calendar: one flight a day keeps the streak; rewards 1, 2, 3, 5, 8, 8, 8 feathers.
+    const CALENDAR_REWARDS = Object.freeze([1, 2, 3, 5, 8, 8, 8]);
+    function dayKey(date = new Date()) { return date.toISOString().slice(0, 10); }
+    function noteDailyFlight(date = new Date()) {
+        const today = dayKey(date);
+        if (data.calendar.lastDay === today) return { ok: false, streak: data.calendar.streak, reward: 0 };
+        const yesterday = dayKey(new Date(date.getTime() - 86400000));
+        data.calendar.streak = data.calendar.lastDay === yesterday ? data.calendar.streak + 1 : 1;
+        data.calendar.lastDay = today;
+        data.calendar.days = [...(data.calendar.days || []), today].slice(-7);
+        const reward = CALENDAR_REWARDS[Math.min(CALENDAR_REWARDS.length, data.calendar.streak) - 1];
+        data.feathers += reward;
+        data.stats.feathersEver = (data.stats.feathersEver || 0) + reward;
+        save();
+        return { ok: true, streak: data.calendar.streak, reward, weekDone: data.calendar.streak % 7 === 0 };
+    }
+    function calendarStatus() {
+        const today = dayKey();
+        const streak = data.calendar.lastDay === today || data.calendar.lastDay === dayKey(new Date(Date.now() - 86400000)) ? data.calendar.streak : 0;
+        return { streak, today: data.calendar.lastDay === today, rewards: CALENDAR_REWARDS, daysThisWeek: streak % 7 === 0 && streak > 0 ? 7 : streak % 7 };
+    }
+
+    // Badges: 30 achievements, all judged from things the game already counts.
+    const BADGES = Object.freeze([
+        ['first-flight', T('Første flyvetur'), T('Gennemfør din første tur')],
+        ['first-star', T('Første stjerne'), T('Saml din første stjerne')],
+        ['first-feather', T('Første fjer'), T('Find din første gyldne fjer')],
+        ['first-bronze', 'Bronze', T('Vind din første bronzemedalje')],
+        ['first-hero', T('Ny ven'), T('Lås din første ekstra helt op')],
+        ['silver-medal', T('Sølv'), T('Vind sølv på en bane')],
+        ['gold-medal', T('Guld'), T('Vind guld på en bane')],
+        ['streak-10', T('I flow'), T('Nå en streak på 10')],
+        ['streak-25', T('Ustoppelig'), T('Nå en streak på 25')],
+        ['stars-100-run', T('Stjerneregn'), T('Saml 100 stjerner på én tur')],
+        ['score-500', T('Højtflyver'), T('Få 500 point på én tur')],
+        ['long-flight', T('Udholdenhed'), T('Flyv 3 minutter på én tur')],
+        ['clean-run', T('Fejlfri'), T('Guld uden redningsliv eller redningsspin')],
+        ['classic-all', T('Klassiker'), T('Bronze på alle Classic-baner')],
+        ['flappy-all', T('Skorstensfejer'), T('Bronze på alle Flappy-baner')],
+        ['tunnel-all', T('Tunnelrytter'), T('Bronze på alle Tunnel-baner')],
+        ['adventure-open', T('Eventyrer'), T('Lås Eventyr op')],
+        ['adventure-all', T('Verdensflyver'), T('Sølv på alle seks eventyrbaner')],
+        ['volcano-master', T('Lavalord'), T('Guld på Vulkanen')],
+        ['poop-master', T('Mesterskytte'), T('10 træffere i træk i Fugleklat')],
+        ['crowd-wave', T('Publikumsvølge'), T('Kom forbi tre bolde i én koncertbølge')],
+        ['predator-dodge', T('Fri af rovfuglen'), T('Undvig den varslede rovfugl')],
+        ['storm-pilot', 'Stormpilot', T('Undvig en flyvende genstand i storm')],
+        ['relay-all', T('Portløber'), T('Klar alle tre porte i én Sky Relay-runde')],
+        ['dj-encore', T('Ekstranummer'), T('Sølv i Neon Encore')],
+        ['caught-spider', T('Pakket ind'), T('Bliv fanget af edderkoppen')],
+        ['caught-snake', T('Snack'), T('Bliv fanget af slangen')],
+        ['roast', T('Grillkylling'), T('Dø 50 gange i alt')],
+        ['heroes-10', T('Flokken'), T('Lås 10 helte op')],
+        ['feathers-100', T('Redebygger'), T('Saml 100 fjer i alt')],
+    ]);
+    function badgeList() {
+        return BADGES.map(([id, label, text]) => ({ id, label, text, earned: Boolean(data.badges[id]) }));
+    }
+    /** Called after every run with what happened; returns newly earned badges. */
+    function awardBadges(ctx) {
+        const best = (ids, min) => ids.every((id) => (Number(ctx.records?.[id]) || 0) >= min);
+        const anyBest = (min) => Object.values(ctx.records || {}).some((score) => Number(score) >= min);
+        const owned = Object.keys(data.ownedHeroes || {}).length;
+        if (ctx.deathCause && ctx.deathCause !== 'world') data.stats.deaths = (data.stats.deaths || 0) + 1;
+        if (ctx.levelId === 25) data.stats.bestPoopStreak = Math.max(data.stats.bestPoopStreak || 0, ctx.streak || 0);
+        if (ctx.relayGatesHit >= 3) data.stats.relayPerfect = (data.stats.relayPerfect || 0) + 1;
+        const checks = {
+            'first-flight': data.runCount >= 1 || ctx.time > 0,
+            'first-star': data.totalStars >= 1 || ctx.stars >= 1,
+            'first-feather': (data.stats.feathersEver || 0) >= 1,
+            'first-bronze': anyBest(20) || ctx.score >= 20,
+            'first-hero': owned >= 2,
+            'silver-medal': anyBest(50) || ctx.score >= 50,
+            'gold-medal': anyBest(100) || ctx.score >= 100,
+            'streak-10': ctx.streak >= 10,
+            'streak-25': ctx.streak >= 25,
+            'stars-100-run': ctx.stars >= 100,
+            'score-500': ctx.score >= 500,
+            'long-flight': ctx.time >= 180,
+            'clean-run': ctx.score >= 100 && !ctx.rescueUsed && !ctx.spinUsed,
+            'classic-all': best([1, 4, 5], 20),
+            'flappy-all': best([3, 6, 7], 20),
+            'tunnel-all': best([2, 8, 9], 20),
+            'adventure-open': best([1, 2, 3, 4, 5, 6, 7, 8, 9], 20),
+            'adventure-all': best([20, 21, 22, 23, 24, 25], 50),
+            'volcano-master': (Number(ctx.records?.[23]) || 0) >= 100,
+            'poop-master': (data.stats.bestPoopStreak || 0) >= 10,
+            'crowd-wave': Boolean(ctx.worldBadges?.[10]),
+            'predator-dodge': Boolean(ctx.worldBadges?.[11]),
+            'storm-pilot': Boolean(ctx.worldBadges?.[12]),
+            'relay-all': (data.stats.relayPerfect || 0) >= 1,
+            'dj-encore': (Number(ctx.records?.[10]) || 0) >= 50,
+            'caught-spider': ctx.deathCause === 'jungle-spider',
+            'caught-snake': ctx.deathCause === 'jungle-snake',
+            'roast': (data.stats.deaths || 0) >= 50,
+            'heroes-10': owned >= 10,
+            'feathers-100': (data.stats.feathersEver || 0) >= 100,
+        };
+        const earned = [];
+        BADGES.forEach(([id]) => {
+            if (!data.badges[id] && checks[id]) { data.badges[id] = new Date().toISOString(); earned.push(id); }
+        });
+        save();
+        return earned;
     }
 
     function recordDuel(won) {
@@ -497,6 +653,7 @@
     save();
     window.BertMeta = Object.freeze({
         addFeathers, hasPlayerName, hasTestAccess, hasOpMode,
+        NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,
         continueSpinOffer, buyContinueSpin, settleContinueSpin,
