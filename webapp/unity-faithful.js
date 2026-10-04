@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-61';
+    const BUILD_VERSION = 'worlds-relay-62';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -472,6 +472,10 @@
         v2PuShrink: 'assets/v2/pickups/pu-shrink.webp',
         v2Bonk: 'assets/v2/fx/bonk.webp',
         v2EdmStage: 'assets/v2/edm/stage.webp',
+        v2DjMix: 'assets/v2/edm/dj-mix.webp',
+        v2DjMove1: 'assets/v2/edm/dj-move-1.webp',
+        v2DjMove2: 'assets/v2/edm/dj-move-2.webp',
+        v2DjUp: 'assets/v2/edm/dj-both-wings-up.webp',
         v2Crowd0: 'assets/v2/edm/crowd-1.webp',
         v2Crowd1: 'assets/v2/edm/crowd-2.webp',
         v2Crowd2: 'assets/v2/edm/crowd-3.webp',
@@ -571,7 +575,7 @@
         const extra = [];
         if (kind === 'poop' && ASSET_PATHS.v2LampPost) extra.push('v2LampPost');
         if (kind === 'edm' && ASSET_PATHS.v2SmokeCannon) extra.push('v2SmokeCannon');
-        if (kind === 'edm') extra.push('v2EdmTruss', 'v2EdmStage', 'v2Crowd0', 'v2Crowd1', 'v2Crowd2');
+        if (kind === 'edm') extra.push('v2EdmTruss', 'v2EdmStage', 'v2Crowd0', 'v2Crowd1', 'v2Crowd2', 'v2DjMix', 'v2DjMove1', 'v2DjMove2', 'v2DjUp');
         if (kind === 'jungle') {
             for (let i = 0; i < 6; i += 1) extra.push(`v2SpiderWrap${i}`);
             for (let i = 0; i < 3; i += 1) extra.push(`v2WebStuck${i}`);
@@ -3726,10 +3730,16 @@
         ctx.drawImage(assets.edmStage, 0, 0, VIEW.width, VIEW.height);
         if (assets.v2EdmStage?.naturalWidth) {
             // Smaller and further back, so the stage sets the scene without crowding play.
-            ctx.save();
-            ctx.globalAlpha = 0.85;
+            // The DJ stands behind the booth (booth top ≈ y 507 on screen): drawn first,
+            // so the booth hides the lower body. Pose follows the beat; both wings up on the drop.
+            const djPoses = ['v2DjMix', 'v2DjMove1', 'v2DjMix', 'v2DjMove2', 'v2DjMix', 'v2DjMove1', 'v2DjMix', 'v2DjUp'];
+            const beat = prefersReducedMotion() ? 0 : Math.floor(state.worldTime * 2.2);
+            const dj = assets[djPoses[beat % djPoses.length]];
+            if (dj?.naturalWidth) {
+                const bob = prefersReducedMotion() ? 0 : Math.abs(Math.sin(state.worldTime * Math.PI * 2.2)) * 5;
+                ctx.drawImage(dj, 540, 357 - bob, 200, 200);
+            }
             ctx.drawImage(assets.v2EdmStage, 200, 356, 880, 275);
-            ctx.restore();
         } else {
         // A stage in the background: deck, glowing front edge, DJ booth and side screens.
         ctx.save();
