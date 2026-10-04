@@ -83,7 +83,8 @@
         return {
             round: r,
             scale: clamp(1 - 0.055 * (r - 1), 0.66, 1),
-            timeLimit: r === 1 ? TIME_LIMIT : clamp(TIME_LIMIT - 4 * (r - 1), 20, TIME_LIMIT),
+            // Less time each round, so later rounds really press (feedback 4. okt.).
+            timeLimit: r === 1 ? TIME_LIMIT : clamp(TIME_LIMIT - 6 * (r - 1), 15, TIME_LIMIT),
             spacing: r === 1 ? 1500 : clamp(1500 - 70 * (r - 1), 1050, 1500),
             bobAmplitude: r < 2 ? 0 : clamp(35 * (r - 1), 0, 120),
             bobSpeed: r < 2 ? 0 : clamp(0.9 + 0.12 * (r - 2), 0.9, 1.8),

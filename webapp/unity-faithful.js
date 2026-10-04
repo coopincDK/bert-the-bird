@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-54';
+    const BUILD_VERSION = 'worlds-relay-55';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1912,7 +1912,7 @@
             // A frost crystal gives normal grip for a short while.
             if (currentLevel.kind === 'iceberg' && state.phase === 'playing' && state.elapsed >= (state.gripUntil || 0)) {
                 // Time constant ~0.12 s at the start, ~0.17 s late: a soft glide, never sluggish.
-                const grip = 1 - Math.exp(-delta * clamp(8.5 - state.difficulty * 1.2, 6, 8.5));
+                const grip = 1 - Math.exp(-delta * clamp(12 - state.difficulty * 1.5, 8.5, 12));
                 bird.velocity = previousVelocity + (bird.velocity - previousVelocity) * grip;
             }
         }
@@ -2709,6 +2709,16 @@
             collectibles.push(makeCollectible(conveyor ? pairCenter - 200 : pairCenter, starY, risk));
             return;
         }
+        if (currentLevel.kind === 'jungle' && state.elapsed > 10 && gameRandom() < 0.2) {
+            // A huge spider web from the canopy or the ground: fly over or under it.
+            const fromTop = gameRandom() < 0.5;
+            const height = randomBetween(260, 360) + Math.min(60, state.difficulty * 25);
+            const width = height * 0.82;
+            const y = fromTop ? 0 : 652 - height;
+            obstacles.push({ x, y, width, height, kind: 'jungle-web', top: fromTop, harmful: true, age: 0, id, sway: gameRandom() * Math.PI * 2 });
+            collectibles.push(makeCollectible(x + width / 2, fromTop ? Math.min(560, height + 110) : Math.max(110, y - 110)));
+            return;
+        }
         if (currentLevel.kind === 'jungle') {
             const spider = gameRandom() < 0.75;
             const scale = spider ? randomBetween(0.9, 1.12) : randomBetween(1.2, 1.5);
@@ -3032,9 +3042,10 @@
             updateHud();
             return;
         }
+        // Flying into the big web is a spider catch: the spider comes down for you.
         const captureCause = obstacle && ['jungle-spider', 'jungle-snake'].includes(obstacle.kind)
             ? obstacle.kind
-            : null;
+            : obstacle?.kind === 'jungle-web' ? 'jungle-spider' : null;
         const predatorHero = obstacle?.kind === 'bird-run-bird' && obstacle.predator
             ? obstacle.heroId : null;
         state.phase = 'dead';
@@ -4259,10 +4270,28 @@
             if (chains) {
                 ctx.moveTo(0, 0); ctx.lineTo(-o.pivotOffset + chains[0] * scale, o.length);
                 ctx.moveTo(0, 0); ctx.lineTo(-o.pivotOffset + chains[1] * scale, o.length);
+                ctx.stroke();
             } else {
-                ctx.moveTo(0, 0); ctx.lineTo(0, o.length + 4);
+                // Crane hook: a thick braided steel cable that continues the one in the art,
+                // instead of a thin line that looked like a cut rope.
+                const cable = (width, color) => {
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = width;
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0); ctx.lineTo(0, o.length + 12);
+                    ctx.stroke();
+                };
+                cable(Math.max(9, o.size * 0.045), '#1e2733');
+                cable(Math.max(5, o.size * 0.026), '#56606e');
+                ctx.save();
+                ctx.strokeStyle = 'rgba(20, 26, 34, .8)';
+                ctx.lineWidth = 2;
+                for (let y = 8; y < o.length + 6; y += 9) {
+                    ctx.beginPath(); ctx.moveTo(-4, y); ctx.lineTo(4, y + 5); ctx.stroke();
+                }
+                ctx.restore();
             }
-            ctx.stroke();
+
             ctx.drawImage(image, -o.pivotOffset, o.length - top, o.size, o.size);
         } else if (o.behaviour === 'spin') {
             const hubX = o.x + o.hubAx * scale;
@@ -4443,10 +4472,13 @@
         }
         o.fogTimer = (o.fogTimer || 0) - delta;
         if (o.fogTimer <= 0) {
-            o.fogTimer = 0.12;
-            state.smokeFog.push({ x: cx + randomBetween(-o.columnWidth, o.columnWidth),
-                y: o.topY + randomBetween(-40, 40) * (o.fromTop ? -1 : 1), r: randomBetween(55, 85),
-                vx: randomBetween(-110, 110), vy: randomBetween(-20, 20), age: 0 });
+            o.fogTimer = 0.06;
+            // Two puffs per tick: one at the tip, one along the jet, spreading wide.
+            const along = randomBetween(0.2, 1);
+            [o.topY, o.lavaTop + (o.topY - o.lavaTop) * along].forEach((y) => state.smokeFog.push({
+                x: cx + randomBetween(-o.columnWidth * 1.3, o.columnWidth * 1.3),
+                y: y + randomBetween(-40, 40), r: randomBetween(70, 110),
+                vx: randomBetween(-190, 190), vy: randomBetween(-35, 35), age: 0 }));
         }
     }
 
@@ -4457,9 +4489,10 @@
             puff.x += puff.vx * delta - scroll;
             puff.y += puff.vy * delta;
             puff.vx *= 0.985;
-            puff.r += 38 * delta;
+            puff.r += 55 * delta;
         });
-        state.smokeFog = state.smokeFog.filter((puff) => puff.age < 3.5 && puff.x + puff.r > -100);
+        state.smokeFog = state.smokeFog.filter((puff) => puff.age < 4 && puff.x + puff.r > -100);
+        if (state.smokeFog.length > 90) state.smokeFog.splice(0, state.smokeFog.length - 90);
     }
 
     // One soft puff is rendered once and reused; per-puff gradients stalled phones.
@@ -4478,7 +4511,7 @@
         }
         ctx.save();
         state.smokeFog.forEach((puff) => {
-            ctx.globalAlpha = puff.age < 0.4 ? puff.age / 0.4 : Math.max(0, 1 - (puff.age - 0.4) / 3.1);
+            ctx.globalAlpha = puff.age < 0.4 ? puff.age / 0.4 : Math.max(0, 1 - (puff.age - 0.4) / 3.6);
             ctx.drawImage(fogSprite, puff.x - puff.r, puff.y - puff.r, puff.r * 2, puff.r * 2);
         });
         ctx.restore();
@@ -4846,7 +4879,12 @@
             return;
         }
         ctx.save();
-        if (state.phase === 'dead' && obstacle.id === state.deathObstacleId) {
+        if (state.phase === 'dead' && obstacle.id === state.deathObstacleId && obstacle.kind !== 'jungle-web') {
+            ctx.restore();
+            return;
+        }
+        if (obstacle.kind === 'jungle-web') {
+            drawSpiderWeb(obstacle);
             ctx.restore();
             return;
         }
@@ -5036,6 +5074,54 @@
             ctx.translate(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height / 2);
             if (obstacle.top) ctx.scale(1, -1);
             ctx.drawImage(assets.rainbow, -obstacle.width / 2, -obstacle.height / 2, obstacle.width, obstacle.height);
+        }
+        ctx.restore();
+    }
+
+    function drawSpiderWeb(o) {
+        const cx = o.x + o.width / 2 + Math.sin(o.age * 1.3 + o.sway) * 6;
+        const cy = o.top ? o.y + o.height * 0.58 : o.y + o.height * 0.42;
+        const rx = o.width * 0.48;
+        const ry = o.height * 0.42;
+        ctx.save();
+        ctx.strokeStyle = 'rgba(245, 250, 255, 0.85)';
+        ctx.lineCap = 'round';
+        // Anchor threads to the canopy or the ground.
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        const edgeY = o.top ? -10 : 680;
+        [-0.6, -0.15, 0.3, 0.7].forEach((f) => { ctx.moveTo(cx + rx * f, cy + (o.top ? -ry : ry) * 0.9); ctx.lineTo(cx + rx * f * 1.3, edgeY); });
+        ctx.stroke();
+        const spokes = 12;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = 0; i < spokes; i += 1) {
+            const a = (i / spokes) * Math.PI * 2;
+            ctx.moveTo(cx, cy);
+            ctx.lineTo(cx + Math.cos(a) * rx, cy + Math.sin(a) * ry);
+        }
+        ctx.stroke();
+        ctx.lineWidth = 1.6;
+        for (let ring = 1; ring <= 6; ring += 1) {
+            const k = ring / 6;
+            ctx.beginPath();
+            for (let i = 0; i <= spokes; i += 1) {
+                const a = (i / spokes) * Math.PI * 2;
+                const mid = ((i + 0.5) / spokes) * Math.PI * 2;
+                const x1 = cx + Math.cos(a) * rx * k;
+                const y1 = cy + Math.sin(a) * ry * k;
+                if (i === 0) { ctx.moveTo(x1, y1); continue; }
+                // Each strand sags a little towards the centre.
+                ctx.quadraticCurveTo(cx + Math.cos(mid - Math.PI / spokes) * rx * k * 0.9, cy + Math.sin(mid - Math.PI / spokes) * ry * k * 0.9, x1, y1);
+            }
+            ctx.stroke();
+        }
+        // Dew drops catch the light.
+        ctx.fillStyle = 'rgba(255,255,255,.9)';
+        for (let i = 0; i < 8; i += 1) {
+            const a = i * 0.83 + o.sway;
+            const k = 0.3 + (i % 4) * 0.18;
+            ctx.beginPath(); ctx.arc(cx + Math.cos(a) * rx * k, cy + Math.sin(a) * ry * k, 2.6, 0, Math.PI * 2); ctx.fill();
         }
         ctx.restore();
     }
@@ -6401,6 +6487,7 @@
                     tilt: obstacle.tilt || 0,
                     conveyor: obstacle.conveyor || 0,
                     warn: obstacle.warn || 0,
+                    type: obstacle.type || null,
                     motionPhase: obstacle.motionPhase ?? null,
                     motionSpeed: obstacle.motionSpeed ?? null,
                     baseY: obstacle.baseY ?? null,

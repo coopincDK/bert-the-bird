@@ -258,6 +258,14 @@
             return shapes;
         }
 
+        if (obstacle.kind === 'jungle-web') {
+            // The web's sticky disc (an ellipse) as three boxes.
+            const cx = obstacle.x + obstacle.width / 2;
+            const cy = obstacle.top ? obstacle.y + obstacle.height * 0.58 : obstacle.y + obstacle.height * 0.42;
+            const rx = obstacle.width * 0.44;
+            const ry = obstacle.height * 0.4;
+            return [box(cx - rx, cy - ry * 0.45, rx * 2, ry * 0.9), box(cx - rx * 0.7, cy - ry * 0.85, rx * 1.4, ry * 1.7), box(cx - rx * 0.35, cy - ry, rx * 0.7, ry * 2)];
+        }
         if (obstacle.kind === 'happy-balloon') {
             // Envelope (round, top 70 %) and the basket underneath.
             const { x, y, width, height } = obstacle;

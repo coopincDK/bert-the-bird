@@ -74,8 +74,8 @@
     function advance(obstacle, delta, scroll, cue) {
         obstacle.age += delta;
         // Tailwind can slow the oncoming object, but cannot reverse its travel into Bert.
-        obstacle.x -= Math.max(0, scroll - cue.horizontal * 78 * delta);
-        const desired = clamp(obstacle.baseY + cue.vertical * 102
+        obstacle.x -= Math.max(scroll * 0.15, scroll - cue.horizontal * 150 * delta);
+        const desired = clamp(obstacle.baseY + cue.vertical * 135
             + Math.sin(obstacle.age * 1.25 + obstacle.id * 0.71) * 11, 156, 482);
         obstacle.y += clamp(desired - obstacle.y, -96 * delta, 96 * delta);
         return obstacle;
