@@ -2462,3 +2462,12 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .nest-card #close-missions, .missions-card #close-missions { display: flex !important; align-items: center; justify-content: center; line-height: 1 !important; padding: 0 !important; min-height: 52px !important; }
 .level-card .lock-icon { width: 14px; height: 14px; vertical-align: -2px; margin-right: 5px; }
 .level-card.locked .level-card-copy { opacity: .85; }
+/* Fanerne deler bredden mellem dem, der er synlige (3 eller 4), og teksten har luft i kanten. */
+.mode-tabs { display: flex !important; gap: 10px; }
+.mode-tabs .mode-tab { flex: 1 1 0; min-width: 0; padding: 4px 14px !important; }
+.mode-tabs .mode-tab strong, .mode-tabs .mode-tab small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mode-tabs .mode-tab { width: auto !important; max-width: none !important; }
+.mode-tabs { width: 100% !important; grid-template-columns: none !important; }
+/* Fane-billederne er beskåret til selve fanen, så de fylder hele knappen. */
+.mode-tab { border-image-slice: 18 fill !important; border-width: 8px !important; }
+.mode-tab.selected, .mode-tab.active { border-image-slice: 18 fill !important; }
