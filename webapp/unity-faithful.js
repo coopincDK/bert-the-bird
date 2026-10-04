@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-47';
+    const BUILD_VERSION = 'worlds-relay-48';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -470,6 +470,58 @@
             'happyEyeLeftClosed', 'happyEyeRightClosed', 'happyMouth1', 'happyMouth2', 'happyMouth3',
         ],
     });
+
+    // ---------- New-style art (docs: grafikplan) ----------
+    // assets/v2/manifest.json lists what has been delivered: { "heroes": [...], "levels": [...] }.
+    // Anything listed overrides the original art; anything missing keeps the original.
+    const V2 = { heroes: new Set(), levels: new Set(), ready: false };
+    const V2_LEVEL_FOLDER = Object.freeze({ desert: 'desert', jungle: 'jungle', happySky: 'happysky', flappy: 'tap', tunnel: 'tunnel' });
+    const V2_HERO_FOLDER = Object.freeze({
+        bert: 'bert', blue: 'blue', block: 'block', brain: 'brain', eagle: 'eagle', mecha: 'mecha', noir: 'noir', vulture: 'vulture',
+        sugar: 'sugar', moss: 'moss', ink: 'ink', prism: 'prism', pingo: 'pingo', mogens: 'mogens', ninja: 'ninja', pakke: 'pakke', gold: 'gold',
+        epicMalthe: 'epic-malthe', epicJohan: 'epic-johan', epicSos: 'epic-sos', epicThor: 'epic-thor', epicFan: 'fanbert', epicCoop: 'coopinc',
+    });
+    // Existing art keys that simply point at a new file once the level is delivered.
+    const V2_KEY_SWAPS = Object.freeze({
+        desert: { desertBanded: 'pillar-banded', desertEtched: 'pillar-etched', desertRuin: 'pillar-ruin' },
+        jungle: { jungleCanopyLeft: 'canopy-left', jungleCanopyRight: 'canopy-right', jungleStone: 'rock' },
+        happySky: { rainbowNormal: 'rainbow' },
+        flappy: { flappyPipe: 'chimney-brick', flappyPipeBlue: 'chimney-stone', flappyPipeGold: 'tower-gold', flappyCopper: 'tower-copper', flappyPearl: 'chimney-stone' },
+        tunnel: {},
+    });
+    const v2LayerKeys = (kind) => ['Sky', 'Bg1', 'Bg2', 'Mg', 'Fg'].map((part) => `v2_${kind}_${part}`);
+    const v2Layers = (kind) => {
+        const [sky, bg1, bg2, mg, fg] = v2LayerKeys(kind);
+        return [
+            { image: sky, y: 0, height: 720, factor: 0.03 },
+            { image: bg1, y: 250, height: 190, factor: 0.06 },
+            { image: bg2, y: 275, height: 400, factor: 0.1 },
+            { image: mg, y: 470, height: 200, factor: 0.18 },
+            { image: fg, y: 545, height: 200, factor: 0.55 },
+        ];
+    };
+    function levelAssetKeys(kind) {
+        const base = LEVEL_ASSET_KEYS[kind] || [];
+        return V2.levels.has(kind) ? [...base, ...v2LayerKeys(kind)] : base;
+    }
+    async function loadV2Manifest() {
+        try {
+            const response = await fetch(`assets/v2/manifest.json?v=${BUILD_VERSION}`, { cache: 'no-cache' });
+            if (!response.ok) return;
+            const manifest = await response.json();
+            (manifest.heroes || []).forEach((hero) => { if (V2_HERO_FOLDER[hero]) V2.heroes.add(hero); });
+            (manifest.levels || []).forEach((kind) => { if (V2_LEVEL_FOLDER[kind]) V2.levels.add(kind); });
+        } catch (_) { /* No manifest: original art everywhere. */ }
+        V2.levels.forEach((kind) => {
+            const folder = `assets/v2/levels/${V2_LEVEL_FOLDER[kind]}`;
+            ['sky', 'bg1', 'bg2', 'mg', 'fg'].forEach((file, index) => { ASSET_PATHS[v2LayerKeys(kind)[index]] = `${folder}/${file}.webp`; });
+            Object.entries(V2_KEY_SWAPS[kind] || {}).forEach(([key, file]) => { ASSET_PATHS[key] = `${folder}/${file}.webp`; });
+            UNITY_LEVELS.filter((level) => level.kind === kind).forEach((level) => { level.layers = v2Layers(kind); });
+            const band = FOREGROUND_BANDS[kind];
+            if (band) { band.image = v2LayerKeys(kind)[4]; band.y = 545; band.height = 200; }
+        });
+        V2.ready = true;
+    }
     const loadedAssetKeys = new Set();
 
     const dom = {
@@ -577,7 +629,6 @@
         pingo: [], mogens: [], ninja: [], pakke: [], gold: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     // Heroes redrawn in the shared style (see docs: grafikplan). Folder under assets/.
-    const V2_HERO_FOLDERS = Object.freeze({ bert: 'heroes/bert' });
     const V2_FPS = 12;
     const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
     const EPIC_HEROES = Object.freeze({
@@ -589,7 +640,7 @@
         epicCoop: { folder: 'coopinc', standIn: 'bert' },
     });
     const menuHeroArt = Object.freeze({
-        bert: 'assets/heroes/bert/flap-03.webp',
+        bert: 'assets/unity/ui/menu-bird.webp',
         blue: 'assets/unity/bird-blue/fly-00.webp',
         block: 'assets/klodsbert/up.webp',
         brain: 'assets/brainbird/up.webp',
@@ -736,7 +787,7 @@
     }
 
     async function ensureLevelAssets(level) {
-        await ensureAssetKeys(LEVEL_ASSET_KEYS[level.kind] || []);
+        await ensureAssetKeys(levelAssetKeys(level.kind));
         if (level.kind === 'edm' && !crowdFrames.length) warmCrowdFrames();
     }
 
@@ -788,7 +839,19 @@
         }
     }
 
+    function applyV2HeroArt() {
+        V2.heroes.forEach((hero) => {
+            const src = `assets/heroes/${V2_HERO_FOLDER[hero]}/flap-03.webp`;
+            menuHeroArtOverrides[hero] = src;
+            document.querySelectorAll(`.hero-option[data-hero="${hero}"] img`).forEach((img) => { img.src = src; });
+            if (hero === 'bert') document.querySelectorAll('.rescue-wheel-bert').forEach((img) => { img.src = src; });
+        });
+    }
+    const menuHeroArtOverrides = {};
+
     async function loadAssets() {
+        await loadV2Manifest();
+        applyV2HeroArt();
         const focusSoundLoading = window.BertFocusAudio.create('assets/music/focus.mp3');
         const pointSoundLoading = window.BertStarAudio.create('assets/sfx/coin.mp3');
         await ensureAssetKeys(BASE_ASSET_KEYS);
@@ -812,7 +875,8 @@
         birdFrames.blue.push(...blue);
         // New-style heroes: 8 wingbeat frames + glide + dead in assets/heroes/<id>/.
         // Loaded after the originals so an incomplete set falls back silently.
-        await Promise.all(Object.entries(V2_HERO_FOLDERS).map(async ([hero, folder]) => {
+        await Promise.all([...V2.heroes].map(async (hero) => {
+            const folder = `heroes/${V2_HERO_FOLDER[hero]}`;
             try {
                 const flaps = await Promise.all(Array.from({ length: 8 }, (_, index) => image(`assets/${folder}/flap-${String(index + 1).padStart(2, '0')}.webp`)));
                 const optional = async (pose, fallback) => { try { return await image(`assets/${folder}/${pose}.webp`); } catch (_) { return fallback; } };
@@ -1276,6 +1340,27 @@
         const best = records.reduce((winner, candidate) => candidate.score > winner.score ? candidate : winner, records[0]);
         dom.menuHighscore.textContent = String(best.score);
         dom.menuBestLevel.textContent = best.score > 0 ? T`Bedst på level ${best.level.id} · ${best.level.name}` : T('Ingen rekord endnu');
+        applyOnboarding(best.score);
+    }
+
+    // The game has many systems; a new player meets them one at a time.
+    // Stage 0 (never flown): only PLAY and Classic. Stage 1 (has a score): heroes,
+    // quick play and missions. Stage 2 (bronze on Desert): Flappy, Tunnel, daily route, leaderboard.
+    function applyOnboarding(bestScore) {
+        const all = BertMeta.hasTestAccess?.();
+        const flown = all || bestScore > 0;
+        const desertBronze = all || loadHighscore(1) >= 20;
+        const show = (id, visible) => document.getElementById(id)?.classList.toggle('hidden', !visible);
+        show('hero-selector', flown);
+        show('quick-play-btn', flown);
+        show('missions-btn', flown);
+        show('daily-btn', desertBronze);
+        show('leaderboard-btn', desertBronze);
+        document.querySelectorAll('.mode-tab').forEach((tab) => {
+            const mode = tab.dataset.mode;
+            const visible = mode === 'classic' || (mode === 'adventure' ? flown : desertBronze);
+            tab.classList.toggle('hidden', !visible);
+        });
     }
 
     function updateLevelHighscores() {
@@ -1411,7 +1496,7 @@
         if (dom.selectedHeroName) dom.selectedHeroName.textContent = selectedName;
         if (dom.heroSelector) dom.heroSelector.dataset.hero = meta.hero;
         if (dom.menuBird) {
-            dom.menuBird.src = menuHeroArt[meta.hero] || menuHeroArt.bert;
+            dom.menuBird.src = menuHeroArtOverrides[meta.hero] || menuHeroArt[meta.hero] || menuHeroArtOverrides.bert || menuHeroArt.bert;
             dom.menuBird.alt = `${selectedName} flyver`;
             dom.menuBird.dataset.hero = meta.hero;
         }
@@ -2515,7 +2600,8 @@
             const motionAmplitude = movingPair ? randomBetween(42, currentLevel.variant === 'moving' ? 78 : 92) : 0;
             const motionSpeed = movingPair ? randomBetween(0.75, 1.22) : 0;
             const motionPhase = movingPair ? gameRandom() * Math.PI * 2 : 0;
-            const desertSkins = ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'];
+            // New-style Desert has three drawn pillars and no terrain-textured wall.
+            const desertSkins = V2.levels.has('desert') ? ['desertRuin', 'desertBanded', 'desertEtched'] : ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'];
             const flappySkins = movingPair
                 ? ['flappyPipeBlue', 'flappyPearl']
                 : ['flappyPipe', 'flappyPipeGold', 'flappyCopper'];
@@ -3603,7 +3689,7 @@
             drawTiled(assets[layer.image], layer.y, layer.height, layer.factor);
             // Desert: the stretched sky's horizon showed as a cyan band (looked like
             // water) between the city and the dunes. Sand fills it behind the layers.
-            if (index === 0 && level.kind === 'desert') {
+            if (index === 0 && level.kind === 'desert' && !V2.levels.has('desert')) {
                 const sand = ctx.createLinearGradient(0, 410, 0, VIEW.height);
                 sand.addColorStop(0, '#d7c67c');
                 sand.addColorStop(1, '#bfac67');
