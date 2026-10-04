@@ -432,4 +432,7 @@ window.BertI18n.register('pt', {
     'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Todos os heróis voam igual. Ganhe-os no jogo ou junte penas.',
     'ÅBN GARDEROBE': 'ABRIR GUARDA-ROUPA',
     'OP · EVIGT SKJOLD · INGEN REKORDER': 'OP · ESCUDO ETERNO · SEM RECORDES',
+    'FORSTØR': 'AUMENTAR',
+    'FORMINDSK': 'ENCOLHER',
+    'FORSTØR · POINT ×2': 'AUMENTAR · PONTOS ×2',
 });

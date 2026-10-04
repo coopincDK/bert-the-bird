@@ -65,7 +65,8 @@
             type: 'circle',
             x: bird.x + birdDisplay.width / 2 + localOffset.x,
             y: bird.y + birdDisplay.height / 2 + localOffset.y,
-            radius: BERT_SOURCE.liveRadius * pixelsPerWorldUnit,
+            // Forstør/Formindsk scale the hit circle with the drawn bird.
+            radius: BERT_SOURCE.liveRadius * pixelsPerWorldUnit * ((typeof window !== 'undefined' && window.BertSizeScale) || 1),
         };
     }
 

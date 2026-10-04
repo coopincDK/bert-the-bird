@@ -454,4 +454,7 @@ window.BertI18n.register('en', {
     'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'All heroes fly the same. Win them in the game or save up feathers.',
     'ÅBN GARDEROBE': 'OPEN WARDROBE',
     'OP · EVIGT SKJOLD · INGEN REKORDER': 'OP · ENDLESS SHIELD · NO RECORDS',
+    'FORSTØR': 'GROW',
+    'FORMINDSK': 'SHRINK',
+    'FORSTØR · POINT ×2': 'GROW · POINTS ×2',
 });

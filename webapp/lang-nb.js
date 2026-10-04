@@ -432,4 +432,7 @@ window.BertI18n.register('nb', {
     'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Alle heltene flyr likt. Vinn dem i spillet eller spar fjær.',
     'ÅBN GARDEROBE': 'ÅPNE GARDEROBEN',
     'OP · EVIGT SKJOLD · INGEN REKORDER': 'OP · EVIG SKJOLD · INGEN REKORDER',
+    'FORSTØR': 'FORSTØRR',
+    'FORMINDSK': 'FORMINSK',
+    'FORSTØR · POINT ×2': 'FORSTØRR · POENG ×2',
 });

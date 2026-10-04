@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-58';
+    const BUILD_VERSION = 'worlds-relay-59';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -45,7 +45,10 @@
 
     const MODE = Object.freeze({ DEFAULT: 'default', FLAPPY: 'flappy' });
     const POWERUP = Object.freeze({ SHIELD: 'Shield', MAGNET: 'Magnet', FOCUS: 'Focus', GUARD: 'Guard',
-        HEAVY: 'Heavy', HYPER: 'Hyper', DOUBLE: 'Double', FLAP: 'Flap', REVERSE: 'Reverse' });
+        HEAVY: 'Heavy', HYPER: 'Hyper', DOUBLE: 'Double', FLAP: 'Flap', REVERSE: 'Reverse',
+        // Forstør: Bert grows (harder to slip through, double points). Formindsk: Bert shrinks.
+        GROW: 'Grow', SHRINK: 'Shrink' });
+    const SIZE_POWERUP = Object.freeze({ Grow: 1.45, Shrink: 0.6 });
     // Omvendt styring: op er ned, og i flappy-styring flyver Bert på hovedet.
     const REVERSE_SECONDS = 7;
     const isReversed = () => state.activePowerup === POWERUP.REVERSE;
@@ -462,6 +465,7 @@
         v2Smoke1: 'assets/v2/fx/smoke-2.webp',
         v2Smoke2: 'assets/v2/fx/smoke-3.webp',
         v2WindSwirl: 'assets/v2/fx/wind-swirl.webp',
+        v2Bubble: 'assets/v2/pickups/bubble.webp',
     });
     for (let i = 0; i < 6; i += 1) {
         ASSET_PATHS[`v2SpiderWrap${i}`] = `assets/v2/deaths/spider-wrap-${i + 1}.webp`;
@@ -475,7 +479,7 @@
         'powerupWing', 'shieldPickup', 'magnetPickup', 'focusPickup', 'shieldCharge',
         'feather', 'shieldSplinter', 'shieldSplinterOrange',
         'eventMetal', 'eventHyper', 'eventDouble', 'eventFlap', 'reversePickup', 'goldFeather',
-        'v2Warning', 'v2FeatherPuff', 'v2Sparkle', 'v2Smoke0', 'v2Smoke1', 'v2Smoke2', 'v2WindSwirl',
+        'v2Warning', 'v2FeatherPuff', 'v2Sparkle', 'v2Smoke0', 'v2Smoke1', 'v2Smoke2', 'v2WindSwirl', 'v2Bubble',
     ];
     const LEVEL_ASSET_KEYS = Object.freeze({
         desert: ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'],
@@ -1721,6 +1725,8 @@
         state.inputUp = false;
         state.inputDown = false;
         heldPointers.clear();
+        state.birdScale = 1;
+        window.BertSizeScale = 1;
         state.pointerHeld = false;
         state.activePointerId = null;
         state.inputStrength = 1;
@@ -2837,7 +2843,7 @@
             : [POWERUP.SHIELD, POWERUP.MAGNET, POWERUP.FOCUS,
                 // Mixed blessings: Tung and Flappy-styring make it harder,
                 // Hyperfart is risky, Point x2 is a bonus. From 20 s in.
-                ...(state.elapsed >= 20 ? [POWERUP.HEAVY, POWERUP.HYPER, POWERUP.DOUBLE, POWERUP.REVERSE,
+                ...(state.elapsed >= 20 ? [POWERUP.HEAVY, POWERUP.HYPER, POWERUP.DOUBLE, POWERUP.REVERSE, POWERUP.GROW, POWERUP.SHRINK,
                     ...(currentLevel.mode === MODE.FLAPPY ? [] : [POWERUP.FLAP])] : [])]
                 .filter((type) => (state.powerupReadyAt[type] ?? 0) <= state.elapsed);
         const guardAvailable = !experimental && state.elapsed >= 30 && state.streakGuardCharges === 0 && state.powerupReadyAt.Guard <= state.elapsed;
@@ -2913,7 +2919,7 @@
         state.streak += 1;
         state.bestStreak = Math.max(state.bestStreak, state.streak);
         state.starsCollected += value;
-        state.score += BertEventPowerups.score(state.streak * value, state.activePowerup);
+        state.score += BertEventPowerups.score(state.streak * value, state.activePowerup) * (state.activePowerup === POWERUP.GROW ? 2 : 1);
         if (!isEventLevel() && state.cleanRun && state.score >= 180 && BertMeta.noteCleanScore(state.score)) {
             window.BertApp?.showToast(T('NOIRWING LÅST OP · FEJLFRI FLYVNING'));
             BertMeta.haptic('reward');
@@ -2947,6 +2953,7 @@
         state.activePowerup = type;
         const duration = type === POWERUP.FOCUS ? FOCUS_DURATION_SECONDS
             : type === POWERUP.REVERSE ? REVERSE_SECONDS
+            : SIZE_POWERUP[type] ? 8
             : BertEventPowerups.DURATION[type] || 10;
         state.powerupEndsAt = state.elapsed + duration + (type === POWERUP.FOCUS ? FOCUS_COUNTDOWN_SECONDS : 0);
         state.powerupReadyAt[type] = state.elapsed + 60;
@@ -2965,6 +2972,10 @@
             state.focusCountdown = FOCUS_COUNTDOWN_SECONDS;
             state.focusRemaining = duration;
             primeFocusAudio();
+        } else if (SIZE_POWERUP[type]) {
+            playAudio(type === POWERUP.GROW ? 'shieldOn' : 'magnetDown');
+            // A short grace period so growing inside a gap is never an instant death.
+            if (type === POWERUP.GROW) state.invulnerableUntil = Math.max(state.invulnerableUntil, state.elapsed + 0.9);
         } else if (BertEventPowerups.isPrototype(type) || type === POWERUP.REVERSE) {
             playAudio('pop');
             if (type === POWERUP.FLAP) {
@@ -2972,7 +2983,8 @@
             }
         }
         const powerupNames = { [POWERUP.SHIELD]: T('SKJOLD'), [POWERUP.MAGNET]: T('MAGNET'),
-            [POWERUP.HEAVY]: T('TUNG'), [POWERUP.HYPER]: T('HYPERFART'), [POWERUP.REVERSE]: T('OMVENDT STYRING'), [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: T('FLAPPY-STYRING') };
+            [POWERUP.HEAVY]: T('TUNG'), [POWERUP.HYPER]: T('HYPERFART'), [POWERUP.REVERSE]: T('OMVENDT STYRING'), [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: T('FLAPPY-STYRING'),
+            [POWERUP.GROW]: T('FORSTØR'), [POWERUP.SHRINK]: T('FORMINDSK') };
         dom.powerup.textContent = type === POWERUP.FOCUS ? T('FOKUS') : `${powerupNames[type] || type.toUpperCase()} · ${duration}s`;
         dom.powerup.classList.add('active');
         burst(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2, type === POWERUP.SHIELD ? '#65d8ff' : '#ffd93b', 16);
@@ -3416,6 +3428,7 @@
                 [POWERUP.HEAVY]: T('TUNG · STIGER LANGSOMT'), [POWERUP.HYPER]: T('HYPERFART'),
                 [POWERUP.DOUBLE]: 'POINT ×2', [POWERUP.FLAP]: T('FLAPPY-STYRING · TAP'),
                 [POWERUP.REVERSE]: T('OMVENDT STYRING'),
+                [POWERUP.GROW]: T('FORSTØR · POINT ×2'), [POWERUP.SHRINK]: T('FORMINDSK'),
             }[state.activePowerup] || state.activePowerup.toUpperCase();
             powerupText = state.activePowerup === POWERUP.FOCUS && state.focusPhase === 'countdown'
                 ? T`FOKUS OM ${Math.max(1, Math.ceil(state.focusCountdown))}`
@@ -3608,6 +3621,9 @@
                 }
             }
             if (heldPointers.size && !usingFlapControl() && !state.inputUp && !state.inputDown) applyHeldDirection();
+            const targetScale = SIZE_POWERUP[state.activePowerup] || 1;
+            state.birdScale = (state.birdScale || 1) + (targetScale - (state.birdScale || 1)) * Math.min(1, delta * 6);
+            window.BertSizeScale = state.birdScale;
             updateObjects(delta);
             updateVolcanoLava(delta);
             updateIceAndWind(delta);
@@ -5379,6 +5395,29 @@
         }
     }
 
+    // Forstør/Formindsk pickup: the bubble with four golden arrows pointing out or in.
+    function drawSizePickup(grow) {
+        const bubble = assets.v2Bubble;
+        if (bubble?.naturalWidth) ctx.drawImage(bubble, -37, -37, 74, 74);
+        ctx.save();
+        ctx.fillStyle = grow ? '#ffcf3a' : '#7fe8ff';
+        ctx.strokeStyle = '#1b2a44';
+        ctx.lineWidth = 3;
+        for (let i = 0; i < 4; i += 1) {
+            ctx.save();
+            ctx.rotate(Math.PI / 4 + (i * Math.PI) / 2);
+            ctx.translate(grow ? 14 : 24, 0);
+            if (!grow) ctx.scale(-1, 1);
+            ctx.beginPath();
+            ctx.moveTo(0, -5); ctx.lineTo(6, -5); ctx.lineTo(6, -10); ctx.lineTo(15, 0); ctx.lineTo(6, 10); ctx.lineTo(6, 5); ctx.lineTo(0, 5);
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+            ctx.restore();
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(0, 0, grow ? 9 : 5, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+        ctx.restore();
+    }
+
     function drawReversePickup(collectible) {
         const glowSize = 112;
         if (assets.reversePickup?.naturalWidth) {
@@ -5483,6 +5522,11 @@
             }[collectible.type];
             if (collectible.type === POWERUP.REVERSE) {
                 drawReversePickup(collectible);
+                ctx.restore();
+                return;
+            }
+            if (SIZE_POWERUP[collectible.type]) {
+                drawSizePickup(collectible.type === POWERUP.GROW);
                 ctx.restore();
                 return;
             }
@@ -5622,6 +5666,7 @@
         const hero = BertMeta.currentHero();
         ctx.save();
         ctx.translate(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2);
+        if (state.birdScale && state.birdScale !== 1) ctx.scale(state.birdScale, state.birdScale);
         // Reversed controls show Bert on his head, so the twist is readable at a glance.
         const upsideDown = isReversed() && !dead;
         if (upsideDown) {

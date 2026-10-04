@@ -432,4 +432,7 @@ window.BertI18n.register('fr', {
     'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Tous les héros volent pareil. Gagne-les en jeu ou économise des plumes.',
     'ÅBN GARDEROBE': 'OUVRIR LE VESTIAIRE',
     'OP · EVIGT SKJOLD · INGEN REKORDER': 'OP · BOUCLIER ÉTERNEL · PAS DE RECORDS',
+    'FORSTØR': 'AGRANDIR',
+    'FORMINDSK': 'RÉTRÉCIR',
+    'FORSTØR · POINT ×2': 'AGRANDIR · POINTS ×2',
 });

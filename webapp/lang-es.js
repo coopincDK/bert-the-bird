@@ -432,4 +432,7 @@ window.BertI18n.register('es', {
     'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Todos los héroes vuelan igual. Gánalos en el juego o ahorra plumas.',
     'ÅBN GARDEROBE': 'ABRIR ARMARIO',
     'OP · EVIGT SKJOLD · INGEN REKORDER': 'OP · ESCUDO ETERNO · SIN RÉCORDS',
+    'FORSTØR': 'AGRANDAR',
+    'FORMINDSK': 'ENCOGER',
+    'FORSTØR · POINT ×2': 'AGRANDAR · PUNTOS ×2',
 });

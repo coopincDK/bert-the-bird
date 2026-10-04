@@ -432,4 +432,7 @@ window.BertI18n.register('de', {
     'Alle helte flyver ens. Vind dem i spillet, eller spar fjer sammen.': 'Alle Helden fliegen gleich. Gewinne sie im Spiel oder spare Federn.',
     'ÅBN GARDEROBE': 'GARDEROBE ÖFFNEN',
     'OP · EVIGT SKJOLD · INGEN REKORDER': 'OP · EWIGER SCHILD · KEINE REKORDE',
+    'FORSTØR': 'VERGRÖSSERN',
+    'FORMINDSK': 'VERKLEINERN',
+    'FORSTØR · POINT ×2': 'VERGRÖSSERN · PUNKTE ×2',
 });
