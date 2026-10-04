@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-80';
+    const BUILD_VERSION = 'worlds-relay-81';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1637,9 +1637,10 @@
         else if (hero.id === 'eggbert') lines.push(T`Klæk alle helte fra rugepladsen. ${hero.current}/${hero.target} klækket.`);
         else if (!hero.eggOnly) lines.push(T`Bedrift: ${hero.goal} (${hero.current}/${hero.target}).`);
         if (!hero.secret && !hero.starter && hero.id !== 'eggbert') {
-            lines.push(eggs?.open
-                ? T`Eller klæk den fra et æg i reden: sikret æg ${BertMeta.EGG_TIERS?.rare.includes(hero.id) ? eggs.rareSecuredPrice : eggs.securedPrice} fjer.`
-                : T('Eller klæk den fra et æg, når reden har nået trin 4.'));
+            const eggPrice = BertMeta.EGG_TIERS?.rare.includes(hero.id) ? eggs?.rareSecuredPrice : eggs?.securedPrice;
+            lines.push(hero.eggOnly
+                ? (eggs?.open ? T`Klæk den fra et æg i reden: sikret æg ${eggPrice} fjer.` : T('Klæk den fra et æg, når reden har nået trin 4.'))
+                : (eggs?.open ? T`Eller klæk den fra et æg i reden: sikret æg ${eggPrice} fjer.` : T('Eller klæk den fra et æg, når reden har nået trin 4.')));
             lines.push(T`Du har ${BertMeta.snapshot().feathers} fjer. Fjer får du af dagens missioner, en tur om dagen og sjældne fjer i banerne.`);
         }
         const pop = document.createElement('div');
@@ -1746,7 +1747,7 @@
             await ensureLevelAssets(currentLevel);
         } catch (error) {
             console.error(error);
-            dom.loading.querySelector('p').textContent = 'Banens originale grafik kunne ikke indlæses.';
+            dom.loading.querySelector('p').textContent = T('Banens grafik kunne ikke indlæses.');
             throw error;
         }
         setVisible(dom.loading, false);
@@ -3034,7 +3035,7 @@
         playAudio('point');
         BertMeta.haptic('star');
         burst(collectible.x, collectible.y, '#fff1c7', 10);
-        dom.powerup.textContent = '+1 FJER';
+        dom.powerup.textContent = T('+1 FJER');
         dom.powerup.classList.add('active');
         state.featherFlashUntil = state.elapsed + 1.4;
     }
@@ -3537,7 +3538,7 @@
             });
         }
         if (savedRun.unlockedHeroes.length) {
-            dom.resultProgress.textContent = `NY HELT: ${savedRun.unlockedHeroes.join(', ').toUpperCase()} · ${dom.resultProgress.textContent}`;
+            dom.resultProgress.textContent = T`NY HELT: ${savedRun.unlockedHeroes.join(', ').toUpperCase()} · ${dom.resultProgress.textContent}`;
             BertMeta.haptic('reward');
         }
         setVisible(dom.newHighscore, improved && state.score > 0);
@@ -6945,7 +6946,7 @@
             claim.type = 'button';
             claim.className = 'mission-claim';
             claim.disabled = !mission.complete || mission.claimed;
-            claim.textContent = mission.claimed ? T('HENTET') : mission.complete ? `HENT +${mission.reward}` : `+${mission.reward} FJER`;
+            claim.textContent = mission.claimed ? T('HENTET') : mission.complete ? T`HENT +${mission.reward}` : T`+${mission.reward} FJER`;
             claim.addEventListener('click', () => {
                 const result = BertMeta.claimMission(mission.id);
                 if (result.ok) {
@@ -7724,7 +7725,7 @@
             requestAnimationFrame(loop);
         } catch (error) {
             console.error(error);
-            dom.loading.querySelector('p').textContent = 'Spillet kunne ikke indlæses. Prøv igen.';
+            dom.loading.querySelector('p').textContent = T('Spillet kunne ikke indlæses. Prøv igen.');
         }
     }
 
