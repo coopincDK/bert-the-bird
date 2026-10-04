@@ -454,11 +454,11 @@
             o.harmful = o.fromTop ? o.topY > o.lavaTop + 24 : o.topY < o.lavaTop - 24;
         } else if (o.behaviour === 'meteor') {
             const lavaTop = env.lavaTop ?? GROUND;
-            if (o.phase === 'idle' && distance < speed * 1.3) { o.phase = 'warn'; o.timer = 0; }
+            if (o.phase === 'idle' && distance < speed * 1.75) { o.phase = 'warn'; o.timer = 0; }
             if (o.phase === 'warn') {
                 o.timer += delta;
-                o.warn = clamp(o.timer / 0.65, 0, 1);
-                if (o.timer >= 0.75) { o.phase = 'fly'; o.warn = 0; o.vy = o.fallSpeed; o.harmful = true; }
+                o.warn = clamp(o.timer / 0.8, 0, 1);
+                if (o.timer >= 1.1) { o.phase = 'fly'; o.warn = 0; o.vy = o.fallSpeed; o.harmful = true; }
             } else if (o.phase === 'fly') {
                 o.vy += 700 * delta;
                 o.y += o.vy * delta;
@@ -471,12 +471,12 @@
             if (o.phase === 'idle') {
                 o.lavaTop = lavaTop;
                 o.y = lavaTop - o.size * 0.5;
-                if (distance < speed * 1.35) { o.phase = 'warn'; o.timer = 0; }
+                if (distance < speed * 1.7) { o.phase = 'warn'; o.timer = 0; }
             }
             if (o.phase === 'warn') {
                 o.timer += delta;
-                o.warn = clamp(o.timer / 0.55, 0, 1);
-                if (o.timer >= 0.6) { o.phase = 'fly'; o.warn = 0; o.vy = -o.launchSpeed; o.harmful = true; }
+                o.warn = clamp(o.timer / 0.75, 0, 1);
+                if (o.timer >= 0.95) { o.phase = 'fly'; o.warn = 0; o.vy = -o.launchSpeed; o.harmful = true; }
             } else if (o.phase === 'fly') {
                 o.vy += 1500 * delta;
                 o.y += o.vy * delta;

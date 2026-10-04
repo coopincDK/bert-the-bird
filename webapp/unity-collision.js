@@ -77,6 +77,10 @@
         return { type: 'circle', x, y, radius };
     }
 
+    function segment(x1, y1, x2, y2, thickness) {
+        return { type: 'segment', x1, y1, x2, y2, thickness };
+    }
+
     /** Rock under a jungle snake: art 180×140, top just under the snake's coil. */
     function snakeRock(obstacle) {
         const width = Math.max(150, obstacle.width * 1.6);
@@ -178,6 +182,16 @@
             const inset = obstacle.width * 0.10;
             return [box(obstacle.x + inset, obstacle.y + 4,
                 obstacle.width - inset * 2, Math.max(0, obstacle.height - 8))];
+        }
+        if (obstacle.kind === 'happy-pipe' && obstacle.tilt && obstacle.height > 0) {
+            // Leaning tower = a thick line from its gap end along the tilted axis.
+            const pivotX = obstacle.x + obstacle.width / 2;
+            const pivotY = obstacle.top ? obstacle.y + obstacle.height : obstacle.y;
+            const length = obstacle.height + 60;
+            const dir = obstacle.top ? -1 : 1;
+            const endX = pivotX - Math.sin(obstacle.tilt) * length * dir;
+            const endY = pivotY + Math.cos(obstacle.tilt) * length * dir;
+            return [segment(pivotX, pivotY, endX, endY, obstacle.width * 0.46)];
         }
         if (obstacle.kind === 'flappy-pipe' || obstacle.kind === 'happy-pipe') {
             const shaftWidth = obstacle.width * (1.28 / 1.57);

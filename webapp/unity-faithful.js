@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-53';
+    const BUILD_VERSION = 'worlds-relay-54';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2102,7 +2102,20 @@
                 obstacle.age += delta;
             }
             if (obstacle.kind === 'jungle-spider') obstacle.bob += delta * 4;
-            if ((obstacle.kind === 'happy-pipe' || obstacle.kind === 'flappy-pipe') && obstacle.motionAmplitude > 0) {
+            if ((obstacle.kind === 'happy-pipe' || obstacle.kind === 'flappy-pipe') && obstacle.conveyor) {
+                // Conveyor column: the gap keeps travelling one way. When it leaves at the
+                // top a new one rises from the bottom (and the reverse), at a steady rhythm.
+                const period = VIEW.height;
+                const raw = obstacle.baseGapTop + obstacle.conveyor * obstacle.age;
+                const g = (((raw + obstacle.gap) % period) + period) % period - obstacle.gap;
+                if (g >= 0) {
+                    obstacle.y = obstacle.top ? 0 : g + obstacle.gap;
+                    obstacle.height = obstacle.top ? g : VIEW.height - g - obstacle.gap;
+                } else {
+                    obstacle.y = obstacle.top ? 0 : g + obstacle.gap;
+                    obstacle.height = obstacle.top ? 0 : VIEW.height - obstacle.gap;
+                }
+            } else if ((obstacle.kind === 'happy-pipe' || obstacle.kind === 'flappy-pipe') && obstacle.motionAmplitude > 0) {
                 const wave = Math.sin(obstacle.age * obstacle.motionSpeed + obstacle.motionPhase) * obstacle.motionAmplitude;
                 const gapTop = clamp(obstacle.baseGapTop + wave, 90, VIEW.height - obstacle.gap - 90);
                 obstacle.y = obstacle.top ? 0 : gapTop + obstacle.gap;
@@ -2685,12 +2698,15 @@
             const bottomSkin = currentLevel.kind === 'desert'
                 ? skinChoices[Math.floor(gameRandom() * skinChoices.length)]
                 : topSkin;
-            const pairData = { gap, baseGapTop: gapTop, motionAmplitude, motionSpeed, motionPhase, moving: movingPair };
+            const conveyor = movingPair && gameRandom() < 0.5
+                ? (gameRandom() < 0.5 ? -1 : 1) * clamp(70 + state.difficulty * 30, 70, 140) : 0;
+            const pairData = { gap, baseGapTop: gapTop, motionAmplitude, motionSpeed, motionPhase, moving: movingPair, conveyor };
             obstacles.push({ x: pairCenter - topWidth / 2, y: 0, width: topWidth, height: gapTop, kind, top: true, harmful: true, age: 0, id, variant: topVariant, artKey: topSkin, ...pairData });
             obstacles.push({ x: pairCenter - bottomWidth / 2, y: gapTop + gap, width: bottomWidth, height: VIEW.height - gapTop - gap, kind, top: false, harmful: true, age: 0, id, variant: bottomVariant, artKey: bottomSkin, ...pairData });
-            const risk = gameRandom() < 0.34;
-            const starY = gapTop + gap * (risk ? (gameRandom() < 0.5 ? 0.24 : 0.76) : 0.5);
-            collectibles.push(makeCollectible(pairCenter, starY, risk));
+            const risk = gameRandom() < 0.34 && !conveyor;
+            // A conveyor's gap moves, so its star waits in open air before the column.
+            const starY = conveyor ? randomBetween(250, 470) : gapTop + gap * (risk ? (gameRandom() < 0.5 ? 0.24 : 0.76) : 0.5);
+            collectibles.push(makeCollectible(conveyor ? pairCenter - 200 : pairCenter, starY, risk));
             return;
         }
         if (currentLevel.kind === 'jungle') {
@@ -2728,10 +2744,18 @@
                 const motionSpeed = randomBetween(0.9, 1.45);
                 const motionPhase = gameRandom() * Math.PI * 2;
                 const width = randomBetween(118, 146);
-                obstacles.push({ x, y: 0, width, height: baseGapTop, gap: pipeGap, baseGapTop, kind: 'happy-pipe', color, top: true, harmful: true, age: 0, id, motionAmplitude, motionSpeed, motionPhase });
-                obstacles.push({ x, y: baseGapTop + pipeGap, width, height: VIEW.height - baseGapTop - pipeGap, gap: pipeGap, baseGapTop, kind: 'happy-pipe', color, top: false, harmful: true, age: 0, id, motionAmplitude, motionSpeed, motionPhase });
-                const risk = gameRandom() < 0.4;
-                collectibles.push(makeCollectible(x + width / 2, baseGapTop + pipeGap * (risk ? 0.25 : 0.5), risk));
+                // Variety (feedback 4. okt.): some columns roll steadily one way, some lean.
+                const style = gameRandom();
+                const conveyor = state.elapsed > 8 && style < 0.3
+                    ? (gameRandom() < 0.5 ? -1 : 1) * clamp(65 + state.difficulty * 30, 65, 130) : 0;
+                const tilt = !conveyor && state.elapsed > 8 && style < 0.6 ? (gameRandom() < 0.5 ? -1 : 1) * randomBetween(0.12, 0.2) : 0;
+                const extra = { conveyor, tilt };
+                obstacles.push({ x, y: 0, width, height: baseGapTop, gap: pipeGap, baseGapTop, kind: 'happy-pipe', color, top: true, harmful: true, age: 0, id, motionAmplitude, motionSpeed, motionPhase, ...extra });
+                obstacles.push({ x, y: baseGapTop + pipeGap, width, height: VIEW.height - baseGapTop - pipeGap, gap: pipeGap, baseGapTop, kind: 'happy-pipe', color, top: false, harmful: true, age: 0, id, motionAmplitude, motionSpeed, motionPhase, ...extra });
+                const risk = gameRandom() < 0.4 && !conveyor;
+                collectibles.push(conveyor
+                    ? makeCollectible(x - 180, randomBetween(250, 470))
+                    : makeCollectible(x + width / 2, baseGapTop + pipeGap * (risk ? 0.25 : 0.5), risk));
                 return;
             }
             // New-style Happy Sky: a hot-air balloon that drifts slowly up and down.
@@ -4085,6 +4109,23 @@
         const image = assets[o.art];
         const scale = o.size / 512;
         const spot = BertAdventure.warningSpot(o);
+        // Vulkanen: meteors and lava bombs show their whole path while warning, so the
+        // player sees where it will cross, not only a glow at the edge.
+        if (spot && o.warn > 0 && (o.behaviour === 'meteor' || o.behaviour === 'bomb')) {
+            const cx = o.x + o.size / 2;
+            const lavaTop = o.lavaTop ?? BertAdventure.GROUND;
+            ctx.save();
+            ctx.globalAlpha = 0.25 + 0.55 * o.warn * (0.6 + 0.4 * Math.sin(state.worldTime * 18));
+            ctx.strokeStyle = '#ffb347';
+            ctx.lineWidth = 6;
+            ctx.setLineDash([16, 14]);
+            ctx.lineDashOffset = -state.worldTime * 80 * (o.behaviour === 'meteor' ? 1 : -1);
+            ctx.beginPath();
+            ctx.moveTo(cx, o.behaviour === 'meteor' ? 0 : lavaTop);
+            ctx.lineTo(cx - (o.behaviour === 'meteor' ? 60 : 140) * 1.1, o.behaviour === 'meteor' ? lavaTop : 60);
+            ctx.stroke();
+            ctx.restore();
+        }
         if (spot && o.warn > 0 && (o.behaviour === 'column' || o.behaviour === 'bomb') && !o.fromTop && assets.volcVent?.naturalWidth && currentLevel.kind === 'volcano') {
             ctx.save();
             ctx.globalAlpha = Math.min(1, o.warn * 1.5);
@@ -4869,6 +4910,14 @@
                 ctx.drawImage(pipe, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
             }
         } else if (obstacle.kind === 'happy-pipe') {
+            if (obstacle.tilt) {
+                // Leaning tower: rotate around its gap end so the opening stays in line.
+                const pivotX = obstacle.x + obstacle.width / 2;
+                const pivotY = obstacle.top ? obstacle.y + obstacle.height : obstacle.y;
+                ctx.translate(pivotX, pivotY);
+                ctx.rotate(obstacle.tilt);
+                ctx.translate(-pivotX, -pivotY);
+            }
             drawHappyPipe(obstacle);
         } else if (obstacle.kind === 'desert-wall') {
             const terrain = assets[obstacle.artKey] || assets.desertTerrain;
@@ -6349,6 +6398,9 @@
                     moving: Boolean(obstacle.moving),
                     scrollFactor: obstacle.scrollFactor || 1,
                     motionAmplitude: obstacle.motionAmplitude || 0,
+                    tilt: obstacle.tilt || 0,
+                    conveyor: obstacle.conveyor || 0,
+                    warn: obstacle.warn || 0,
                     motionPhase: obstacle.motionPhase ?? null,
                     motionSpeed: obstacle.motionSpeed ?? null,
                     baseY: obstacle.baseY ?? null,
