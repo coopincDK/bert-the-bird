@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-46';
+    const BUILD_VERSION = 'worlds-relay-47';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -576,6 +576,9 @@
     const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [],
         pingo: [], mogens: [], ninja: [], pakke: [], gold: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
+    // Heroes redrawn in the shared style (see docs: grafikplan). Folder under assets/.
+    const V2_HERO_FOLDERS = Object.freeze({ bert: 'heroes/bert' });
+    const V2_FPS = 12;
     const EXTRA_HERO_FOLDERS = Object.freeze({ pingo: 'pingo', mogens: 'mogens', ninja: 'ninjabert', pakke: 'pakkeb', gold: 'goldbert' });
     const EPIC_HEROES = Object.freeze({
         epicMalthe: { folder: 'epic-malthe', standIn: 'eagle' },
@@ -586,7 +589,7 @@
         epicCoop: { folder: 'coopinc', standIn: 'bert' },
     });
     const menuHeroArt = Object.freeze({
-        bert: 'assets/unity/ui/menu-bird.webp',
+        bert: 'assets/heroes/bert/flap-03.webp',
         blue: 'assets/unity/bird-blue/fly-00.webp',
         block: 'assets/klodsbert/up.webp',
         brain: 'assets/brainbird/up.webp',
@@ -807,6 +810,19 @@
         ]);
         birdFrames.bert.push(...bert);
         birdFrames.blue.push(...blue);
+        // New-style heroes: 8 wingbeat frames + glide + dead in assets/heroes/<id>/.
+        // Loaded after the originals so an incomplete set falls back silently.
+        await Promise.all(Object.entries(V2_HERO_FOLDERS).map(async ([hero, folder]) => {
+            try {
+                const flaps = await Promise.all(Array.from({ length: 8 }, (_, index) => image(`assets/${folder}/flap-${String(index + 1).padStart(2, '0')}.webp`)));
+                const optional = async (pose, fallback) => { try { return await image(`assets/${folder}/${pose}.webp`); } catch (_) { return fallback; } };
+                const glide = await optional('glide', flaps[2]);
+                const dead = await optional('dead', flaps[2]);
+                const frames = [...flaps, glide, dead];
+                frames.v2 = true;
+                birdFrames[hero] = frames;
+            } catch (_) { /* Keeps the original frames. */ }
+        }));
         const setGeneratedAnimation = (hero, [up, mid, glide, dead]) => {
             birdFrames[hero].push(up, up, mid, mid, glide, glide, glide, glide, mid, mid, up, up, mid, dead);
         };
@@ -4909,6 +4925,13 @@
     }
 
     function heroAnimationState(hero, animationTime, dead = false) {
+        if (birdFrames[hero]?.v2) {
+            if (dead) return { currentIndex: 9, nextIndex: 9, blend: 0, fps: 0 };
+            // Glide when Bert is falling calmly; otherwise the 8-frame wingbeat at 12 fps.
+            if (bird.velocity > 260 && state.phase === 'playing') return { currentIndex: 8, nextIndex: 8, blend: 0, fps: 0 };
+            const currentIndex = Math.floor(Math.max(0, animationTime) * V2_FPS) % 8;
+            return { currentIndex, nextIndex: currentIndex, blend: 0, fps: V2_FPS };
+        }
         if (dead) return { currentIndex: 13, nextIndex: 13, blend: 0, fps: 0 };
         if (!GENERATED_HERO_IDS.has(hero)) {
             const currentIndex = Math.floor(Math.max(0, animationTime) * 24) % 13;
