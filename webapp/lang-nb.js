@@ -435,4 +435,5 @@ window.BertI18n.register('nb', {
     'FORSTØR': 'FORSTØRR',
     'FORMINDSK': 'FORMINSK',
     'FORSTØR · POINT ×2': 'FORSTØRR · POENG ×2',
+    'FØLG TUNNELEN · HOLD VENSTRE = OP · HØJRE = NED': 'FØLG TUNNELEN · HOLD VENSTRE = OPP · HØYRE = NED',
 });

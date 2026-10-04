@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-66';
+    const BUILD_VERSION = 'worlds-relay-67';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -259,7 +259,7 @@
             poopMeterIcon: 'poop-meter-icon', poopMeterFrame: 'poop-meter-frame' } },
     });
     // bg1 ends just inside bg2's solid band, so no seam shows between them.
-    const ADVENTURE_BG1_Y = Object.freeze({ iceberg: 310, harbor: 335, nightcity: 350, volcano: 361, windfarm: 238, poop: 250 });
+    const ADVENTURE_BG1_Y = Object.freeze({ iceberg: 310, harbor: 335, nightcity: 350, volcano: 412, windfarm: 238, poop: 250 });
     const adventureLayers = (theme) => [
         { image: `${theme}Sky`, y: 0, height: 720, factor: 0.03 },
         // Vindmøller: bg2 carries its own horizon, so bg1's sea band made a second
@@ -1977,7 +1977,8 @@
             // A frost crystal gives normal grip for a short while.
             if (currentLevel.kind === 'iceberg' && state.phase === 'playing' && state.elapsed >= (state.gripUntil || 0)) {
                 // Time constant ~0.12 s at the start, ~0.17 s late: a soft glide, never sluggish.
-                const grip = 1 - Math.exp(-delta * clamp(12 - state.difficulty * 1.5, 8.5, 12));
+                // Middle ground (feedback): slippery enough to feel, quick enough to steer.
+                const grip = 1 - Math.exp(-delta * clamp(10 - state.difficulty * 1.3, 7.5, 10));
                 bird.velocity = previousVelocity + (bird.velocity - previousVelocity) * grip;
             }
         }
@@ -2809,7 +2810,7 @@
             const height = (spider ? 87 : 119) * scale;
             const fromTop = spider;
             // Snakes sit on a rock that rises above the foreground grass.
-            const groundAnchor = spider ? randomBetween(610, 646) : randomBetween(525, 560);
+            const groundAnchor = spider ? randomBetween(610, 646) : randomBetween(596, 624);
             const y = fromTop ? randomBetween(64, 190) : groundAnchor - height;
             obstacles.push({
                 x, y, width, height, kind: spider ? 'jungle-spider' : 'jungle-snake',
@@ -4098,7 +4099,8 @@
         }
         if (currentLevel.kind === 'edm' && assets.v2EdmTruss?.naturalWidth) {
             // New-style stage: horizontal light truss at the top, new crowd at the bottom.
-            drawTiled(assets.v2EdmTruss, -14, 72, 0.16);
+            // A thinner truss high up, so the top of the stage never feels crowded.
+            drawTiled(assets.v2EdmTruss, -10, 48, 0.16);
             if (assets.edmCrowd?.naturalWidth) {
                 const reduced = prefersReducedMotion();
                 const frame = crowdFrames[BertEDM.crowdFrame(state.worldTime, reduced)];
@@ -4235,14 +4237,7 @@
         samples.forEach((point, index) => index ? ctx.lineTo(point.x, point.bottom) : ctx.moveTo(point.x, point.bottom));
         ctx.stroke();
         if (currentLevel.variant === BertTunnel.VARIANTS.TRAINING) {
-            ctx.setLineDash([10, 20]);
-            ctx.lineDashOffset = -(state.worldDistance * .24);
-            ctx.strokeStyle = 'rgba(169, 241, 255, .34)';
-            ctx.lineWidth = 2;
-            ctx.beginPath();
-            samples.forEach((point, index) => index ? ctx.lineTo(point.x, point.center) : ctx.moveTo(point.x, point.center));
-            ctx.stroke();
-            ctx.setLineDash([]);
+            // The dashed centre line is gone (feedback). A short steering hint shows instead.
         } else if (pulse) {
             ctx.fillStyle = 'rgba(255, 207, 89, .72)';
             samples.forEach((point, index) => {
@@ -4322,21 +4317,17 @@
         const image = assets[o.art];
         const scale = o.size / 512;
         const spot = BertAdventure.warningSpot(o);
-        // Vulkanen: meteors and lava bombs show their whole path while warning, so the
-        // player sees where it will cross, not only a glow at the edge.
-        if (spot && o.warn > 0 && (o.behaviour === 'meteor' || o.behaviour === 'bomb')) {
-            const cx = o.x + o.size / 2;
+        // Vulkanen: a meteor marks where it will land with a pulsing ring on the lava
+        // (no guide lines, feedback); bombs bulge up out of the lava below.
+        if (spot && o.warn > 0 && o.behaviour === 'meteor') {
+            const cx = o.x + o.size / 2 - 60;
             const lavaTop = o.lavaTop ?? BertAdventure.GROUND;
             ctx.save();
-            ctx.globalAlpha = 0.25 + 0.55 * o.warn * (0.6 + 0.4 * Math.sin(state.worldTime * 18));
+            ctx.globalAlpha = 0.35 + 0.55 * o.warn * (0.6 + 0.4 * Math.sin(state.worldTime * 14));
             ctx.strokeStyle = '#ffb347';
-            ctx.lineWidth = 6;
-            ctx.setLineDash([16, 14]);
-            ctx.lineDashOffset = -state.worldTime * 80 * (o.behaviour === 'meteor' ? 1 : -1);
-            ctx.beginPath();
-            ctx.moveTo(cx, o.behaviour === 'meteor' ? 0 : lavaTop);
-            ctx.lineTo(cx - (o.behaviour === 'meteor' ? 60 : 140) * 1.1, o.behaviour === 'meteor' ? lavaTop : 60);
-            ctx.stroke();
+            ctx.lineWidth = 5;
+            ctx.beginPath(); ctx.ellipse(cx, lavaTop - 6, 34 + 10 * (1 - o.warn), 12, 0, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.ellipse(cx, lavaTop - 6, 16, 6, 0, 0, Math.PI * 2); ctx.stroke();
             ctx.restore();
         }
         if (spot && o.warn > 0 && (o.behaviour === 'column' || o.behaviour === 'bomb') && !o.fromTop && assets.volcVent?.naturalWidth && currentLevel.kind === 'volcano') {
@@ -4393,7 +4384,22 @@
             // The kite line runs down to the sea, drawn but harmless.
             ctx.strokeStyle = 'rgba(40, 40, 50, .7)';
             ctx.lineWidth = 2;
-            ctx.beginPath(); ctx.moveTo(o.x + 384 * s, o.y + 458 * s); ctx.lineTo(o.x + 330 * s, BertAdventure.GROUND + 40); ctx.stroke();
+            {
+                // The line leaves the kite where the art's string starts, follows its tilt,
+                // and sags down to the sea behind it like a real kite line.
+                const cx = o.x + o.size / 2;
+                const cy = o.y + o.size / 2;
+                const ax = (384 - 256) * s;
+                const ay = (458 - 256) * s;
+                const anchorX = cx + ax * Math.cos(o.angle) - ay * Math.sin(o.angle);
+                const anchorY = cy + ax * Math.sin(o.angle) + ay * Math.cos(o.angle);
+                const groundX = cx - 110;
+                const groundY = BertAdventure.GROUND + 40;
+                ctx.beginPath();
+                ctx.moveTo(anchorX, anchorY);
+                ctx.quadraticCurveTo(anchorX - 25, (anchorY + groundY) / 2 + 25, groundX, groundY);
+                ctx.stroke();
+            }
             ctx.translate(o.x + o.size / 2, o.y + o.size / 2);
             ctx.rotate(o.angle);
             ctx.drawImage(image, -o.size / 2, -o.size / 2, o.size, o.size);
@@ -4727,7 +4733,7 @@
             fx.age += delta;
             const t = fx.age / 0.45;
             if (!assets.v2Sparkle?.naturalWidth || t >= 1) return;
-            const size = 50 + t * 70;
+            const size = 26 + t * 30;
             ctx.globalAlpha = 1 - t;
             ctx.drawImage(assets.v2Sparkle, fx.x - size / 2, fx.y - size / 2, size, size);
         });
@@ -6045,6 +6051,21 @@
         }
         drawSmokeFog();
         drawArtEffects(1 / 60);
+        if (currentLevel.kind === 'tunnel' && state.phase === 'playing' && state.elapsed < 6) {
+            // Tunnel is hard at first: a short steering hint instead of the old dashed line.
+            const fade = state.elapsed < 5 ? 1 : 6 - state.elapsed;
+            const label = T('FØLG TUNNELEN · HOLD VENSTRE = OP · HØJRE = NED');
+            ctx.save();
+            ctx.globalAlpha = fade * 0.95;
+            ctx.font = '900 20px "Bert Rounded", sans-serif';
+            ctx.textAlign = 'center';
+            const width = ctx.measureText(label).width + 44;
+            ctx.fillStyle = 'rgba(10, 24, 40, .78)';
+            ctx.beginPath(); ctx.roundRect(VIEW.width / 2 - width / 2, 150, width, 44, 22); ctx.fill();
+            ctx.fillStyle = '#9ff7ff';
+            ctx.fillText(label, VIEW.width / 2, 180);
+            ctx.restore();
+        }
         drawGhost();
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
         drawRelayNearEdge();

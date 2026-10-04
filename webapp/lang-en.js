@@ -457,4 +457,5 @@ window.BertI18n.register('en', {
     'FORSTØR': 'GROW',
     'FORMINDSK': 'SHRINK',
     'FORSTØR · POINT ×2': 'GROW · POINTS ×2',
+    'FØLG TUNNELEN · HOLD VENSTRE = OP · HØJRE = NED': 'FOLLOW THE TUNNEL · HOLD LEFT = UP · RIGHT = DOWN',
 });

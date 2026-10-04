@@ -435,4 +435,5 @@ window.BertI18n.register('pt', {
     'FORSTØR': 'AUMENTAR',
     'FORMINDSK': 'ENCOLHER',
     'FORSTØR · POINT ×2': 'AUMENTAR · PONTOS ×2',
+    'FØLG TUNNELEN · HOLD VENSTRE = OP · HØJRE = NED': 'SIGA O TÚNEL · ESQUERDA = SUBIR · DIREITA = DESCER',
 });

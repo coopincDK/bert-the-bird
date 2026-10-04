@@ -435,4 +435,5 @@ window.BertI18n.register('es', {
     'FORSTØR': 'AGRANDAR',
     'FORMINDSK': 'ENCOGER',
     'FORSTØR · POINT ×2': 'AGRANDAR · PUNTOS ×2',
+    'FØLG TUNNELEN · HOLD VENSTRE = OP · HØJRE = NED': 'SIGUE EL TÚNEL · IZQUIERDA = SUBIR · DERECHA = BAJAR',
 });
