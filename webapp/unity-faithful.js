@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-52';
+    const BUILD_VERSION = 'worlds-relay-53';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1678,6 +1678,7 @@
         state.birdsVisible = true;
         state.inputUp = false;
         state.inputDown = false;
+        heldPointers.clear();
         state.pointerHeld = false;
         state.activePointerId = null;
         state.inputStrength = 1;
@@ -2850,11 +2851,10 @@
         if (BertEventPowerups.isPrototype(type)) {
             if (state.activePowerup) return;
             if (type === POWERUP.FLAP) {
-                const previousPointer = state.activePointerId;
-                clearTouchDirection();
-                if (previousPointer != null && dom.shell.hasPointerCapture?.(previousPointer)) {
-                    dom.shell.releasePointerCapture(previousPointer);
-                }
+                // Held fingers stay tracked; direction pauses while tapping is the control
+                // and comes back by itself when the power-up ends.
+                state.inputUp = false;
+                state.inputDown = false;
             }
         }
         if (type === POWERUP.GUARD) {
@@ -3515,6 +3515,7 @@
                     state.nextSpawnAt = state.elapsed + 0.08;
                 }
             }
+            if (heldPointers.size && !usingFlapControl() && !state.inputUp && !state.inputDown) applyHeldDirection();
             updateObjects(delta);
             updateVolcanoLava(delta);
             updateIceAndWind(delta);
@@ -5588,15 +5589,38 @@
         dom.touchDown.classList.toggle('active', state.inputDown);
     }
 
-    function clearTouchDirection(event) {
-        if (event?.pointerId != null && state.activePointerId != null && event.pointerId !== state.activePointerId) return;
-        state.pointerHeld = false;
-        state.activePointerId = null;
-        state.inputUp = false;
-        state.inputDown = false;
+    // Every finger on the screen is tracked. The newest finger still held decides
+    // the direction, so pressing the other side before letting go (two thumbs)
+    // never leaves Bert without input. Before: releasing the second thumb cleared
+    // everything even though the first was still down, and Bert just fell.
+    const heldPointers = new Map();
+    function applyHeldDirection() {
+        if (usingFlapControl() || !heldPointers.size) {
+            state.pointerHeld = heldPointers.size > 0;
+            state.activePointerId = null;
+            state.inputUp = false;
+            state.inputDown = false;
+            state.inputStrength = 1;
+            dom.touchUp?.classList.remove('active');
+            dom.touchDown?.classList.remove('active');
+            return;
+        }
+        const [pointerId, pointerX] = [...heldPointers].at(-1);
+        state.pointerHeld = true;
+        state.activePointerId = pointerId;
+        const midpoint = VIEW.width / 2;
+        const neutralBand = VIEW.width * 0.04;
+        state.inputUp = pointerX < midpoint - neutralBand;
+        state.inputDown = pointerX > midpoint + neutralBand;
         state.inputStrength = 1;
-        dom.touchUp?.classList.remove('active');
-        dom.touchDown?.classList.remove('active');
+        dom.touchUp?.classList.toggle('active', state.inputUp);
+        dom.touchDown?.classList.toggle('active', state.inputDown);
+    }
+
+    function clearTouchDirection(event) {
+        if (event?.pointerId != null) heldPointers.delete(event.pointerId);
+        else if (!event) heldPointers.clear();
+        applyHeldDirection();
     }
 
     function flap() {
@@ -5970,36 +5994,27 @@
             if (event.target.closest?.('button')) return;
             if (state.phase !== 'prewarm' && state.phase !== 'playing') return;
             event.preventDefault();
-            if (state.phase === 'prewarm') {
-                beginRun();
-                if (usingFlapControl()) {
-                    flap();
-                } else {
-                    state.pointerHeld = true;
-                    state.activePointerId = event.pointerId;
-                    setTouchDirection(event);
-                }
-                return;
-            }
-            if (state.phase !== 'playing') return;
+            heldPointers.set(event.pointerId, logicalPointerX(event));
+            try { dom.shell.setPointerCapture?.(event.pointerId); } catch (_) { /* Some browsers refuse; tracking still works. */ }
+            if (state.phase === 'prewarm') beginRun();
             if (usingFlapControl()) {
                 flap();
                 return;
             }
-            state.pointerHeld = true;
-            state.activePointerId = event.pointerId;
-            setTouchDirection(event);
-            dom.shell.setPointerCapture?.(event.pointerId);
+            applyHeldDirection();
         });
         dom.shell.addEventListener('pointermove', (event) => {
-            if (!state.pointerHeld || event.pointerId !== state.activePointerId || usingFlapControl() || state.phase !== 'playing') return;
+            if (!heldPointers.has(event.pointerId)) return;
             event.preventDefault();
-            setTouchDirection(event);
+            heldPointers.set(event.pointerId, logicalPointerX(event));
+            if (state.phase === 'playing' && !usingFlapControl()) applyHeldDirection();
         });
-        ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => {
-            dom.shell.addEventListener(type, (event) => clearTouchDirection(event));
+        ['pointerup', 'pointercancel', 'lostpointercapture'].forEach((type) => {
+            dom.shell.addEventListener(type, (event) => {
+                if (!heldPointers.has(event.pointerId)) return;
+                clearTouchDirection(event);
+            });
         });
-        dom.shell.addEventListener('lostpointercapture', (event) => clearTouchDirection(event));
         window.addEventListener('blur', () => clearTouchDirection());
         window.addEventListener('pagehide', () => clearTouchDirection());
         document.addEventListener('visibilitychange', () => {
