@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-60';
+    const BUILD_VERSION = 'worlds-relay-61';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -468,6 +468,13 @@
         v2Smoke2: 'assets/v2/fx/smoke-3.webp',
         v2WindSwirl: 'assets/v2/fx/wind-swirl.webp',
         v2Bubble: 'assets/v2/pickups/bubble.webp',
+        v2PuGrow: 'assets/v2/pickups/pu-grow.webp',
+        v2PuShrink: 'assets/v2/pickups/pu-shrink.webp',
+        v2Bonk: 'assets/v2/fx/bonk.webp',
+        v2EdmStage: 'assets/v2/edm/stage.webp',
+        v2Crowd0: 'assets/v2/edm/crowd-1.webp',
+        v2Crowd1: 'assets/v2/edm/crowd-2.webp',
+        v2Crowd2: 'assets/v2/edm/crowd-3.webp',
     });
     for (let i = 0; i < 6; i += 1) {
         ASSET_PATHS[`v2SpiderWrap${i}`] = `assets/v2/deaths/spider-wrap-${i + 1}.webp`;
@@ -482,6 +489,7 @@
         'feather', 'shieldSplinter', 'shieldSplinterOrange',
         'eventMetal', 'eventHyper', 'eventDouble', 'eventFlap', 'reversePickup', 'goldFeather',
         'v2Warning', 'v2FeatherPuff', 'v2Sparkle', 'v2Smoke0', 'v2Smoke1', 'v2Smoke2', 'v2WindSwirl', 'v2Bubble',
+        'v2PuGrow', 'v2PuShrink', 'v2Bonk',
     ];
     const LEVEL_ASSET_KEYS = Object.freeze({
         desert: ['desertTerrain', 'desertRuin', 'desertBanded', 'desertEtched'],
@@ -530,7 +538,7 @@
             jungleStone: 'rock',
             v2CanopyLeft: 'canopy-left',
             v2CanopyRight: 'canopy-right',
-            ...Object.fromEntries([0, 1, 2].map((i) => [`spider${i}`, `fit-spider-idle-${i + 1}`])),
+            ...Object.fromEntries([0, 1, 2, 3, 4, 5].map((i) => [`spider${i}`, `fit-spider-idle-${i + 1}`])),
             ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => [`spiderCatch${i}`, `fit-spider-catch-${Math.floor(i / 3) + 1}`])),
             ...Object.fromEntries(Array.from({ length: 7 }, (_, i) => [`snake${i}`, `cut-snake-idle-${(i % 6) + 1}`])),
             ...Object.fromEntries(Array.from({ length: 5 }, (_, i) => [`snakeJump${i}`, `cut-snake-jump-${i + 1}`])),
@@ -563,7 +571,7 @@
         const extra = [];
         if (kind === 'poop' && ASSET_PATHS.v2LampPost) extra.push('v2LampPost');
         if (kind === 'edm' && ASSET_PATHS.v2SmokeCannon) extra.push('v2SmokeCannon');
-        if (kind === 'edm') extra.push('v2EdmTruss');
+        if (kind === 'edm') extra.push('v2EdmTruss', 'v2EdmStage', 'v2Crowd0', 'v2Crowd1', 'v2Crowd2');
         if (kind === 'jungle') {
             for (let i = 0; i < 6; i += 1) extra.push(`v2SpiderWrap${i}`);
             for (let i = 0; i < 3; i += 1) extra.push(`v2WebStuck${i}`);
@@ -1982,8 +1990,16 @@
         bird.y += bird.velocity * delta;
         if (currentLevel.kind === 'skyRelay') {
             const lowest = VIEW.height - BIRD.height - 58;
-            if (bird.y > lowest) { bird.y = lowest; bird.velocity = Math.min(0, bird.velocity); }
-            if (bird.y < 58) { bird.y = 58; bird.velocity = Math.max(0, bird.velocity); }
+            const impact = Math.abs(bird.velocity);
+            const bonk = (y) => {
+                if (impact > 160 && state.elapsed >= (state.nextBonkAt || 0)) {
+                    (state.bonks ||= []).push({ x: bird.x + BIRD.width * 0.6, y, age: 0 });
+                    state.nextBonkAt = state.elapsed + 0.35;
+                    playAudio('pop');
+                }
+            };
+            if (bird.y > lowest) { bonk(lowest + BIRD.height); bird.y = lowest; bird.velocity = Math.min(0, bird.velocity) * 0 - 120; }
+            if (bird.y < 58) { bonk(58); bird.y = 58; bird.velocity = 140; }
         }
         bird.rotation = clamp(bird.velocity * 0.055, -28, 76);
         bird.animationTime += delta * animationSpeed;
@@ -3708,6 +3724,13 @@
             return;
         }
         ctx.drawImage(assets.edmStage, 0, 0, VIEW.width, VIEW.height);
+        if (assets.v2EdmStage?.naturalWidth) {
+            // Smaller and further back, so the stage sets the scene without crowding play.
+            ctx.save();
+            ctx.globalAlpha = 0.85;
+            ctx.drawImage(assets.v2EdmStage, 200, 356, 880, 275);
+            ctx.restore();
+        } else {
         // A stage in the background: deck, glowing front edge, DJ booth and side screens.
         ctx.save();
         const cx = VIEW.width / 2;
@@ -3728,6 +3751,7 @@
             ctx.fillRect(cx + side * 520 - 58, 342, 116, 120);
         });
         ctx.restore();
+        }
         if (!BertMeta.settingEnabled('lights')) return;
         const reduced = prefersReducedMotion();
         const cue = BertEDM.lightCue(state.worldTime, reduced);
@@ -4047,6 +4071,14 @@
             if (assets.edmCrowd?.naturalWidth) {
                 const reduced = prefersReducedMotion();
                 const frame = crowdFrames[BertEDM.crowdFrame(state.worldTime, reduced)];
+                // Round 3 crowd: hands down, half up, up — two rows a half beat apart.
+                const poses = [assets.v2Crowd0, assets.v2Crowd1, assets.v2Crowd2, assets.v2Crowd1];
+                if (poses[0]?.naturalWidth) {
+                    const step = reduced ? 0 : Math.floor(state.worldTime * 4);
+                    drawTiled(poses[step % 4], 548, 180, 0.34);
+                    drawTiled(poses[(step + 2) % 4], 572, 180, 0.42);
+                    return;
+                }
                 // The crowd jumps to the beat (two offset rows so it never moves as one block).
                 const beat = reduced ? 0 : Math.abs(Math.sin(state.worldTime * Math.PI * 2));
                 drawTiled(frame || assets.edmCrowd, 574 - beat * 9, 160, 0.34);
@@ -4669,6 +4701,15 @@
             ctx.drawImage(assets.v2Sparkle, fx.x - size / 2, fx.y - size / 2, size, size);
         });
         state.sparkles = (state.sparkles || []).filter((fx) => fx.age < 0.45);
+        (state.bonks || []).forEach((fx) => {
+            fx.age += delta;
+            const t = fx.age / 0.5;
+            if (!assets.v2Bonk?.naturalWidth || t >= 1) return;
+            const size = 70 + t * 40;
+            ctx.globalAlpha = 1 - t;
+            ctx.drawImage(assets.v2Bonk, fx.x - size / 2, fx.y - size / 2, size, size);
+        });
+        state.bonks = (state.bonks || []).filter((fx) => fx.age < 0.5);
         if (state.featherPuff && assets.v2FeatherPuff?.naturalWidth) {
             state.featherPuff.age += delta;
             const t = state.featherPuff.age / 0.7;
@@ -5176,8 +5217,9 @@
                 ctx.drawImage(terrain, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
             }
         } else if (obstacle.kind === 'jungle-spider') {
-            const idleSequence = [0, 1, 2, 1];
-            const frame = assets[`spider${idleSequence[Math.floor((obstacle.age + obstacle.animationPhase) * 5) % idleSequence.length]}`];
+            // Six-frame spider (round 3) for soft leg movement; the old art has three.
+            const idleSequence = assets.spider5 ? [0, 1, 2, 3, 4, 5, 4, 3, 2, 1] : [0, 1, 2, 1];
+            const frame = assets[`spider${idleSequence[Math.floor((obstacle.age + obstacle.animationPhase) * (assets.spider5 ? 10 : 5)) % idleSequence.length]}`];
             const swing = Math.sin(obstacle.bob) * 14;
             // New-style Jungle: each spider hangs from a leafy branch at the top.
             const canopy = assets[obstacle.id % 2 ? 'v2CanopyLeft' : 'v2CanopyRight'];
@@ -5481,6 +5523,8 @@
 
     // Forstør/Formindsk pickup: the bubble with four golden arrows pointing out or in.
     function drawSizePickup(grow) {
+        const art = assets[grow ? 'v2PuGrow' : 'v2PuShrink'];
+        if (art?.naturalWidth) { ctx.drawImage(art, -37, -37, 74, 74); return; }
         const bubble = assets.v2Bubble;
         if (bubble?.naturalWidth) ctx.drawImage(bubble, -37, -37, 74, 74);
         ctx.save();
