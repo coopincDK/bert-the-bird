@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-50';
+    const BUILD_VERSION = 'worlds-relay-51';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -487,6 +487,8 @@
         desert: { desertBanded: 'pillar-banded', desertEtched: 'pillar-etched', desertRuin: 'pillar-ruin' },
         jungle: {
             jungleStone: 'rock',
+            v2CanopyLeft: 'canopy-left',
+            v2CanopyRight: 'canopy-right',
             ...Object.fromEntries([0, 1, 2].map((i) => [`spider${i}`, `fit-spider-idle-${i + 1}`])),
             ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => [`spiderCatch${i}`, `fit-spider-catch-${Math.floor(i / 3) + 1}`])),
             ...Object.fromEntries(Array.from({ length: 7 }, (_, i) => [`snake${i}`, `cut-snake-idle-${(i % 6) + 1}`])),
@@ -520,6 +522,7 @@
         const extra = [];
         if (kind === 'poop' && ASSET_PATHS.v2LampPost) extra.push('v2LampPost');
         if (kind === 'edm' && ASSET_PATHS.v2SmokeCannon) extra.push('v2SmokeCannon');
+        if ((kind === 'birdRun' || kind === 'skyRelay') && V2.levels.has('happySky')) extra.push(...v2LayerKeys('happySky'));
         if (kind === 'birdRun' && ASSET_PATHS.v2HawkFly0) {
             for (let i = 0; i < 4; i += 1) extra.push(`v2HawkFly${i}`);
             for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCatch${i}`);
@@ -3747,15 +3750,25 @@
             drawEDMBackground();
             return;
         }
+        // Open-sky test worlds borrow the new Happy Sky: sky plus a low cloud floor.
+        const newSky = V2.levels.has('happySky') && assets.v2_happySky_Sky?.naturalWidth;
         if (level.kind === 'birdRun') {
             ctx.fillStyle = '#bdeaff';
             ctx.fillRect(0, 0, VIEW.width, VIEW.height);
-            if (assets.happySky?.naturalWidth) ctx.drawImage(assets.happySky, 0, 0, VIEW.width, VIEW.height);
+            if (newSky) {
+                drawTiled(assets.v2_happySky_Sky, 0, 720, 0.03);
+                if (assets.v2_happySky_Fg?.naturalWidth) drawTiled(assets.v2_happySky_Fg, 600, 200, 0.2);
+            } else if (assets.happySky?.naturalWidth) ctx.drawImage(assets.happySky, 0, 0, VIEW.width, VIEW.height);
             return;
         }
         if (level.kind === 'skyRelay') {
             ctx.fillStyle = '#bdeaff';
             ctx.fillRect(0, 0, VIEW.width, VIEW.height);
+            if (newSky) {
+                drawTiled(assets.v2_happySky_Sky, 0, 720, 0.03);
+                if (assets.v2_happySky_Mg?.naturalWidth) drawTiled(assets.v2_happySky_Mg, 540, 200, 0.15);
+                return;
+            }
             if (assets.happySky?.naturalWidth) ctx.drawImage(assets.happySky, 0, 0, VIEW.width, VIEW.height);
             if (assets.happyMg?.naturalWidth) drawTiled(assets.happyMg, 568, 152, 0.15);
             return;
@@ -4854,6 +4867,13 @@
             const idleSequence = [0, 1, 2, 1];
             const frame = assets[`spider${idleSequence[Math.floor((obstacle.age + obstacle.animationPhase) * 5) % idleSequence.length]}`];
             const swing = Math.sin(obstacle.bob) * 14;
+            // New-style Jungle: each spider hangs from a leafy branch at the top.
+            const canopy = assets[obstacle.id % 2 ? 'v2CanopyLeft' : 'v2CanopyRight'];
+            if (V2.levels.has('jungle') && canopy?.naturalWidth) {
+                const width = 230;
+                const height = width * canopy.naturalHeight / canopy.naturalWidth;
+                ctx.drawImage(canopy, obstacle.renderX + obstacle.renderWidth / 2 - width / 2, -height * 0.35, width, height);
+            }
             ctx.strokeStyle = 'rgba(230,230,230,0.85)';
             ctx.lineWidth = 2;
             ctx.beginPath();
