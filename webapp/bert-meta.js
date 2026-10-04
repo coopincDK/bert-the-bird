@@ -22,6 +22,7 @@
         calendar: { lastDay: '', streak: 0, days: [] },
         badges: {},
         stats: { deaths: 0, feathersEver: 0, bestPoopStreak: 0, relayPerfect: 0 },
+        eggs: { bought: 0, incubating: null, hatched: [] },
         economy: { continueSpins: 0, revivesWon: 0, feathersSpent: 0 },
         settings: { music: true, sfx: true, haptics: true, lights: true },
         daily: {},
@@ -83,6 +84,7 @@
                 calendar: { ...DEFAULTS.calendar, ...(stored.calendar || {}) },
                 badges: stored.badges && typeof stored.badges === 'object' ? stored.badges : {},
                 stats: { ...DEFAULTS.stats, ...(stored.stats || {}) },
+                eggs: { ...DEFAULTS.eggs, ...(stored.eggs || {}) },
                 economy: { ...DEFAULTS.economy, ...(stored.economy || {}) },
                 settings: { ...DEFAULTS.settings, ...(stored.settings || {}) },
                 daily: stored.daily && typeof stored.daily === 'object' ? stored.daily : {},
@@ -445,6 +447,74 @@
         return { magnet: has('magnet'), shield: has('shield'), boost: has('boost'), gold: has('gold') };
     }
 
+    // ---------- Rugepladsen: eggs hatch new heroes ----------
+    // Opens at nest step 4 (one egg, slow), improves at step 7 (faster, two eggs is a later idea).
+    const EGG_TIERS = Object.freeze({
+        common: ['blue', 'block', 'brain', 'sugar', 'moss', 'ink', 'pingo', 'mogens', 'ninja', 'pakke'],
+        rare: ['eagle', 'mecha', 'noir', 'vulture', 'prism', 'gold'],
+    });
+    const EGG_BASE_PRICE = 40;
+    const EGG_PRICE_STEP = 20;
+    function eggCandidates() {
+        const owned = data.ownedHeroes || {};
+        return {
+            common: EGG_TIERS.common.filter((id) => !owned[id]),
+            rare: EGG_TIERS.rare.filter((id) => !owned[id]),
+        };
+    }
+    function eggStatus() {
+        const level = nestLevel();
+        const open = level >= 3;
+        const candidates = eggCandidates();
+        const remaining = candidates.common.length + candidates.rare.length;
+        const price = EGG_BASE_PRICE + EGG_PRICE_STEP * (data.eggs.bought || 0);
+        const egg = data.eggs.incubating;
+        return {
+            open, level, price, securedPrice: price * 2, rareSecuredPrice: price * 3,
+            remaining, candidates,
+            incubating: egg ? { ...egg, stage: Math.min(3, Math.floor((egg.progress / egg.need) * 3)) } : null,
+            canBuy: open && !egg && remaining > 0 && data.feathers >= price,
+            need: level >= 6 ? 180 : 300,
+        };
+    }
+    /** Buy an egg. heroId picks a secured egg (2× price, 3× for rare); null is a random egg. */
+    function buyEgg(heroId = null) {
+        const status = eggStatus();
+        if (!status.open || status.incubating || !status.remaining) return { ok: false, status };
+        let hero = null;
+        let cost = status.price;
+        if (heroId) {
+            const rare = status.candidates.rare.includes(heroId);
+            if (!rare && !status.candidates.common.includes(heroId)) return { ok: false, status };
+            hero = heroId;
+            cost = rare ? status.rareSecuredPrice : status.securedPrice;
+        } else {
+            const pickRare = status.candidates.rare.length && (!status.candidates.common.length || Math.random() < 0.18);
+            const pool = pickRare ? status.candidates.rare : status.candidates.common;
+            hero = pool[Math.floor(Math.random() * pool.length)];
+        }
+        if (data.feathers < cost) return { ok: false, status, missing: cost - data.feathers };
+        data.feathers -= cost;
+        data.economy.feathersSpent += cost;
+        data.eggs.bought = (data.eggs.bought || 0) + 1;
+        data.eggs.incubating = { hero, secured: Boolean(heroId), progress: 0, need: status.need, at: new Date().toISOString() };
+        save();
+        return { ok: true, cost, secured: Boolean(heroId), status: eggStatus() };
+    }
+    /** After a run: stars warm the egg. Returns the hatched hero id when it cracks open. */
+    function incubate(stars) {
+        const egg = data.eggs.incubating;
+        if (!egg) return null;
+        egg.progress = Math.min(egg.need, egg.progress + Math.max(1, Math.floor(Number(stars) || 0)));
+        if (egg.progress < egg.need) { save(); return null; }
+        const hero = egg.hero;
+        if (!data.ownedHeroes[hero]) data.ownedHeroes[hero] = { source: 'egg', at: new Date().toISOString() };
+        data.eggs.hatched = [...(data.eggs.hatched || []), hero];
+        data.eggs.incubating = null;
+        save();
+        return hero;
+    }
+
     // Login calendar: one flight a day keeps the streak; rewards 1, 2, 3, 5, 8, 8, 8 feathers.
     const CALENDAR_REWARDS = Object.freeze([1, 2, 3, 5, 8, 8, 8]);
     function dayKey(date = new Date()) { return date.toISOString().slice(0, 10); }
@@ -654,6 +724,7 @@
     window.BertMeta = Object.freeze({
         addFeathers, hasPlayerName, hasTestAccess, hasOpMode,
         NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
+        EGG_TIERS, eggStatus, buyEgg, incubate,
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,
         continueSpinOffer, buyContinueSpin, settleContinueSpin,

@@ -2359,3 +2359,19 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 /* Eventyr-fanen: verdenskortet bag kortene. */
 .level-grid[data-mode="adventure"] { background: url(assets/v2/g4/map/world-map.webp) center / cover no-repeat; border-radius: 14px; padding: 8px !important; }
 .level-grid[data-mode="adventure"] .level-card { backdrop-filter: blur(2px); }
+
+/* ---- Rugepladsen ---- */
+.egg-row { display: grid; grid-template-columns: 110px 1fr; gap: 12px; align-items: center; }
+.egg-view { position: relative; height: 90px; display: grid; place-items: center; }
+.egg-shape { display: block; width: 54px; height: 70px; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: radial-gradient(circle at 35% 30%, #fff9e6, #e8d9b0 70%); border: 3px solid #1b2a44; box-shadow: inset -6px -8px 0 rgba(0,0,0,.08); }
+.egg-view.empty .egg-shape { opacity: .25; border-style: dashed; background: none; }
+.egg-view.stage-1 .egg-shape { background-image: radial-gradient(circle at 35% 30%, #fff9e6, #e8d9b0 70%), linear-gradient(135deg, transparent 48%, #1b2a44 49%, #1b2a44 51%, transparent 52%); background-size: 100% 100%, 40% 30%; background-repeat: no-repeat; background-position: center, 60% 20%; }
+.egg-view.stage-2 .egg-shape, .egg-view.stage-3 .egg-shape { animation: egg-wobble .9s ease-in-out infinite; }
+@keyframes egg-wobble { 0%, 100% { transform: rotate(-6deg); } 50% { transform: rotate(6deg); } }
+.egg-view span { position: absolute; bottom: 0; font-size: 10px; font-weight: 900; color: #ffd98a; letter-spacing: .06em; }
+.egg-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.egg-btn { min-height: 38px; border: 0; border-radius: 10px; background: linear-gradient(#c9ff3c, #81bd09); color: #123018; font-weight: 900; font-size: 11px; letter-spacing: .08em; cursor: pointer; }
+.egg-btn.secondary { background: linear-gradient(#7fe8ff, #2fa7d4); color: #0b2a3a; }
+.egg-btn:disabled { opacity: .45; cursor: default; }
+.egg-select { grid-column: 1 / -1; background: rgba(255,255,255,.1); color: #fff; border: 1px solid rgba(255,255,255,.3); border-radius: 8px; padding: 6px; font-weight: 700; }
+.egg-section.hidden { display: none; }

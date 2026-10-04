@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-74';
+    const BUILD_VERSION = 'worlds-relay-75';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1584,7 +1584,7 @@
                 : T`${hero.name} låst. ${hero.goal}. ${hero.current} af ${hero.target}. Alternativ pris ${hero.price} fjer.`);
             button.querySelector('small').textContent = hero.owned
                 ? hero.source === 'feathers' ? T('KØBT') : hero.source === 'name' ? T('EPISK') : hero.source === 'legacy' ? T('BEHOLDT') : hero.id === 'bert' ? T('ORIGINAL') : T('VUNDET')
-                : T`${hero.price} FJER`;
+                : hero.secret ? T('HEMMELIG') : T('ÆG ELLER BEDRIFT');
         });
         const active = catalog.find((hero) => hero.id === inspectedHero) || catalog[0];
         dom.heroDetailName.textContent = active.name.toUpperCase();
@@ -1593,12 +1593,15 @@
             : active.owned
             ? active.id === meta.hero ? T('Valgt og klar til at flyve') : T('Låst op. Tryk på figuren for at vælge.')
             : `${active.goal} · ${active.current}/${active.target} · ${Math.max(0, active.price - meta.feathers)} fjer mangler`;
-        dom.heroBuy.classList.toggle('hidden', active.owned);
-        dom.heroBuy.disabled = active.owned || meta.feathers < active.price;
-        dom.heroBuy.textContent = pendingHeroPurchase === active.id
-            ? T`BEKRÆFT · ${active.price} FJER`
-            : T`KØB · ${active.price} FJER`;
-        dom.heroCancelBuy.classList.toggle('hidden', pendingHeroPurchase !== active.id);
+        // Heroes hatch from eggs in the nest now; the wardrobe only shows the way.
+        dom.heroBuy.classList.add('hidden');
+        dom.heroCancelBuy.classList.add('hidden');
+        if (!active.owned && !active.secret) {
+            const eggs = BertMeta.eggStatus?.();
+            dom.heroDetailGoal.textContent = eggs?.open
+                ? T`${active.goal} · ${active.current}/${active.target} · eller klæk den fra et æg i reden`
+                : T`${active.goal} · ${active.current}/${active.target} · æg i reden fra trin 4`;
+        }
     }
 
     function updateMetaMenu() {
@@ -3493,7 +3496,16 @@
         }) || [];
         const daily = BertMeta.noteDailyFlight?.() || { ok: false };
         const nest = BertMeta.nestStatus?.();
+        const hatched = BertMeta.incubate?.(state.starsCollected);
         const bits = [];
+        if (hatched) {
+            const heroName = BertHeroStore.catalog.find((hero) => hero.id === hatched)?.name || hatched;
+            bits.push(T`Ægget klækkede: ${heroName}!`);
+            setTimeout(() => { playAudio('fanfare'); window.BertApp?.showToast(T`${heroName} er klækket og venter i garderoben`); }, 1200);
+        } else if (BertMeta.eggStatus?.().incubating) {
+            const egg = BertMeta.eggStatus().incubating;
+            bits.push(T`Ægget: ${egg.progress}/${egg.need} stjerner`);
+        }
         if (state.runFeathers > 0) bits.push(T`${state.runFeathers} fjer fundet`);
         if (daily.ok) bits.push(T`Dag ${daily.streak} i træk: +${daily.reward} fjer`);
         if (nest?.next) bits.push(T`Reden: ${nest.feathers}/${nest.next.cost} til ${nest.next.label}`);
@@ -6711,6 +6723,7 @@
             const note = document.getElementById('calendar-note');
             if (note) note.textContent = status.streak ? T`${status.streak} dage i træk` : T('Én tur om dagen giver fjer');
         }
+        renderEggs();
         const grid = document.getElementById('badge-grid');
         if (grid) {
             const badges = BertMeta.badgeList();
@@ -6731,6 +6744,55 @@
                 return el;
             }));
         }
+    }
+
+    function renderEggs() {
+        const section = document.getElementById('egg-section');
+        const status = BertMeta.eggStatus?.();
+        if (!section || !status) return;
+        section.classList.toggle('hidden', !status.open);
+        if (!status.open) return;
+        const catalog = BertHeroStore.catalog;
+        const name = (id) => catalog.find((hero) => hero.id === id)?.name || id;
+        const view = document.getElementById('egg-view');
+        const progress = document.getElementById('egg-progress');
+        const note = document.getElementById('egg-note');
+        const random = document.getElementById('egg-random');
+        const secure = document.getElementById('egg-secure');
+        const select = document.getElementById('egg-hero');
+        view.className = `egg-view ${status.incubating ? `stage-${status.incubating.stage}` : 'empty'}`;
+        if (status.incubating) {
+            const egg = status.incubating;
+            progress.textContent = T`${egg.progress}/${egg.need} STJERNER`;
+            note.textContent = egg.secured ? T`Ruger: ${name(egg.hero)}` : T('Ruger et tilfældigt æg. Saml stjerner, så klækker det.');
+        } else {
+            progress.textContent = status.remaining ? T('TOM') : T('ALLE KLÆKKET');
+            note.textContent = status.remaining ? T`${status.remaining} helte kan stadig klækkes` : T('Alle helte er klækket');
+        }
+        random.disabled = !status.canBuy;
+        random.textContent = T`TILFÆLDIGT ÆG · ${status.price} FJER`;
+        select.replaceChildren(...[...status.candidates.common, ...status.candidates.rare].map((id) => {
+            const option = document.createElement('option');
+            const rare = status.candidates.rare.includes(id);
+            option.value = id;
+            option.textContent = `${name(id)} · ${rare ? status.rareSecuredPrice : status.securedPrice} ${T('fjer')}${rare ? ` · ${T('sjælden')}` : ''}`;
+            return option;
+        }));
+        const chosen = select.value;
+        const securedCost = status.candidates.rare.includes(chosen) ? status.rareSecuredPrice : status.securedPrice;
+        secure.disabled = Boolean(status.incubating) || !status.remaining || BertMeta.snapshot().feathers < securedCost;
+        secure.textContent = T`SIKRET ÆG · ${securedCost} FJER`;
+        select.onchange = () => renderEggs();
+        random.onclick = () => {
+            const result = BertMeta.buyEgg(null);
+            if (result.ok) { playAudio('pop'); BertMeta.haptic('upgrade'); window.BertApp?.showToast(T('Et æg ligger i reden. Saml stjerner, så klækker det.')); }
+            updateMetaMenu();
+        };
+        secure.onclick = () => {
+            const result = BertMeta.buyEgg(select.value);
+            if (result.ok) { playAudio('pop'); BertMeta.haptic('upgrade'); window.BertApp?.showToast(T`Et sikret æg med ${name(select.value)} ligger i reden`); }
+            updateMetaMenu();
+        };
     }
 
     function renderMissions() {
