@@ -2113,7 +2113,8 @@ body.keyboard-open .name-card h2 { font-size: 20px; margin: 0 0 6px; }
 .result-medal img { width: 64px !important; height: 64px !important; object-fit: contain; }
 .challenge-button { display: inline-flex; align-items: center; gap: 8px; }
 .challenge-button img { width: 34px; height: 18px; object-fit: contain; }
-.result-kicker { background: url(assets/v2/ui/result-ribbon.webp) center / contain no-repeat; padding: 10px 70px; color: #1d3b5a !important; text-shadow: none !important; }
+.result-kicker { background: url(assets/v2/ui/result-ribbon.webp) center / 100% 100% no-repeat; display: inline-block; min-width: 300px;
+    padding: 12px 96px 14px; color: #1d3b5a !important; text-shadow: none !important; white-space: nowrap; box-sizing: border-box; }
 .loading { background: #8fd3ff url(assets/v2/ui/splash.webp) center / cover no-repeat !important; }
 .hero-wardrobe-card header { background: url(assets/v2/ui/wardrobe-header.webp) left center / auto 100% no-repeat; padding-left: 16px; }
 
