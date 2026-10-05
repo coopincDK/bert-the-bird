@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-81';
+    const BUILD_VERSION = 'worlds-relay-82';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -909,6 +909,7 @@
     }
 
     function sound(url, preload = 'auto') {
+        if (/assets\/sfx\//.test(url)) window.BertSfx?.load(url.replace(/^.*\/|\.mp3$/g, ''), url);
         const loaded = new Audio(url);
         loaded.preload = preload;
         return loaded;
@@ -1111,6 +1112,9 @@
         audio.tick = sound('assets/sfx/tick.mp3');
     }
 
+    // The first touch anywhere unlocks Web Audio on iPhone.
+    ['pointerdown', 'touchstart', 'keydown'].forEach((type) => window.addEventListener(type, () => window.BertSfx?.unlock(), { passive: true }));
+
     function primeFocusAudio() {
         if (focusAudioPrimed || !audio.focus || !BertMeta.settingEnabled('music')) return;
         if (typeof audio.focus.prime === 'function') {
@@ -1139,7 +1143,7 @@
                 clip.play().catch(() => {});
             } else if (typeof clip.playOnce === 'function') {
                 clip.playOnce();
-            } else if (name === 'explosion') {
+            } else if (name === 'explosion' && !window.BertSfx?.has('explosion')) {
                 // A missed star can end a streak repeatedly. Never clone the
                 // original 2.5-second explosion clip for every break.
                 if (!clip.paused && !clip.ended) return;
@@ -1147,6 +1151,8 @@
                 clip.volume = sfxVol();
                 clip.play().catch(() => {});
             } else {
+                const key = (clip.src || '').replace(/^.*\/|\.mp3.*$/g, '');
+                if (window.BertSfx?.play(key, sfxVol())) return;
                 const effect = clip.cloneNode();
                 effect.volume = sfxVol();
                 effect.play().catch(() => {});
@@ -3969,15 +3975,28 @@
         const menuDistance = state.worldTime * 220;
         const distance = ['playing', 'dead', 'gameover', 'relay-finish', 'world-finish'].includes(state.phase)
             ? state.worldDistance : menuDistance;
-        const offset = (distance * factor) % width;
-        for (let x = -width - offset; x < VIEW.width + width; x += width) {
-            ctx.drawImage(imageElement, x, y, width, height);
+        const offset = ((distance * factor) % width + width) % width;
+        // Only the visible part of each tile is drawn (at most two tiles), so the GPU
+        // never paints pixels outside the screen. This was the biggest cost per frame.
+        const scaleX = imageWidth / width;
+        for (let x = -offset; x < VIEW.width; x += width) {
+            const left = Math.max(0, x);
+            const right = Math.min(VIEW.width, x + width);
+            if (right <= left) continue;
+            ctx.drawImage(imageElement, (left - x) * scaleX, 0, (right - left) * scaleX, imageHeight, left, y, right - left, height);
         }
     }
 
+    // Read once a second instead of dozens of times per frame (matchMedia showed up in profiles).
+    let reducedMotionCache = false;
+    let reducedMotionReadAt = -Infinity;
     function prefersReducedMotion() {
-        // WebKit can keep an old MediaQueryList after accessibility settings change.
-        return Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+        const now = performance.now();
+        if (now - reducedMotionReadAt > 1000) {
+            reducedMotionReadAt = now;
+            reducedMotionCache = Boolean(window.matchMedia?.('(prefers-reduced-motion: reduce)').matches);
+        }
+        return reducedMotionCache;
     }
 
     function drawEDMBackground() {
@@ -5938,19 +5957,25 @@
         });
     }
 
+    let starHaloCache = null;
+    function starHaloSprite() {
+        if (starHaloCache) return starHaloCache;
+        const c = document.createElement('canvas'); c.width = c.height = 96;
+        const g = c.getContext('2d');
+        const halo = g.createRadialGradient(48, 48, 10, 48, 48, 46);
+        halo.addColorStop(0, 'rgba(255, 196, 40, .75)'); halo.addColorStop(1, 'rgba(255, 150, 0, 0)');
+        g.fillStyle = halo; g.beginPath(); g.arc(48, 48, 46, 0, Math.PI * 2); g.fill();
+        g.strokeStyle = 'rgba(27, 42, 68, .55)'; g.lineWidth = 3; g.beginPath(); g.arc(48, 48, 30, 0, Math.PI * 2); g.stroke();
+        starHaloCache = c;
+        return c;
+    }
+
     function drawCollectible(collectible) {
         ctx.save();
         ctx.translate(collectible.x, collectible.y);
         // Bright sky levels: a warm halo and a dark ring make stars pop off the clouds.
         if (collectible.kind === 'star' && ['skyRelay', 'birdRun', 'happySky'].includes(currentLevel.kind)) {
-            const halo = ctx.createRadialGradient(0, 0, 10, 0, 0, 46);
-            halo.addColorStop(0, 'rgba(255, 196, 40, .75)');
-            halo.addColorStop(1, 'rgba(255, 150, 0, 0)');
-            ctx.fillStyle = halo;
-            ctx.beginPath(); ctx.arc(0, 0, 46, 0, Math.PI * 2); ctx.fill();
-            ctx.strokeStyle = 'rgba(27, 42, 68, .55)';
-            ctx.lineWidth = 3;
-            ctx.beginPath(); ctx.arc(0, 0, 30, 0, Math.PI * 2); ctx.stroke();
+            ctx.drawImage(starHaloSprite(), -48, -48, 96, 96);
         }
         if (currentLevel.kind === 'tunnel' && collectible.kind === 'star' && assets.v2StarGate?.naturalWidth) {
             ctx.globalAlpha = 0.5;
@@ -6471,8 +6496,7 @@
             if (art?.naturalWidth) ctx.drawImage(art, x - size / 2, y - size / 2, size, size);
             if (t >= 1 && !fx.landed) {
                 fx.landed = true;
-                dom.score?.classList.remove('bump'); void dom.score?.offsetWidth; dom.score?.classList.add('bump');
-                playAudio('tick');
+                dom.score?.animate?.([{ transform: 'scale(1)' }, { transform: 'scale(1.25)' }, { transform: 'scale(1)' }], { duration: 220 });
             }
         });
         state.flyingPickups = state.flyingPickups.filter((fx) => fx.age < 0.5);
@@ -6534,8 +6558,9 @@
         stormline: { count: 22, color: 'rgba(120, 200, 90, .85)', size: [3, 5], vx: [-320, -180], vy: [-30, 50], shape: 'leaf', art: 'g4AmbLeaf' },
     };
     const CONFETTI_COLORS = ['rgba(255,110,220,.9)', 'rgba(90,230,255,.9)', 'rgba(255,230,90,.9)'];
+    const PERF_FLAGS = new URLSearchParams(location.search).get('perf') || '';
     function updateAmbient(delta) {
-        const cfg = AMBIENT[currentLevel.kind];
+        const cfg = PERF_FLAGS.includes('noamb') ? null : AMBIENT[currentLevel.kind];
         if (!cfg || prefersReducedMotion()) { state.ambient = []; return; }
         state.ambient ||= [];
         const spawn = () => {
@@ -7327,9 +7352,13 @@
         state.orientationAudio = null;
     }
 
+    let orientationDirty = true;
+    window.addEventListener('resize', () => { orientationDirty = true; });
+    window.visualViewport?.addEventListener('resize', () => { orientationDirty = true; });
+    window.addEventListener('orientationchange', () => { orientationDirty = true; });
     function loop(now) {
         requestAnimationFrame(loop);
-        syncOrientationPause();
+        if (orientationDirty) { orientationDirty = false; syncOrientationPause(); }
         const delta = Math.min((now - lastFrame) / 1000, FIXED_STEP * MAX_SIMULATION_STEPS);
         lastFrame = now;
         if (!state.orientationPaused && !document.hidden) {
