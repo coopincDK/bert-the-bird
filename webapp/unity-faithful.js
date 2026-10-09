@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-82';
+    const BUILD_VERSION = 'worlds-relay-83';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -49,6 +49,7 @@
         // Forstør: Bert grows (harder to slip through, double points). Formindsk: Bert shrinks.
         GROW: 'Grow', SHRINK: 'Shrink' });
     const SIZE_POWERUP = Object.freeze({ Grow: 1.45, Shrink: 0.6 });
+    const BIRD_DRAW_SCALE = 1.15;
     // Omvendt styring: op er ned, og i flappy-styring flyver Bert på hovedet.
     const REVERSE_SECONDS = 7;
     const isReversed = () => state.activePowerup === POWERUP.REVERSE;
@@ -1269,6 +1270,48 @@
         window.BertApp?.leaveGameMode();
     }
 
+    // Eventyr as a map (feedback 9. okt., "like Mario"): the six worlds are stops on the
+    // painted islands, joined by the dotted flight path. Each stop shows its medal or lock;
+    // tapping it does exactly what tapping the world's card does.
+    const MAP_STOPS = Object.freeze({ 21: [48.8, 22], 22: [84.8, 25.7], 24: [50.4, 75], 23: [16.8, 74], 20: [16.4, 26], 25: [86, 75.7] });
+    function renderWorldMap(show) {
+        let map = document.getElementById('world-map');
+        if (!show) { map?.remove(); return; }
+        if (!map) {
+            map = document.createElement('div');
+            map.id = 'world-map';
+            map.className = 'world-map';
+            dom.levelGrid.prepend(map);
+        }
+        map.replaceChildren();
+        const pin = document.createElement('img');
+        pin.className = 'map-pin'; pin.src = 'assets/v2/g4/map/pin.webp'; pin.alt = '';
+        let pinPlaced = false;
+        ADVENTURE_LEVELS.slice().sort((a, b) => a.modeOrder - b.modeOrder).forEach((level) => {
+            const [left, top] = MAP_STOPS[level.id] || [50, 50];
+            const status = adventureStatus(level);
+            const best = loadHighscore(level.id);
+            const medal = best >= 100 ? 'gold' : best >= 50 ? 'silver' : best >= 20 ? 'bronze' : '';
+            const stop = document.createElement('button');
+            stop.type = 'button';
+            stop.className = `map-stop${status.unlocked ? '' : ' locked'}${medal ? ` medal-${medal}` : ''}`;
+            stop.style.left = `${left}%`;
+            stop.style.top = `${top}%`;
+            stop.setAttribute('aria-label', `${level.name}${status.unlocked ? '' : ` · ${status.short}`}`);
+            stop.innerHTML = `<b>${level.modeOrder}</b><span>${level.name}</span>${status.unlocked
+                ? (medal ? `<img src="${['assets/v2/ui/medal', medal].join('-')}.webp" alt="">` : '')
+                : `<small><img src="assets/adventure/ui/lock.webp" alt="">${status.short}</small>`}`;
+            stop.addEventListener('click', () => dom.levelGrid.querySelector(`.level-card[data-level-id="${level.id}"]`)?.click());
+            map.appendChild(stop);
+            // "Du er her": the newest open world without a medal yet.
+            if (!pinPlaced && status.unlocked && !medal) {
+                pin.style.left = `${left + 4}%`; pin.style.top = `${top - 4}%`;
+                map.appendChild(pin);
+                pinPlaced = true;
+            }
+        });
+    }
+
     function selectGameMode(mode = 'classic') {
         const selectedMode = ['classic', 'flappy', 'tunnel', 'adventure'].includes(mode) ? mode : 'classic';
         document.querySelectorAll('.mode-tab').forEach((button) => {
@@ -1279,6 +1322,7 @@
             button.tabIndex = selected ? 0 : -1;
         });
         dom.levelGrid.dataset.mode = selectedMode;
+        renderWorldMap(selectedMode === 'adventure');
         dom.levelGrid.querySelectorAll('.level-card').forEach((card) => {
             const hidden = card.dataset.mode !== selectedMode;
             card.classList.toggle('mode-hidden', hidden);
@@ -1321,6 +1365,7 @@
             button.dataset.mode = level.modeGroup === 'event' ? 'adventure' : modeForLevel(level);
             button.dataset.variant = level.variant;
             button.dataset.levelId = String(level.id);
+            button.dataset.group = level.modeGroup || 'base';
             const thumbnail = `assets/unity/ui/previews/level-${level.id}.webp`;
             button.innerHTML = `
                 <img class="level-thumb" data-src="${thumbnail}" alt="" decoding="async">
@@ -2999,7 +3044,8 @@
             : [POWERUP.SHIELD, POWERUP.MAGNET, POWERUP.FOCUS,
                 // Mixed blessings: Tung and Flappy-styring make it harder,
                 // Hyperfart is risky, Point x2 is a bonus. From 20 s in.
-                ...(state.elapsed >= 20 ? [POWERUP.HEAVY, POWERUP.HYPER, POWERUP.DOUBLE, POWERUP.REVERSE, POWERUP.GROW, POWERUP.SHRINK,
+                // Omvendt styring removed (feedback 9. okt.: the only purely negative one).
+                ...(state.elapsed >= 20 ? [POWERUP.HEAVY, POWERUP.HYPER, POWERUP.DOUBLE, POWERUP.GROW, POWERUP.SHRINK,
                     ...(currentLevel.mode === MODE.FLAPPY ? [] : [POWERUP.FLAP])] : [])]
                 .filter((type) => (state.powerupReadyAt[type] ?? 0) <= state.elapsed);
         const guardAvailable = !experimental && state.elapsed >= 30 && state.streakGuardCharges === 0 && state.powerupReadyAt.Guard <= state.elapsed;
@@ -3052,7 +3098,7 @@
             ? BertTunnel.profileAt(state.worldDistance + x, state.difficulty, currentLevel.variant).center
             : motion.baseY;
         return { x, y: BertCollectibleMotion.yAt(motion, 0, corridor),
-            width: 96, height: 92, kind: 'powerup', type,
+            width: 124, height: 120, kind: 'powerup', type,
             spin: 0, age: 0, motion, collected: false };
     }
 
@@ -3979,11 +4025,14 @@
         // Only the visible part of each tile is drawn (at most two tiles), so the GPU
         // never paints pixels outside the screen. This was the biggest cost per frame.
         const scaleX = imageWidth / width;
-        for (let x = -offset; x < VIEW.width; x += width) {
+        // Whole-pixel positions and a 1 px overlap between tiles: no flicker at the seams.
+        const start = -Math.round(offset);
+        for (let x = start; x < VIEW.width; x += width) {
             const left = Math.max(0, x);
-            const right = Math.min(VIEW.width, x + width);
+            const right = Math.min(VIEW.width, x + width + 1);
             if (right <= left) continue;
-            ctx.drawImage(imageElement, (left - x) * scaleX, 0, (right - left) * scaleX, imageHeight, left, y, right - left, height);
+            const sw = Math.min(imageWidth - (left - x) * scaleX, (right - left) * scaleX);
+            ctx.drawImage(imageElement, (left - x) * scaleX, 0, sw, imageHeight, left, Math.round(y), sw / scaleX, height);
         }
     }
 
@@ -5957,6 +6006,24 @@
         });
     }
 
+    // A soft haze over the scenery (not over obstacles, stars or Bert): the background
+    // loses a little contrast and the action in front stands out (feedback 9. okt.).
+    const DEPTH_HAZE = {
+        desert: 'rgba(255, 238, 200, .16)', jungle: 'rgba(210, 245, 225, .16)', happySky: 'rgba(235, 248, 255, .16)',
+        flappy: 'rgba(235, 245, 255, .14)', tunnel: 'rgba(10, 18, 40, .22)', birdRun: 'rgba(235, 248, 255, .16)',
+        skyRelay: 'rgba(235, 248, 255, .14)', stormline: 'rgba(225, 235, 245, .16)', edm: 'rgba(12, 6, 30, .2)',
+        iceberg: 'rgba(235, 248, 255, .16)', harbor: 'rgba(230, 242, 250, .16)', nightcity: 'rgba(8, 14, 34, .2)',
+        volcano: 'rgba(40, 18, 18, .16)', windfarm: 'rgba(235, 248, 255, .14)', poop: 'rgba(240, 245, 250, .14)',
+    };
+    function drawDepthHaze() {
+        const color = DEPTH_HAZE[currentLevel.kind];
+        if (!color || state.phase === 'menu' || state.phase === 'levels') return;
+        ctx.save();
+        ctx.fillStyle = color;
+        ctx.fillRect(0, 0, VIEW.width, VIEW.height);
+        ctx.restore();
+    }
+
     let starHaloCache = null;
     function starHaloSprite() {
         if (starHaloCache) return starHaloCache;
@@ -6045,6 +6112,7 @@
             if (assets.goldFeather?.naturalWidth) ctx.drawImage(assets.goldFeather, -34, -34, 68, 68);
             else if (assets.feather?.naturalWidth) ctx.drawImage(assets.feather, -30, -27, 60, 54);
         } else if (collectible.kind === 'powerup') {
+            ctx.scale(1.3, 1.3); // bigger and readable on a phone (feedback 9. okt.)
             const prototypeArt = {
                 [POWERUP.HEAVY]: 'eventMetal', [POWERUP.HYPER]: 'eventHyper',
                 [POWERUP.DOUBLE]: 'eventDouble', [POWERUP.FLAP]: 'eventFlap',
@@ -6210,7 +6278,9 @@
         const hero = BertMeta.currentHero();
         ctx.save();
         ctx.translate(bird.x + BIRD.width / 2, bird.y + BIRD.height / 2);
-        if (state.birdScale && state.birdScale !== 1) ctx.scale(state.birdScale, state.birdScale);
+        // Bert is drawn 15 % larger (feedback: too small on phones); see BIRD_DRAW_SCALE.
+        const drawScale = BIRD_DRAW_SCALE * (state.birdScale || 1);
+        ctx.scale(drawScale, drawScale);
         if (!dead && state.phase === 'playing' && !prefersReducedMotion()) {
             // Squash & stretch: a touch wider when climbing, a touch taller when diving.
             const k = clamp(bird.velocity / 900, -0.1, 0.1);
@@ -6407,6 +6477,7 @@
             ctx.translate((Math.random() - 0.5) * amp, (Math.random() - 0.5) * amp);
         }
         drawBackground();
+        drawDepthHaze();
         drawAmbient();
         drawRelayCourse();
         obstacles.forEach(drawObstacle);
@@ -7359,23 +7430,20 @@
     function loop(now) {
         requestAnimationFrame(loop);
         if (orientationDirty) { orientationDirty = false; syncOrientationPause(); }
+        // Smooth motion (feedback 9. okt.: frames felt "set back"). The game advances by
+        // exactly the time since the last drawn frame, split into small steps, so every
+        // drawn frame shows the same amount of movement. A fixed 1/60 step with jittery
+        // frame timing sometimes advanced 0 or 2 steps per frame, which reads as stutter.
+        const shouldRender = lastRender === 0 || now - lastRender >= RENDER_INTERVAL - 0.75;
+        if (!shouldRender) return;
         const delta = Math.min((now - lastFrame) / 1000, FIXED_STEP * MAX_SIMULATION_STEPS);
         lastFrame = now;
         if (!state.orientationPaused && !document.hidden) {
-            simulationAccumulator = Math.min(
-                simulationAccumulator + delta,
-                FIXED_STEP * MAX_SIMULATION_STEPS,
-            );
-            let steps = 0;
-            while (simulationAccumulator >= FIXED_STEP && steps < MAX_SIMULATION_STEPS) {
-                update(FIXED_STEP);
-                simulationAccumulator -= FIXED_STEP;
-                steps += 1;
-            }
-        } else {
-            simulationAccumulator = 0;
+            const steps = Math.max(1, Math.ceil(delta / FIXED_STEP - 0.01));
+            for (let step = 0; step < steps; step += 1) update(delta / steps);
         }
-        if (lastRender === 0 || now - lastRender >= RENDER_INTERVAL - 0.75) {
+        simulationAccumulator = 0;
+        if (shouldRender) {
             render();
             lastRender = now;
             updateHudClearance();

@@ -10,7 +10,8 @@ vm.runInContext(fs.readFileSync('webapp/unity-collision.js', 'utf8'), context);
 const collision = context.window.BertCollision;
 
 const bird = collision.bertCollider({ x: 185, y: 300, rotation: 0 }, { width: 124, height: 113 });
-assert(Math.abs(bird.radius - 31.3131) < 0.02, `Unexpected Unity-scaled radius: ${bird.radius}`);
+// Bert is drawn 15 % larger since 9. okt.; the hit circle grew 8 % with him.
+assert(Math.abs(bird.radius - 31.3131 * 1.08) < 0.02, `Unexpected Unity-scaled radius: ${bird.radius}`);
 assert(Math.abs(bird.x - 247) < 0.001, `Unexpected collider x: ${bird.x}`);
 assert(Math.abs(bird.y - 365.546) < 0.03, `Unexpected collider y offset: ${bird.y}`);
 

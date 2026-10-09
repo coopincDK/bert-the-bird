@@ -66,7 +66,7 @@
             x: bird.x + birdDisplay.width / 2 + localOffset.x,
             y: bird.y + birdDisplay.height / 2 + localOffset.y,
             // Forstør/Formindsk scale the hit circle with the drawn bird.
-            radius: BERT_SOURCE.liveRadius * pixelsPerWorldUnit * ((typeof window !== 'undefined' && window.BertSizeScale) || 1),
+            radius: BERT_SOURCE.liveRadius * pixelsPerWorldUnit * 1.08 * ((typeof window !== 'undefined' && window.BertSizeScale) || 1),
         };
     }
 
