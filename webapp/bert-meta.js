@@ -300,6 +300,7 @@
             hero: String(run.hero || data.hero || 'bert'),
             improved: run.improved === true,
             diedBig: run.diedBig === true,
+            nearMisses: Math.max(0, Math.floor(Number(run.nearMisses) || 0)),
         };
         data.totalStars += stars;
         data.runCount += 1;
@@ -693,6 +694,44 @@
         { id: 'h-bonk', label: T('Bonk-serie: 5 styrt på 2 minutter'), test: (r) => r.length >= 5 && (new Date(r[0].createdAt) - new Date(r[4].createdAt)) < 120000 && r.slice(0, 5).every((x) => x.time < 20) },
         { id: 'h-spiderfriend', label: T('Edderkoppens ven: fanget 10 gange'), test: () => (data.counters.causes['jungle-spider'] || 0) >= 10 },
     ];
+    // Turbedrifter (feedback 10. okt.): things you do in ONE run.
+    const RUN_FEATS = [
+        { id: 't-heart', label: T('Hjertet i halsen: 10 nærdødsoplevelser på én tur'), test: (r) => r.some((x) => x.nearMisses >= 10) },
+        { id: 't-heart25', label: T('Dødsforagt: 25 nærdødsoplevelser på én tur'), test: (r) => r.some((x) => x.nearMisses >= 25) },
+        { id: 't-short', label: T('Kort og godt: 20 point på under 20 sekunder'), test: (r) => r.some((x) => x.score >= 20 && x.time < 20) },
+        { id: 't-vacuum', label: T('Stjernestøvsuger: 50 stjerner på én tur'), test: (r) => r.some((x) => x.stars >= 50) },
+        { id: 't-power', label: T('Power-samler: 5 power-ups på én tur'), test: (r) => r.some((x) => x.powerups >= 5) },
+        { id: 't-comeback', label: T('Comeback: brug et redningsliv, og slå din rekord'), test: (r) => r.some((x) => x.rescueUsed && x.improved) },
+        { id: 't-five', label: T('Stabil: 5 ture i træk over 50 point'), test: (r) => r.length >= 5 && r.slice(0, 5).every((x) => x.score >= 50) },
+        { id: 't-tourist', label: T('Turist: 6 forskellige baner på én dag'), test: (r) => {
+            const byDay = {};
+            r.forEach((x) => { const d = String(x.createdAt).slice(0, 10); (byDay[d] ||= new Set()).add(x.levelId); });
+            return Object.values(byDay).some((set) => set.size >= 6);
+        } },
+        { id: 't-pure', label: T('Ren luft: 100 point uden power-ups og redning'), test: (r) => r.some((x) => x.score >= 100 && !x.powerups && !x.rescueUsed) },
+        { id: 't-long', label: T('Udholdende: 4 minutter på én tur'), test: (r) => r.some((x) => x.time >= 240) },
+        { id: 't-double', label: T('Dobbelt op: slå din rekord to gange samme dag'), test: (r) => {
+            const byDay = {};
+            r.filter((x) => x.improved).forEach((x) => { const d = String(x.createdAt).slice(0, 10); byDay[d] = (byDay[d] || 0) + 1; });
+            return Object.values(byDay).some((n) => n >= 2);
+        } },
+        { id: 't-allround', label: T('Allround: bronze på en Classic-, en Flappy- og en Tunnel-bane samme dag'), test: (r) => {
+            const byDay = {};
+            r.filter((x) => x.score >= 20).forEach((x) => { const d = String(x.createdAt).slice(0, 10); (byDay[d] ||= new Set()).add([1, 4, 5].includes(x.levelId) ? 'c' : [3, 6, 7].includes(x.levelId) ? 'f' : [2, 8, 9].includes(x.levelId) ? 't' : ''); });
+            return Object.values(byDay).some((set) => set.has('c') && set.has('f') && set.has('t'));
+        } },
+    ];
+    /** How this run compares with your own earlier runs on the same level. */
+    function runInsights(levelId, score) {
+        const runs = data.runs.filter((x) => x.levelId === levelId);
+        const scores = runs.map((x) => x.score);
+        const total = scores.length;
+        const better = scores.filter((v) => v < score).length;
+        const rank = scores.filter((v) => v > score).length + 1;
+        const average = total ? scores.reduce((a, b) => a + b, 0) / total : 0;
+        return { total, rank, average, percentBetter: total > 1 ? Math.round(better / (total - 1) * 100) : 100 };
+    }
+
     function challengeBook() {
         const claims = data.challengeClaims.book || {};
         const row = (entry, kind, reward) => {
@@ -705,11 +744,12 @@
             milestones: MILESTONES.map((entry, index) => row(entry, 'milestone', 10 + Math.floor(index % 8) * 5)),
             mastery: MASTERY.map((entry) => row(entry, 'mastery', entry.id.endsWith('pure') ? 25 : entry.id.endsWith('200') ? 20 : 12)),
             hidden: HIDDEN.map((entry) => row(entry, 'hidden', 25)),
+            runs: RUN_FEATS.map((entry) => row(entry, 'run', 20)),
         };
     }
     function claimBook(id) {
         const book = challengeBook();
-        const entry = [...book.milestones, ...book.mastery, ...book.hidden].find((item) => item.id === id);
+        const entry = [...book.milestones, ...book.mastery, ...book.hidden, ...book.runs].find((item) => item.id === id);
         if (!entry || !entry.complete || entry.claimed) return { ok: false };
         data.challengeClaims.book ||= {};
         data.challengeClaims.book[id] = Date.now();
@@ -977,7 +1017,7 @@
         addFeathers, hasPlayerName, hasTestAccess, hasOpMode, settingValue, nameAllowed,
         NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
         EGG_TIERS, eggStatus, buyEgg, incubate, grantFoundEgg, starterChoice, chooseStarter,
-        weeklyChallenges, claimWeekly, challengeBook, claimBook, nearestChallenge, flokStatus, useFlokLife, buyFlokLife,
+        weeklyChallenges, claimWeekly, challengeBook, claimBook, nearestChallenge, runInsights, flokStatus, useFlokLife, buyFlokLife,
         /** Weekly bonus level: first bronze, silver and gold each week pay 10, 20 and 40 feathers. */
         claimBonusWeek(week, score) {
             const done = (data.bonusWeeks[week] ||= {});

@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-116';
+    const BUILD_VERSION = 'worlds-relay-117';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2086,6 +2086,7 @@
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
         state.runFeathers = 0;
+        state.nearMisses = 0;
         state.stickersShown = {};
         state.swarm = [];
         state.imageFx = [];
@@ -3940,6 +3941,7 @@
             hero: BertMeta.currentHero(),
             improved: Boolean(improved && state.score > 0),
             diedBig: state.activePowerup === POWERUP.GROW,
+            nearMisses: state.nearMisses || 0,
         });
         const player = BertMeta.snapshot().player;
         if (!isEventLevel() && !opRun) BertSocial.submitScore({
@@ -4034,11 +4036,44 @@
         setVisible(dom.gameOver, true);
         revealResult(improved && state.score > 0);
         settleNest(opRun);
+        showRunHighlights(improved && !opRun, record);
         if (!opRun && currentLevel.id === weeklyBonusId()) {
             const reward = BertMeta.claimBonusWeek?.(String(weekNumber()), state.score);
             if (reward?.feathers) setTimeout(() => window.BertApp?.showToast(T`Ugens bonus: +${reward.feathers} fjer til reden`), 2600);
         }
         maybeOfferStarter();
+    }
+
+    // Turens højdepunkter (feedback 10. okt.): a short, always positive summary of the run.
+    // Comparisons are with your own runs for now; with the server they become "of all players".
+    function showRunHighlights(newRecord, record) {
+        const box = document.getElementById('result-highlights');
+        if (!box) return;
+        const score = state.score;
+        const insight = BertMeta.runInsights?.(currentLevel.id, score) || { total: 0 };
+        const lines = [];
+        if (newRecord && record?.score > 0) lines.push(['🏆', T`Ny rekord på ${currentLevel.name}!`]);
+        else if (insight.total >= 3 && insight.rank <= 3) lines.push(['🥇', T`Din ${insight.rank}. bedste tur ud af ${insight.total} her`]);
+        else if (insight.total >= 4 && insight.percentBetter >= 50) lines.push(['📈', T`Bedre end ${insight.percentBetter} % af dine ture her`]);
+        if ((state.nearMisses || 0) >= 3) lines.push(['😱', T`${state.nearMisses} nærdødsoplevelser`]);
+        if (state.bestStreak >= 8) lines.push(['🔥', T`Længste stjernerække: x${state.bestStreak}`]);
+        if ((state.runPowerups || 0) >= 2) lines.push(['⚡', T`${state.runPowerups} power-ups taget`]);
+        if (state.elapsed >= 60) lines.push(['⏱️', T`I luften i ${formatTime(state.elapsed)}`]);
+        if ((state.runFeathers || 0) > 0) lines.push(['🪶', T`${state.runFeathers} gyldne fjer fundet`]);
+        if (state.swarm?.length) lines.push(['🐦', T`${state.swarm.length} fugle i flokken til sidst`]);
+        // Encouragement, never "you are bad".
+        if (!lines.length || (insight.total >= 4 && score < insight.average * 0.6)) {
+            lines.push(['💪', score < 5 ? T('Det kan kun gå fremad herfra. Prøv at holde dig midt på skærmen.')
+                : T`Dit snit her er ${Math.round(insight.average)}. Næste tur sidder den!`]);
+        }
+        box.replaceChildren(...lines.slice(0, 4).map(([icon, text], i) => {
+            const li = document.createElement('li');
+            li.style.animationDelay = `${0.9 + i * 0.25}s`;
+            li.innerHTML = `<span>${icon}</span>`;
+            li.append(document.createTextNode(text));
+            return li;
+        }));
+        box.classList.remove('hidden');
     }
 
     // Starter heroes: after 10, 20, 30 and 40 flights the player picks one.
@@ -6785,6 +6820,8 @@
         const close = obstacles.some((o) => o.harmful && o.x > bx - 20 && o.x < bx + 120 && by > (o.y ?? 0) - 70 && by < (o.y ?? 0) + (o.height || o.size || 0) + 70);
         if (close) {
             if (state.elapsed >= (state.scaredUntil || 0) + 2.5 && state.phase === 'playing') playAudio('bert_whoa');
+            // A new close call (not the same one continuing) counts as a near miss.
+            if (state.phase === 'playing' && state.elapsed > (state.scaredUntil || 0) + 0.2) state.nearMisses = (state.nearMisses || 0) + 1;
             state.scaredUntil = state.elapsed + 0.35;
         }
     }

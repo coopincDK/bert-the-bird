@@ -2772,3 +2772,16 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .intro-medal { width: 20px; height: 20px; }
 .intro-medal[hidden] { display: none; }
 @media (max-height: 430px) { .intro-control { width: 92px; } .level-intro { padding-top: 30px !important; padding-bottom: 8px !important; } .intro-start { margin-top: 6px !important; } }
+
+/* Turens højdepunkter på resultatskærmen */
+.result-highlights { list-style: none; margin: 6px auto 0; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; gap: 6px; max-width: 760px; }
+.result-highlights.hidden { display: none; }
+.result-highlights li { display: flex; align-items: center; gap: 6px; padding: 5px 10px; border-radius: 12px; background: rgba(8,20,32,.82); color: #fff;
+    font-size: 12px; font-weight: 800; opacity: 0; animation: hl-in .35s ease-out forwards; }
+.result-highlights li span { font-size: 15px; }
+@keyframes hl-in { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .result-highlights li { animation: none; opacity: 1; } }
+.book-tab[data-book="runs"]::before { background-image: url(assets/v2/g6/ui/challenge-hard.webp); }
+#game-over .result-highlights { grid-column: 1 / -1 !important; width: 100%; max-width: 760px; justify-self: center; margin: 4px auto 2px !important; }
+#game-over .result-highlights li { font-size: 11px; padding: 4px 9px; }
+#game-over #result-progress { display: -webkit-box !important; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 11px !important; }
