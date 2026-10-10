@@ -2508,3 +2508,20 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .level-grid[data-mode="adventure"] { grid-template-columns: auto minmax(0, 1fr) !important; justify-content: stretch !important; }
 .level-grid[data-mode="adventure"] .level-card[data-group="event"] { width: 100% !important; }
 .level-grid[data-mode="adventure"] .level-card[data-group="event"] .level-card-title { font-size: 13px !important; white-space: nowrap !important; }
+
+/* Udfordringer i reden */
+.mission-row[data-difficulty]::before { content: ''; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; display: inline-block; flex: 0 0 8px; }
+.mission-row[data-difficulty="easy"]::before { background: #7ee36b; }
+.mission-row[data-difficulty="medium"]::before { background: #ffd23b; }
+.mission-row[data-difficulty="hard"]::before { background: #ff5a73; }
+.book-tabs { display: flex; gap: 6px; margin-bottom: 6px; }
+.book-tab { flex: 1; border: 2px solid rgba(255,255,255,.2); background: rgba(255,255,255,.06); color: #fff; border-radius: 10px; padding: 6px; font-weight: 900; font-size: 11px; letter-spacing: .08em; cursor: pointer; }
+.book-tab small { display: block; color: #ffd98a; font-size: 10px; }
+.book-tab.selected { border-color: #b6ff3b; background: rgba(182,255,59,.15); }
+.book-list { max-height: none !important; }
+
+/* Resultat: FLYV IGEN stor og i midten, SKIFT BANE og UDFORDR små (feedback 10. okt.) */
+.result-actions { display: flex !important; justify-content: center; align-items: center; gap: 12px; }
+.result-actions button:first-child { min-width: 240px; min-height: 64px; font-size: 26px !important; order: 2; }
+.result-actions button:not(:first-child) { min-height: 48px; font-size: 14px !important; order: 1; }
+.challenge-button { transform: scale(.85); }

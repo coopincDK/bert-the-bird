@@ -23,6 +23,8 @@
         badges: {},
         stats: { deaths: 0, feathersEver: 0, bestPoopStreak: 0, relayPerfect: 0 },
         eggs: { bought: 0, incubating: null, hatched: [] },
+        challengeClaims: {},
+        counters: { causes: {}, heroesFlown: {}, levelRuns: {} },
         economy: { continueSpins: 0, revivesWon: 0, feathersSpent: 0 },
         settings: { music: true, sfx: true, haptics: true, lights: true, musicVolume: 0.7, sfxVolume: 0.7 },
         daily: {},
@@ -85,6 +87,8 @@
                 badges: stored.badges && typeof stored.badges === 'object' ? stored.badges : {},
                 stats: { ...DEFAULTS.stats, ...(stored.stats || {}) },
                 eggs: { ...DEFAULTS.eggs, ...(stored.eggs || {}) },
+                challengeClaims: stored.challengeClaims && typeof stored.challengeClaims === 'object' ? stored.challengeClaims : {},
+                counters: { causes: {}, heroesFlown: {}, levelRuns: {}, ...(stored.counters || {}) },
                 economy: { ...DEFAULTS.economy, ...(stored.economy || {}) },
                 settings: { ...DEFAULTS.settings, ...(stored.settings || {}) },
                 daily: stored.daily && typeof stored.daily === 'object' ? stored.daily : {},
@@ -272,9 +276,19 @@
             time: Math.max(0, Number(run.time) || 0),
             stars,
             rescueUsed: run.rescueUsed === true,
+            powerups: Math.max(0, Math.floor(Number(run.powerups) || 0)),
+            feathers: Math.max(0, Math.floor(Number(run.feathers) || 0)),
+            maxNoStar: Math.max(0, Number(run.maxNoStar) || 0),
+            cause: String(run.cause || ''),
+            hero: String(run.hero || data.hero || 'bert'),
+            improved: run.improved === true,
+            diedBig: run.diedBig === true,
         };
         data.totalStars += stars;
         data.runCount += 1;
+        data.counters.levelRuns[normalized.levelId] = (data.counters.levelRuns[normalized.levelId] || 0) + 1;
+        data.counters.heroesFlown[normalized.hero] = true;
+        if (normalized.cause) data.counters.causes[normalized.cause] = (data.counters.causes[normalized.cause] || 0) + 1;
         data.runs.unshift(normalized);
         data.runs = data.runs.slice(0, 200);
         if (run.dailyKey && normalized.score >= Number(run.dailyTarget)) {
@@ -317,18 +331,20 @@
             .map((run, index) => ({ rank: index + 1, playerName: data.player.name || 'Dig', ...run }));
     }
 
-    function missions(date = new Date()) {
+    let lastOpenLevels = [1];
+    function missions(date = new Date(), openLevels = lastOpenLevels) {
+        lastOpenLevels = openLevels && openLevels.length ? openLevels : lastOpenLevels;
         const key = dayKey(date);
         const runs = data.runs.filter((run) => String(run.createdAt).slice(0, 10) === key);
-        const stars = runs.reduce((sum, run) => sum + run.stars, 0);
-        const seconds = runs.reduce((sum, run) => sum + run.time, 0);
-        const streak = runs.reduce((best, run) => Math.max(best, run.streak), 0);
         const claimed = data.missionClaims[key] || {};
         const dailyRouteComplete = Boolean(data.daily[key]);
+        const picked = pickThree(dailyPool(lastOpenLevels.filter((id) => id < 20 || data.achievements.bestScores[id] != null)), key);
         return [
-            { id: 'food', label: T('Saml 20 stjerner til reden'), value: Math.min(stars, 20), target: 20, reward: 8, complete: stars >= 20, claimed: Boolean(claimed.food) },
-            { id: 'flight', label: T('Flyv samlet i 3 minutter'), value: Math.min(Math.floor(seconds), 180), target: 180, reward: 12, complete: seconds >= 180, claimed: Boolean(claimed.flight) },
-            { id: 'streak', label: T('Nå en streak på 12'), value: Math.min(streak, 12), target: 12, reward: 15, complete: streak >= 12, claimed: Boolean(claimed.streak) },
+            ...picked.map((entry) => {
+                const value = entry.value(runs);
+                return { id: entry.id, label: entry.label, value: Math.min(value, entry.target), target: entry.target, reward: DIFF_REWARD[entry.diff],
+                    difficulty: entry.diff, complete: value >= entry.target, claimed: Boolean(claimed[entry.id]) };
+            }),
             { id: 'route', label: T('Klar dagens rute'), value: dailyRouteComplete ? 1 : 0, target: 1, reward: 10, complete: dailyRouteComplete, claimed: Boolean(claimed.route) },
         ];
     }
@@ -552,6 +568,148 @@
         return hero;
     }
 
+    // ---------- Udfordringer (feedback 10. okt.): many more, and harder ----------
+    // Daily: 3 a day from a pool of ~55 (one easy, one medium, one hard) + the daily route.
+    // Weekly: 3 a week. Milestones (42), mastery per level (45) and hidden ones (15) live
+    // in the nest. Everything is judged from the run log, so nothing needs a server.
+    function seeded(seed) { let x = seed % 2147483647 || 1; return () => (x = (x * 48271) % 2147483647) / 2147483647; }
+    function keySeed(key) { return [...key].reduce((sum, ch) => (sum * 31 + ch.charCodeAt(0)) % 2147483647, 7); }
+    const LEVEL_NAMES = { 1: 'Desert', 2: 'Tunnel', 3: 'Flappy Bert', 4: 'Jungle', 5: 'Happy Sky', 6: 'Sky Shift', 7: 'Flappy 3', 8: 'Tunnel 2', 9: 'Tunnel 3',
+        20: T('Isbjerget'), 21: T('Havnen'), 22: T('Nattebyen'), 23: T('Vulkanen'), 24: T('Vindmøller'), 25: 'Fugleklat' };
+    function runsSince(start) { return data.runs.filter((run) => new Date(run.createdAt).getTime() >= start); }
+    function sum(runs, field) { return runs.reduce((total, run) => total + (Number(run[field]) || 0), 0); }
+    function best(runs, field) { return runs.reduce((top, run) => Math.max(top, Number(run[field]) || 0), 0); }
+    const DIFF_REWARD = { easy: 6, medium: 10, hard: 18 };
+    function dailyPool(openLevels) {
+        const pool = [];
+        const add = (id, diff, label, target, value) => pool.push({ id, diff, label, target, value });
+        [[20, 'easy'], [45, 'medium'], [90, 'hard']].forEach(([n, d]) => add(`stars${n}`, d, T`Saml ${n} stjerner i dag`, n, (r) => sum(r, 'stars')));
+        [[120, 'easy'], [300, 'medium'], [600, 'hard']].forEach(([n, d]) => add(`time${n}`, d, T`Flyv ${Math.round(n / 60)} minutter i alt i dag`, n, (r) => Math.floor(sum(r, 'time'))));
+        [[8, 'easy'], [15, 'medium'], [25, 'hard']].forEach(([n, d]) => add(`streak${n}`, d, T`Nå en streak på ${n}`, n, (r) => best(r, 'streak')));
+        [[3, 'easy'], [7, 'medium'], [15, 'hard']].forEach(([n, d]) => add(`runs${n}`, d, T`Flyv ${n} ture i dag`, n, (r) => r.length));
+        [[40, 'easy'], [120, 'medium'], [300, 'hard']].forEach(([n, d]) => add(`score${n}`, d, T`Få ${n} point på én tur`, n, (r) => best(r, 'score')));
+        [[2, 'easy'], [5, 'medium'], [10, 'hard']].forEach(([n, d]) => add(`pu${n}`, d, T`Tag ${n} power-ups i dag`, n, (r) => sum(r, 'powerups')));
+        [[45, 'easy'], [90, 'medium'], [180, 'hard']].forEach(([n, d]) => add(`long${n}`, d, T`Flyv ${n} sekunder på én tur`, n, (r) => Math.floor(best(r, 'time'))));
+        add('clean40', 'medium', T('Få 40 point uden redningsliv'), 40, (r) => best(r.filter((x) => !x.rescueUsed), 'score'));
+        add('clean80', 'hard', T('Få 80 point uden redningsliv'), 80, (r) => best(r.filter((x) => !x.rescueUsed), 'score'));
+        add('feather1', 'medium', T('Find en gylden fjer i en bane'), 1, (r) => sum(r, 'feathers'));
+        add('nopower60', 'hard', T('Få 60 point uden at tage en power-up'), 60, (r) => best(r.filter((x) => !x.powerups), 'score'));
+        openLevels.forEach((levelId) => {
+            const name = LEVEL_NAMES[levelId] || `#${levelId}`;
+            add(`lvl${levelId}b`, 'easy', T`Bronze i ${name} i dag`, 20, (r) => best(r.filter((x) => x.levelId === levelId), 'score'));
+            add(`lvl${levelId}s`, 'medium', T`Sølv i ${name} i dag`, 50, (r) => best(r.filter((x) => x.levelId === levelId), 'score'));
+            add(`lvl${levelId}g`, 'hard', T`Guld i ${name} i dag`, 100, (r) => best(r.filter((x) => x.levelId === levelId), 'score'));
+        });
+        return pool;
+    }
+    function pickThree(pool, key) {
+        const rand = seeded(keySeed(key));
+        return ['easy', 'medium', 'hard'].map((diff) => {
+            const options = pool.filter((entry) => entry.diff === diff);
+            return options[Math.floor(rand() * options.length)];
+        }).filter(Boolean);
+    }
+    function weeklyChallenges(openLevels = [1], now = new Date()) {
+        const start = new Date(now); start.setDate(start.getDate() - ((start.getDay() + 6) % 7)); start.setHours(0, 0, 0, 0);
+        const weekKey = `w${dayKey(start)}`;
+        const runs = runsSince(start.getTime());
+        const golds = openLevels.filter((id) => best(runs.filter((r) => r.levelId === id), 'score') >= 100).length;
+        const levelsPlayed = new Set(runs.map((r) => r.levelId)).size;
+        const pool = [
+            { id: 'wstars', label: T('Saml 400 stjerner i denne uge'), target: 400, value: sum(runs, 'stars') },
+            { id: 'wruns', label: T('Flyv 30 ture i denne uge'), target: 30, value: runs.length },
+            { id: 'wgold', label: T('Guld på 2 forskellige baner i denne uge'), target: 2, value: golds },
+            { id: 'wrecord', label: T('Slå din egen rekord 3 gange'), target: 3, value: runs.filter((r) => r.improved).length },
+            { id: 'wlevels', label: T('Flyv på 6 forskellige baner'), target: 6, value: levelsPlayed },
+            { id: 'wtime', label: T('Flyv 30 minutter i denne uge'), target: 1800, value: Math.floor(sum(runs, 'time')) },
+        ];
+        const rand = seeded(keySeed(weekKey));
+        const chosen = pool.slice().sort(() => rand() - 0.5).slice(0, 3);
+        const claims = data.challengeClaims[weekKey] || {};
+        return chosen.map((entry, index) => ({ ...entry, key: weekKey, reward: [30, 40, 50][index],
+            value: Math.min(entry.value, entry.target), complete: entry.value >= entry.target, claimed: Boolean(claims[entry.id]) }));
+    }
+    function claimWeekly(id, openLevels) {
+        const entry = weeklyChallenges(openLevels).find((item) => item.id === id);
+        if (!entry || !entry.complete || entry.claimed) return { ok: false };
+        data.challengeClaims[entry.key] ||= {};
+        data.challengeClaims[entry.key][id] = Date.now();
+        data.feathers += entry.reward;
+        data.stats.feathersEver = (data.stats.feathersEver || 0) + entry.reward;
+        save();
+        return { ok: true, reward: entry.reward };
+    }
+    const MILESTONES = [
+        ...[10, 25, 50, 100, 250, 500, 1000, 2500].map((n) => ({ id: `m-runs-${n}`, label: T`Tur nr. ${n}`, target: n, read: () => data.runCount })),
+        ...[100, 500, 1000, 5000, 10000, 25000, 50000, 100000].map((n) => ({ id: `m-stars-${n}`, label: T`${n.toLocaleString('da-DK')} stjerner i alt`, target: n, read: () => data.totalStars })),
+        ...[3, 7, 14, 30, 60, 100].map((n) => ({ id: `m-days-${n}`, label: T`${n} dage i træk`, target: n, read: () => data.calendar.best || data.calendar.streak || 0 })),
+        ...[50, 200, 500, 1000].map((n) => ({ id: `m-feathers-${n}`, label: T`${n} fjer samlet i alt`, target: n, read: () => data.stats.feathersEver || 0 })),
+        ...[3, 5, 10, 15, 20].map((n) => ({ id: `m-heroes-${n}`, label: T`${n} helte`, target: n, read: () => Object.keys(data.ownedHeroes || {}).length })),
+        ...[5, 10, 20, 30].map((n) => ({ id: `m-badges-${n}`, label: T`${n} mærker`, target: n, read: () => Object.keys(data.badges || {}).length })),
+        ...[3, 5, 7].map((n) => ({ id: `m-nest-${n}`, label: T`Reden på trin ${n}`, target: n, read: () => nestLevel() + 1 })),
+        ...[1, 5, 10, 16].map((n) => ({ id: `m-eggs-${n}`, label: T`${n} æg klækket`, target: n, read: () => (data.eggs.hatched || []).length })),
+    ];
+    const MASTERY_LEVELS = [1, 4, 5, 3, 6, 7, 2, 8, 9, 21, 22, 24, 23, 20, 25];
+    const MASTERY = MASTERY_LEVELS.flatMap((levelId) => {
+        const name = LEVEL_NAMES[levelId] || `#${levelId}`;
+        const runsOn = () => data.runs.filter((r) => r.levelId === levelId);
+        return [
+            { id: `x-${levelId}-gold`, levelId, label: T`${name}: guld`, target: 100, read: () => Math.max(Number(data.achievements.bestScores[levelId]) || 0) },
+            { id: `x-${levelId}-200`, levelId, label: T`${name}: 200 point`, target: 200, read: () => Math.max(Number(data.achievements.bestScores[levelId]) || 0) },
+            { id: `x-${levelId}-pure`, levelId, label: T`${name}: 60 point uden redning og power-ups`, target: 60, read: () => best(runsOn().filter((r) => !r.rescueUsed && !r.powerups), 'score') },
+        ];
+    });
+    const HIDDEN = [
+        { id: 'h-speedrun', label: T('Lynhurtig: styrt inden for 1 sekund'), test: (r) => r.some((x) => x.time > 0 && x.time < 1) },
+        { id: 'h-42', label: T('Svaret på alt: præcis 42 point'), test: (r) => r.some((x) => x.score === 42) },
+        { id: 'h-night', label: T('Natteravn: flyv mellem midnat og kl. 4'), test: (r) => r.some((x) => new Date(x.createdAt).getHours() < 4) },
+        { id: 'h-patient', label: T('Tålmodig: 60 sekunder uden en eneste stjerne'), test: (r) => r.some((x) => x.maxNoStar >= 60) },
+        { id: 'h-hunger', label: T('Sultestrejke: 30 sekunder og 0 stjerner'), test: (r) => r.some((x) => x.time >= 30 && x.stars === 0) },
+        { id: 'h-bigfall', label: T('Jo større de er: styrt mens du er forstørret'), test: (r) => r.some((x) => x.diedBig) },
+        { id: 'h-xmas', label: T('Juleflyver: flyv juleaften'), test: (r) => r.some((x) => String(x.createdAt).slice(5, 10) === '12-24') },
+        { id: 'h-hattrick', label: T('Hattrick: tre ture i træk med samme point'), test: (r) => r.some((x, i) => i >= 2 && x.score > 0 && x.score === r[i - 1].score && x.score === r[i - 2].score) },
+        { id: 'h-wardrobe', label: T('Garderobe-gal: flyv med 7 forskellige helte'), test: () => Object.keys(data.counters.heroesFlown || {}).length >= 7 },
+        { id: 'h-marathon', label: T('Maraton: 10 minutter på én tur'), test: (r) => r.some((x) => x.time >= 600) },
+        { id: 'h-desert', label: T('Ørkenrotte: 100 ture i Desert'), test: () => (data.counters.levelRuns[1] || 0) >= 100 },
+        { id: 'h-fifty', label: T('Halvtreds: en streak på 50'), test: (r) => r.some((x) => x.streak >= 50) },
+        { id: 'h-flappy500', label: T('Flappy-mester: 500 point i Flappy Bert'), test: (r) => r.some((x) => x.levelId === 3 && x.score >= 500) },
+        { id: 'h-bonk', label: T('Bonk-serie: 5 styrt på 2 minutter'), test: (r) => r.length >= 5 && (new Date(r[0].createdAt) - new Date(r[4].createdAt)) < 120000 && r.slice(0, 5).every((x) => x.time < 20) },
+        { id: 'h-spiderfriend', label: T('Edderkoppens ven: fanget 10 gange'), test: () => (data.counters.causes['jungle-spider'] || 0) >= 10 },
+    ];
+    function challengeBook() {
+        const claims = data.challengeClaims.book || {};
+        const row = (entry, kind, reward) => {
+            const value = entry.read ? entry.read() : (entry.test(data.runs) ? 1 : 0);
+            const target = entry.read ? entry.target : 1;
+            return { id: entry.id, kind, label: entry.label, value: Math.min(value, target), target, complete: value >= target,
+                claimed: Boolean(claims[entry.id]), reward, hidden: kind === 'hidden' };
+        };
+        return {
+            milestones: MILESTONES.map((entry, index) => row(entry, 'milestone', 10 + Math.floor(index % 8) * 5)),
+            mastery: MASTERY.map((entry) => row(entry, 'mastery', entry.id.endsWith('pure') ? 25 : entry.id.endsWith('200') ? 20 : 12)),
+            hidden: HIDDEN.map((entry) => row(entry, 'hidden', 25)),
+        };
+    }
+    function claimBook(id) {
+        const book = challengeBook();
+        const entry = [...book.milestones, ...book.mastery, ...book.hidden].find((item) => item.id === id);
+        if (!entry || !entry.complete || entry.claimed) return { ok: false };
+        data.challengeClaims.book ||= {};
+        data.challengeClaims.book[id] = Date.now();
+        data.feathers += entry.reward;
+        data.stats.feathersEver = (data.stats.feathersEver || 0) + entry.reward;
+        save();
+        return { ok: true, reward: entry.reward, label: entry.label };
+    }
+    /** The challenge closest to done (>= 70 %), for the "almost there" line after a run. */
+    function nearestChallenge(openLevels = [1]) {
+        const book = challengeBook();
+        const candidates = [...missions(new Date(), openLevels), ...weeklyChallenges(openLevels), ...book.milestones, ...book.mastery]
+            .filter((entry) => !entry.complete && entry.target > 0 && entry.value / entry.target >= 0.7);
+        candidates.sort((a, b) => (b.value / b.target) - (a.value / a.target));
+        return candidates[0] || null;
+    }
+
     // Login calendar: one flight a day keeps the streak; rewards 1, 2, 3, 5, 8, 8, 8 feathers.
     const CALENDAR_REWARDS = Object.freeze([1, 2, 3, 5, 8, 8, 8]);
     function dayKey(date = new Date()) { return date.toISOString().slice(0, 10); }
@@ -560,6 +718,7 @@
         if (data.calendar.lastDay === today) return { ok: false, streak: data.calendar.streak, reward: 0 };
         const yesterday = dayKey(new Date(date.getTime() - 86400000));
         data.calendar.streak = data.calendar.lastDay === yesterday ? data.calendar.streak + 1 : 1;
+        data.calendar.best = Math.max(data.calendar.best || 0, data.calendar.streak);
         data.calendar.lastDay = today;
         data.calendar.days = [...(data.calendar.days || []), today].slice(-7);
         const reward = CALENDAR_REWARDS[Math.min(CALENDAR_REWARDS.length, data.calendar.streak) - 1];
@@ -762,6 +921,7 @@
         addFeathers, hasPlayerName, hasTestAccess, hasOpMode, settingValue,
         NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
         EGG_TIERS, eggStatus, buyEgg, incubate, grantFoundEgg, starterChoice, chooseStarter,
+        weeklyChallenges, claimWeekly, challengeBook, claimBook, nearestChallenge,
         resetAll() { try { localStorage.clear(); } catch (_) { /* ignore */ } },
         snapshot, currentHero, settingEnabled, heroCatalog, setHero, buyHero, noteCleanScore, setPlayerName, setSetting, dailyChallenge, recordRun,
         localLeaderboard, missions, claimMission, missionClaimCount, rescueUpgrade, buyRescueLife,

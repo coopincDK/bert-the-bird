@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-83';
+    const BUILD_VERSION = 'worlds-relay-84';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1839,6 +1839,10 @@
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
         state.runFeathers = 0;
+        state.runPowerups = 0;
+        state.maxNoStar = 0;
+        state.lastStarAt = 0;
+        state.levelStep = 1;
         state.eggSpawned = false;
         state.hitStop = 0;
         state.shake = 0;
@@ -1914,6 +1918,11 @@
         state.dailyTarget = Number(options.dailyTarget) || 0;
         state.challenge = options.challenge || null;
         state.ghostRecorder = isEventLevel() ? null : BertSocial.createGhostRecorder();
+        // Your own best run flies along as a faint ghost (feedback 10. okt.).
+        state.ownGhost = null;
+        if (!state.challenge && !isEventLevel()) {
+            try { state.ownGhost = JSON.parse(localStorage.getItem(`bertTheBird_ghost_${currentLevel.id}`) || 'null'); } catch (_) { state.ownGhost = null; }
+        }
         state.completedGhost = [];
         obstacles = [];
         collectibles = [];
@@ -2013,6 +2022,7 @@
 
         if (state.focusPhase === 'idle') {
             state.speed = BertEventPowerups.speed(values.speed, state.activePowerup)
+                * (1 + Math.min(0.24, ((state.levelStep || 1) - 1) * 0.04))
                 * (BertMeta.nestPerks?.().boost && !isEventLevel() && state.elapsed < 5 ? 1.15 : 1);
             state.difficulty = values.difficulty;
             return;
@@ -3119,6 +3129,8 @@
     }
 
     function collectStar(collectible = null) {
+        state.maxNoStar = Math.max(state.maxNoStar || 0, state.elapsed - (state.lastStarAt || 0));
+        state.lastStarAt = state.elapsed;
         const value = collectible?.value || 1;
         if (collectible) {
             (state.sparkles ||= []).push({ x: collectible.x, y: collectible.y, age: 0 });
@@ -3141,6 +3153,7 @@
     }
 
     function activatePowerup(type) {
+        state.runPowerups = (state.runPowerups || 0) + 1;
         if (BertEventPowerups.isPrototype(type)) {
             if (state.activePowerup) return;
             if (type === POWERUP.FLAP) {
@@ -3501,6 +3514,9 @@
         const opRun = opMode();
         const { record, improved } = opRun ? { record: loadRecord(currentLevel.id), improved: false } : saveRecord(currentLevel.id, run);
         state.completedGhost = state.ghostRecorder?.export() || [];
+        if (improved && state.score > 0 && !isEventLevel() && !opRun && state.completedGhost.length) {
+            try { localStorage.setItem(`bertTheBird_ghost_${currentLevel.id}`, JSON.stringify(state.completedGhost)); } catch (_) { /* full storage */ }
+        }
         const mode = currentLevel.kind === 'tunnel' ? 'tunnel' : currentLevel.mode === MODE.FLAPPY ? 'flappy' : 'classic';
         const savedRun = isEventLevel() || opRun ? { unlockedHeroes: [] } : BertMeta.recordRun({
             ...run,
@@ -3510,6 +3526,13 @@
             dailyKey: state.dailyKey,
             dailyTarget: state.dailyTarget,
             rescueUsed: state.rescueUsed,
+            powerups: state.runPowerups || 0,
+            feathers: state.runFeathers || 0,
+            maxNoStar: Math.max(state.maxNoStar || 0, state.elapsed - (state.lastStarAt || 0)),
+            cause: state.deathCause || '',
+            hero: BertMeta.currentHero(),
+            improved: Boolean(improved && state.score > 0),
+            diedBig: state.activePowerup === POWERUP.GROW,
         });
         const player = BertMeta.snapshot().player;
         if (!isEventLevel() && !opRun) BertSocial.submitScore({
@@ -3682,6 +3705,8 @@
             const egg = BertMeta.eggStatus().incubating;
             bits.push(T`Ægget: ${egg.progress}/${egg.need} stjerner`);
         }
+        const near = BertMeta.nearestChallenge?.(unlockedLevels().map((level) => level.id));
+        if (near) bits.unshift(T`Tæt på: ${near.label} (${near.value}/${near.target})`);
         if (state.runFeathers > 0) bits.push(T`${state.runFeathers} fjer fundet`);
         if (daily.ok) bits.push(T`Dag ${daily.streak} i træk: +${daily.reward} fjer`);
         if (nest?.next) bits.push(T`Reden: ${nest.feathers}/${nest.next.cost} til ${nest.next.label}`);
@@ -3974,6 +3999,14 @@
             state.birdScale = (state.birdScale || 1) + (targetScale - (state.birdScale || 1)) * Math.min(1, delta * 6);
             window.BertSizeScale = state.birdScale;
             updateAmbient(delta);
+            // Difficulty steps you can feel and see: every 30 seconds "NIVEAU n!" and
+            // a little more speed on top of the normal ramp (feedback 9.–10. okt.).
+            const step = 1 + Math.floor(state.elapsed / 30);
+            if (state.phase === 'playing' && !isEventLevel() && step > (state.levelStep || 1)) {
+                state.levelStep = step;
+                state.comboText = { text: T`NIVEAU ${step}!`, age: 0 };
+                playAudio('combo');
+            }
             noteNearMiss();
             // Sky Relay: from round 2 birds cross the route, from round 3 the hawk hunts too.
             if (currentLevel.kind === 'skyRelay' && state.phase === 'playing' && state.relayRoute) {
@@ -6309,10 +6342,25 @@
     }
 
     function drawGhost() {
-        if (!state.challenge?.ghost || state.phase !== 'playing') return;
-        const centerY = BertSocial.ghostYAt(state.challenge.ghost, state.elapsed);
+        const ghost = state.challenge?.ghost || state.ownGhost;
+        if (!ghost || state.phase !== 'playing') return;
+        const centerY = BertSocial.ghostYAt(ghost, state.elapsed);
         if (!Number.isFinite(centerY)) return;
-        const hero = Object.prototype.hasOwnProperty.call(birdFrames, state.challenge.hero) ? state.challenge.hero : 'bert';
+        const heroId = state.challenge?.hero || BertMeta.currentHero();
+        const hero = Object.prototype.hasOwnProperty.call(birdFrames, heroId) ? heroId : 'bert';
+        if (!state.challenge) {
+            // The record ghost: a faint copy of you, with a tiny "REKORD" tag.
+            ctx.save();
+            ctx.globalAlpha = 0.22;
+            drawHeroAnimation(hero, state.elapsed, false, BIRD.x - 10, centerY - BIRD.height / 2, BIRD.width, BIRD.height);
+            ctx.globalAlpha = 0.6;
+            ctx.font = '900 13px "Bert Rounded", sans-serif';
+            ctx.fillStyle = '#ffffff';
+            ctx.textAlign = 'center';
+            ctx.fillText(T('REKORD'), BIRD.x - 10 + BIRD.width / 2, centerY - BIRD.height / 2 - 4);
+            ctx.restore();
+            return;
+        }
         ctx.save();
         ctx.globalAlpha = 0.24;
         ctx.filter = 'grayscale(1) brightness(1.65)';
@@ -6528,6 +6576,18 @@
         if (state.activePowerup === POWERUP.HYPER && state.phase === 'playing' && assets.g4Trail?.naturalWidth) {
             ctx.save(); ctx.globalAlpha = 0.75;
             ctx.drawImage(assets.g4Trail, bird.x - 200, bird.y + BIRD.height * 0.3, 230, 60);
+            ctx.restore();
+        }
+        if (state.birdsVisible && state.phase === 'playing' && !['tunnel', 'skyRelay', 'stormline', 'birdRun', 'edm'].includes(currentLevel.kind)) {
+            // A soft shadow on the ground under Bert, so height reads at a glance.
+            const groundY = VIEW.height - 34;
+            const height = clamp((groundY - (bird.y + BIRD.height)) / groundY, 0, 1);
+            ctx.save();
+            ctx.globalAlpha = 0.28 * (1 - height * 0.7);
+            ctx.fillStyle = '#1b2a44';
+            ctx.beginPath();
+            ctx.ellipse(bird.x + BIRD.width / 2, groundY, 44 * (1 - height * 0.5), 9 * (1 - height * 0.5), 0, 0, Math.PI * 2);
+            ctx.fill();
             ctx.restore();
         }
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
@@ -7032,7 +7092,8 @@
 
     function renderMissions() {
         dom.missionList.replaceChildren();
-        BertMeta.missions().forEach((mission) => {
+        const openIds = unlockedLevels().map((level) => level.id);
+        BertMeta.missions(new Date(), openIds).forEach((mission) => {
             const row = document.createElement('div');
             row.className = `mission-row${mission.complete ? ' complete' : ''}${mission.claimed ? ' claimed' : ''}`;
             const title = document.createElement('strong'); title.textContent = mission.label;
@@ -7056,9 +7117,58 @@
                 renderMissions();
             });
             claim.dataset.haptic = 'none';
+            if (mission.difficulty) row.dataset.difficulty = mission.difficulty;
             row.append(title, track, count, claim); dom.missionList.appendChild(row);
         });
+        renderChallengeBook(openIds);
         updateMetaMenu();
+    }
+
+    // Weekly challenges and the challenge book (milestones, mastery, hidden) in the nest.
+    let bookTab = 'milestones';
+    function challengeRow(entry, onClaim) {
+        const row = document.createElement('div');
+        row.className = `mission-row${entry.complete ? ' complete' : ''}${entry.claimed ? ' claimed' : ''}`;
+        const title = document.createElement('strong');
+        title.textContent = entry.hidden && !entry.complete ? T('??? (hemmelig udfordring)') : entry.label;
+        const track = document.createElement('span'); track.className = 'mission-track';
+        const fill = document.createElement('i'); fill.style.width = `${Math.min(100, entry.value / entry.target * 100)}%`; track.appendChild(fill);
+        const count = document.createElement('b');
+        count.textContent = entry.hidden ? (entry.complete ? '✓' : '') : `${Number(entry.value).toLocaleString('da-DK')}/${Number(entry.target).toLocaleString('da-DK')}`;
+        const claim = document.createElement('button');
+        claim.type = 'button'; claim.className = 'mission-claim'; claim.dataset.haptic = 'none';
+        claim.disabled = !entry.complete || entry.claimed;
+        claim.textContent = entry.claimed ? T('HENTET') : entry.complete ? T`HENT +${entry.reward}` : T`+${entry.reward} FJER`;
+        claim.addEventListener('click', onClaim);
+        row.append(title, track, count, claim);
+        return row;
+    }
+    function renderChallengeBook(openIds) {
+        const weekly = document.getElementById('weekly-list');
+        if (weekly) {
+            weekly.replaceChildren(...BertMeta.weeklyChallenges(openIds).map((entry) => challengeRow(entry, () => {
+                const result = BertMeta.claimWeekly(entry.id, openIds);
+                if (result.ok) { BertMeta.haptic('reward'); playAudio('ding'); window.BertApp?.showToast(T`+${result.reward} fjer til reden`); }
+                renderMissions();
+            })));
+        }
+        const list = document.getElementById('book-list');
+        if (!list) return;
+        const book = BertMeta.challengeBook();
+        document.querySelectorAll('.book-tab').forEach((tab) => {
+            const entries = book[tab.dataset.book] || [];
+            tab.classList.toggle('selected', tab.dataset.book === bookTab);
+            tab.querySelector('small').textContent = `${entries.filter((e) => e.complete).length}/${entries.length}`;
+            tab.onclick = () => { bookTab = tab.dataset.book; renderChallengeBook(openIds); };
+        });
+        // Unclaimed finished ones first, then the closest to done.
+        const entries = (book[bookTab] || []).slice().sort((a, b) => (b.complete && !b.claimed) - (a.complete && !a.claimed)
+            || (a.claimed - b.claimed) || (b.value / b.target) - (a.value / a.target));
+        list.replaceChildren(...entries.map((entry) => challengeRow(entry, () => {
+            const result = BertMeta.claimBook(entry.id);
+            if (result.ok) { BertMeta.haptic('reward'); playAudio('ding'); window.BertApp?.showToast(T`+${result.reward} fjer · ${result.label}`); }
+            renderMissions();
+        })));
     }
 
     function openMissions() {
