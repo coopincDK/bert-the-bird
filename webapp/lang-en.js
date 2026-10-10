@@ -714,4 +714,5 @@ window.BertI18n.register('en', {
     "GLID & OPVIND · TESTBANE": "GLIDE & THERMALS · TEST LEVEL",
     "GLID & OPVIND": "GLIDE & THERMALS",
     "Svæv": "Glide",
+    "Vælg et andet navn": "Pick another name",
 });

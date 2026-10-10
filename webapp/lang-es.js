@@ -681,4 +681,5 @@ window.BertI18n.register('es', {
     "GLID & OPVIND · TESTBANE": "PLANEA Y CORRIENTES · NIVEL DE PRUEBA",
     "GLID & OPVIND": "PLANEA Y CORRIENTES",
     "Svæv": "Planear",
+    "Vælg et andet navn": "Elige otro nombre",
 });

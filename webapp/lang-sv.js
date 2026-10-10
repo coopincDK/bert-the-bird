@@ -681,4 +681,5 @@ window.BertI18n.register('sv', {
     "GLID & OPVIND · TESTBANE": "GLID & UPPVIND · TESTBANA",
     "GLID & OPVIND": "GLID & UPPVIND",
     "Svæv": "Sväva",
+    "Vælg et andet navn": "Välj ett annat namn",
 });

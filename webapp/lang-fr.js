@@ -681,4 +681,5 @@ window.BertI18n.register('fr', {
     "GLID & OPVIND · TESTBANE": "PLANE & ASCENDANCES · NIVEAU TEST",
     "GLID & OPVIND": "PLANE & ASCENDANCES",
     "Svæv": "Planer",
+    "Vælg et andet navn": "Choisis un autre nom",
 });

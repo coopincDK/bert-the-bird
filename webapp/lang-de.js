@@ -681,4 +681,5 @@ window.BertI18n.register('de', {
     "GLID & OPVIND · TESTBANE": "GLEITEN & AUFWIND · TESTSTRECKE",
     "GLID & OPVIND": "GLEITEN & AUFWIND",
     "Svæv": "Gleiten",
+    "Vælg et andet navn": "Wähle einen anderen Namen",
 });

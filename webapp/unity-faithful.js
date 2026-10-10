@@ -1132,6 +1132,8 @@
         audio.combo = sound('assets/sfx/combo.mp3');
         audio.fanfare = sound('assets/sfx/fanfare.mp3');
         audio.tick = sound('assets/sfx/tick.mp3');
+        // Bert's made-up bird language: no real words, so it works in every language.
+        ['yay', 'ohno', 'whoa', 'pip', 'prrt'].forEach((word) => { audio[`bert_${word}`] = sound(`assets/sfx/bert-${word}.mp3`); });
     }
 
     // The first touch anywhere unlocks Web Audio on iPhone.
@@ -1903,6 +1905,11 @@
     function saveFirstName() {
         const name = dom.firstNameInput.value.trim();
         if (!name) return;
+        if (!BertMeta.nameAllowed(name.replace(/\(op\)/i, ''))) {
+            window.BertApp?.showToast(T('Vælg et andet navn'));
+            dom.firstNameInput.select();
+            return;
+        }
         BertMeta.setPlayerName(name);
         setVisible(dom.nameModal, false);
         updateMetaMenu();
@@ -1912,7 +1919,8 @@
     }
 
     async function startLevel(levelId, options = {}) {
-        if (!QUERY.has('qa') && !BertMeta.hasPlayerName()) {
+        // The name is asked for after three flights, not before the first (feedback 10. okt.).
+        if (!QUERY.has('qa') && !BertMeta.hasPlayerName() && (BertMeta.snapshot().runCount || 0) >= 3) {
             askForName(levelId, options);
             return false;
         }
@@ -3542,6 +3550,7 @@
         state.deathFromWeb = obstacle?.kind === 'jungle-web';
         state.hitStop = 0.11;
         state.shake = Math.max(state.shake || 0, 0.6);
+        setTimeout(() => playAudio('bert_ohno'), 140);
         state.slowmoUntil = state.worldTime + 0.55;
         BertMeta.haptic?.('death');
         if (!captureCause && !predatorHero) state.featherPuff = { x: bird.x + BIRD.width / 2, y: bird.y + BIRD.height / 2, age: 0 };
@@ -3894,7 +3903,7 @@
         if (hatched) {
             const heroName = BertHeroStore.catalog.find((hero) => hero.id === hatched)?.name || hatched;
             bits.push(T`Ægget klækkede: ${heroName}!`);
-            setTimeout(() => { playAudio('fanfare'); window.BertApp?.showToast(T`${heroName} er klækket og venter i garderoben`); showHatch(hatched); }, 1200);
+            setTimeout(() => { playAudio('fanfare'); playAudio('bert_prrt'); window.BertApp?.showToast(T`${heroName} er klækket og venter i garderoben`); showHatch(hatched); }, 1200);
         } else if (BertMeta.eggStatus?.().incubating) {
             const egg = BertMeta.eggStatus().incubating;
             bits.push(T`Ægget: ${egg.progress}/${egg.need} stjerner`);
@@ -3933,6 +3942,7 @@
             resultTimers.push(setTimeout(() => {
                 if (state.phase !== 'gameover') return;
                 playAudio('fanfare');
+                setTimeout(() => playAudio('bert_yay'), 650);
                 for (let i = 0; i < 36; i += 1) {
                     const piece = document.createElement('i');
                     piece.className = 'confetti-piece';
@@ -4200,6 +4210,7 @@
                 state.levelStep = step;
                 state.comboText = { text: T`NIVEAU ${step}!`, age: 0 };
                 playAudio('combo');
+                setTimeout(() => playAudio('bert_pip'), 250);
             }
             noteNearMiss();
             // Sky Relay: from round 2 birds cross the route, from round 3 the hawk hunts too.
@@ -6518,7 +6529,10 @@
         const bx = bird.x + BIRD.width;
         const by = bird.y + BIRD.height / 2;
         const close = obstacles.some((o) => o.harmful && o.x > bx - 20 && o.x < bx + 120 && by > (o.y ?? 0) - 70 && by < (o.y ?? 0) + (o.height || o.size || 0) + 70);
-        if (close) state.scaredUntil = state.elapsed + 0.35;
+        if (close) {
+            if (state.elapsed >= (state.scaredUntil || 0) + 2.5 && state.phase === 'playing') playAudio('bert_whoa');
+            state.scaredUntil = state.elapsed + 0.35;
+        }
     }
 
     function drawBird() {
@@ -7521,6 +7535,11 @@
         });
         dom.saveFirstName.addEventListener('click', saveFirstName);
         dom.playerName.addEventListener('change', () => {
+            if (dom.playerName.value.trim() && !BertMeta.nameAllowed(dom.playerName.value.replace(/\(op\)/i, ''))) {
+                window.BertApp?.showToast(T('Vælg et andet navn'));
+                dom.playerName.value = BertMeta.snapshot().player.name || '';
+                return;
+            }
             BertMeta.setPlayerName(dom.playerName.value);
             updateMetaMenu();
         });

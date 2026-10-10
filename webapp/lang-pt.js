@@ -681,4 +681,5 @@ window.BertI18n.register('pt', {
     "GLID & OPVIND · TESTBANE": "PLANE & CORRENTES · FASE DE TESTE",
     "GLID & OPVIND": "PLANE & CORRENTES",
     "Svæv": "Planar",
+    "Vælg et andet navn": "Escolha outro nome",
 });

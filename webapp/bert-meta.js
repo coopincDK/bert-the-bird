@@ -184,6 +184,17 @@
         return true;
     }
 
+    // A simple local name filter (Danish and English). The server filters again later.
+    const BLOCKED_NAME_PARTS = ['fuck', 'shit', 'cunt', 'bitch', 'nigger', 'nigga', 'fag', 'whore', 'slut', 'rape', 'nazi', 'hitler',
+        'pik', 'fisse', 'kusse', 'luder', 'kælling', 'kaelling', 'bøsse', 'boesse', 'neger', 'perker', 'idiot', 'spasser', 'mongol', 'røv', 'roev', 'lort', 'pis', 'kneppe', 'liderlig', 'hore', 'fanden', 'satan'];
+    function nameAllowed(name) {
+        const plain = String(name || '').toLowerCase().normalize('NFKD').replace(/[^a-zæøå0-9]/g, '')
+            .replace(/0/g, 'o').replace(/1/g, 'i').replace(/3/g, 'e').replace(/4/g, 'a').replace(/5/g, 's').replace(/7/g, 't');
+        if (!plain) return false;
+        // Short words like "pis" or "lort" only count as the whole name or a clear part of it.
+        return !BLOCKED_NAME_PARTS.some((word) => (word.length <= 4 ? plain === word || plain.startsWith(word) || plain.endsWith(word) : plain.includes(word)));
+    }
+
     function setPlayerName(name) {
         const cleaned = String(name || '').trim().replace(/\s+/g, ' ').slice(0, 24);
         data.player.name = cleaned;
@@ -918,7 +929,7 @@
     window.BertHaptics?.setEnabled(data.settings.haptics);
     save();
     window.BertMeta = Object.freeze({
-        addFeathers, hasPlayerName, hasTestAccess, hasOpMode, settingValue,
+        addFeathers, hasPlayerName, hasTestAccess, hasOpMode, settingValue, nameAllowed,
         NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
         EGG_TIERS, eggStatus, buyEgg, incubate, grantFoundEgg, starterChoice, chooseStarter,
         weeklyChallenges, claimWeekly, challengeBook, claimBook, nearestChallenge,

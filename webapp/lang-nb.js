@@ -681,4 +681,5 @@ window.BertI18n.register('nb', {
     "GLID & OPVIND · TESTBANE": "GLI & OPPVIND · TESTBANE",
     "GLID & OPVIND": "GLI & OPPVIND",
     "Svæv": "Sveve",
+    "Vælg et andet navn": "Velg et annet navn",
 });
