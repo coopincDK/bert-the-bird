@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-87';
+    const BUILD_VERSION = 'worlds-relay-88';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -6837,13 +6837,17 @@
             // A soft shadow on the ground under Bert, so height reads at a glance.
             const groundY = VIEW.height - 34;
             const height = clamp((groundY - (bird.y + BIRD.height)) / groundY, 0, 1);
+            // Only near the ground: higher up the shadow fades away completely (feedback 10. okt.).
+            const near = clamp(1 - height / 0.45, 0, 1);
+            if (near <= 0) { /* too high to cast a visible shadow */ } else {
             ctx.save();
-            ctx.globalAlpha = 0.28 * (1 - height * 0.7);
+            ctx.globalAlpha = 0.3 * near;
             ctx.fillStyle = '#1b2a44';
             ctx.beginPath();
-            ctx.ellipse(bird.x + BIRD.width / 2, groundY, 44 * (1 - height * 0.5), 9 * (1 - height * 0.5), 0, 0, Math.PI * 2);
+            ctx.ellipse(bird.x + BIRD.width / 2, groundY, 44 * (0.5 + near * 0.5), 9 * (0.5 + near * 0.5), 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
+            }
         }
         if (currentLevel.swarm && state.swarm?.length && state.phase === 'playing') {
             // Followers fly in a V behind Bert, each a little later along his path.
