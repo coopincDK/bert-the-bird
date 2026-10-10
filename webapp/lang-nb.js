@@ -690,4 +690,7 @@ window.BertI18n.register('nb', {
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Fem skjulte klistremerker på hver bane. Hold øye mens du flyr.",
     "Flokken": "Flokken",
     "UDFORDRER": "UTFORDRER",
+    "NYT": "NYTT",
+    "FLOKKEN": "FLOKKEN",
+    "ALLE MOD ALLE I EN STOR HIMMEL": "ALLE MOT ALLE PÅ EN STOR HIMMEL",
 });

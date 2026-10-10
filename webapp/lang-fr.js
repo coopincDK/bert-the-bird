@@ -690,4 +690,7 @@ window.BertI18n.register('fr', {
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Cinq autocollants cachés dans chaque niveau. Ouvre l'œil en volant.",
     "Flokken": "La Volée",
     "UDFORDRER": "CHALLENGER",
+    "NYT": "NOUVEAU",
+    "FLOKKEN": "LA VOLÉE",
+    "ALLE MOD ALLE I EN STOR HIMMEL": "TOUS CONTRE TOUS DANS UN GRAND CIEL",
 });

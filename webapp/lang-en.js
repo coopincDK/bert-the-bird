@@ -723,4 +723,7 @@ window.BertI18n.register('en', {
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Five hidden stickers on each level. Keep your eyes open while you fly.",
     "Flokken": "The Flock",
     "UDFORDRER": "CHALLENGER",
+    "NYT": "NEW",
+    "FLOKKEN": "THE FLOCK",
+    "ALLE MOD ALLE I EN STOR HIMMEL": "EVERYONE AGAINST EVERYONE IN A BIG SKY",
 });

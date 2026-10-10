@@ -34,6 +34,10 @@
   .card p { margin: 6px 0; font-size: 14px; line-height: 1.4; }
   .card button { margin-top: 12px; border: 0; border-radius: 14px; padding: 12px 28px; background: #b6ff3b; color: #123018; font-weight: 900; font-size: 18px; box-shadow: 0 4px 0 #3c7a12; }
   .card .rules { text-align: left; font-size: 13px; opacity: .92; }
+  .lives { font-size: 20px !important; color: #ff6b7d; letter-spacing: .1em; margin: 8px 0 0 !important; }
+  .card button[disabled] { background: #6a7a8a; box-shadow: none; }
+  .buy-life { display: block; margin: 8px auto 0 !important; background: #ffd98a !important; color: #3a2a1a !important; font-size: 14px !important; padding: 10px 18px !important; }
+  .buy-life[hidden] { display: none !important; }
   .proto { position: fixed; left: 50%; bottom: calc(6px + env(safe-area-inset-bottom, 0)); transform: translateX(-50%); white-space: nowrap; font-size: 10px; letter-spacing: .12em; color: rgba(255,255,255,.85); font-weight: 900; pointer-events: none; }
 </style>
 </head>
@@ -55,9 +59,12 @@
       <p><b>Kæden:</b> Sæt fingeren et sted på skærmen og træk: så styrer du med joysticket, der dukker op. Saml stjerner, så kommer flere fugle med. Rammer dit hoved en andens kæde, er du ude.</p>
       <p><b>Flokken:</b> Med 15 fugle kan du trykke FLOK. I kort tid bliver I til en stor, langsom kugle, der spiser mindre flokke og kæder. Så folder I jer ud igen.</p>
       <p><b>Fang en flok:</b> Flyv rundt om den med din kæde. Lukker ringen sig, er den din.</p>
+      <p><b>Kanten:</b> Flyver du ud i vindvæggen eller ned i jorden, er du ude.</p>
       <p><b>Tricks:</b> Dyk for fart, stigning koster. Flyv tæt bag en anden kæde for 20 % ekstra fart. Pas på høgen: den jagter altid den største.</p>
     </div>
+    <p class="lives"></p>
     <button id="play" type="button">FLYV</button>
+    <button class="buy-life" type="button" hidden></button>
   </div>
 </div>
 <div class="screen hidden" id="dead">
@@ -65,9 +72,13 @@
     <img class="caught-art" src="assets/v2/g7/flock/caught.webp" alt="">
     <h1 id="dead-title">UDE!</h1>
     <p id="dead-text"></p>
+    <p class="lives"></p>
     <button id="again" type="button">FLYV IGEN</button>
+    <button class="buy-life" type="button" hidden></button>
   </div>
 </div>
+<script src="bert-hero-store.js"></script>
+<script src="bert-meta.js"></script>
 <script src="flok.js"></script>
 </body>
 </html>

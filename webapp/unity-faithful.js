@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-96';
+    const BUILD_VERSION = 'worlds-relay-97';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1456,11 +1456,6 @@
                 b.addEventListener('click', () => { selectGameMode('adventure'); card.click(); });
                 balloons.appendChild(b);
             });
-            const flok = document.createElement('button');
-            flok.type = 'button'; flok.className = 'journey-balloon flok';
-            flok.innerHTML = `<img src="assets/v2/g6/journey/balloon.webp" alt="">${T('Flokken')}`;
-            flok.addEventListener('click', () => { location.href = 'flok.html'; });
-            balloons.prepend(flok);
             document.getElementById('journey-balloons')?.replaceChildren(...balloons.children);
         } else {
             document.getElementById('journey-balloons')?.replaceChildren();
@@ -1879,7 +1874,15 @@
         dom.heroModal.querySelector('.hero-wardrobe-card')?.appendChild(pop);
     }
 
+    function updateFlokPromo() {
+        const el = document.getElementById('flok-promo-lives');
+        const st = BertMeta.flokStatus?.();
+        if (!el || !st) return;
+        el.textContent = st.unlimited ? '' : `${'❤'.repeat(st.lives)}${'♡'.repeat(st.max - st.lives)}`;
+    }
+
     function updateMetaMenu() {
+        updateFlokPromo();
         const meta = BertMeta.snapshot();
         const daily = BertMeta.dailyChallenge(new Date(), unlockedLevels().map((level) => level.id));
         dom.totalStars.textContent = String(meta.totalStars);
@@ -7789,6 +7792,8 @@
                 if (name === 'sfxVolume') playAudio('coin');
             });
         });
+        document.getElementById('flok-promo')?.addEventListener('click', () => { location.href = 'flok.html'; });
+        setInterval(() => { if (state.phase === 'menu') updateFlokPromo(); }, 30000);
         document.getElementById('reset-all-btn')?.addEventListener('click', () => {
             const button = document.getElementById('reset-all-btn');
             if (button.dataset.confirm !== '1') {

@@ -690,4 +690,7 @@ window.BertI18n.register('pt', {
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Cinco figurinhas escondidas em cada fase. Fique de olho enquanto voa.",
     "Flokken": "O Bando",
     "UDFORDRER": "DESAFIANTE",
+    "NYT": "NOVO",
+    "FLOKKEN": "O BANDO",
+    "ALLE MOD ALLE I EN STOR HIMMEL": "TODOS CONTRA TODOS NUM GRANDE CÉU",
 });

@@ -25,6 +25,7 @@
         eggs: { bought: 0, incubating: null, hatched: [] },
         challengeClaims: {},
         stickers: {},
+        flok: { lives: 5, updatedAt: 0 },
         counters: { causes: {}, heroesFlown: {}, levelRuns: {} },
         economy: { continueSpins: 0, revivesWon: 0, feathersSpent: 0 },
         settings: { music: true, sfx: true, haptics: true, lights: true, musicVolume: 0.7, sfxVolume: 0.7 },
@@ -90,6 +91,7 @@
                 eggs: { ...DEFAULTS.eggs, ...(stored.eggs || {}) },
                 challengeClaims: stored.challengeClaims && typeof stored.challengeClaims === 'object' ? stored.challengeClaims : {},
                 stickers: stored.stickers && typeof stored.stickers === 'object' ? stored.stickers : {},
+                flok: { lives: 5, updatedAt: 0, ...(stored.flok || {}) },
                 counters: { causes: {}, heroesFlown: {}, levelRuns: {}, ...(stored.counters || {}) },
                 economy: { ...DEFAULTS.economy, ...(stored.economy || {}) },
                 settings: { ...DEFAULTS.settings, ...(stored.settings || {}) },
@@ -723,6 +725,45 @@
         return candidates[0] || null;
     }
 
+    // ---------- Flokken: lives (feedback 10. okt.) ----------
+    // Five lives; one comes back every 15 minutes; a life can be bought for feathers.
+    // (Later: watch an ad for a life.) A life is used when a round starts.
+    const FLOK_MAX_LIVES = 5;
+    const FLOK_REGEN_MS = 15 * 60 * 1000;
+    const FLOK_LIFE_COST = 15;
+    function flokStatus(now = Date.now()) {
+        const flok = data.flok;
+        if (!flok.updatedAt) flok.updatedAt = now;
+        if (flok.lives >= FLOK_MAX_LIVES) flok.updatedAt = now;
+        else {
+            const gained = Math.floor((now - flok.updatedAt) / FLOK_REGEN_MS);
+            if (gained > 0) {
+                flok.lives = Math.min(FLOK_MAX_LIVES, flok.lives + gained);
+                flok.updatedAt = flok.lives >= FLOK_MAX_LIVES ? now : flok.updatedAt + gained * FLOK_REGEN_MS;
+                save();
+            }
+        }
+        const nextInMs = flok.lives >= FLOK_MAX_LIVES ? 0 : Math.max(0, flok.updatedAt + FLOK_REGEN_MS - now);
+        return { lives: flok.lives, max: FLOK_MAX_LIVES, nextInMs, cost: FLOK_LIFE_COST, feathers: data.feathers, unlimited: hasTestAccess() };
+    }
+    function useFlokLife() {
+        const status = flokStatus();
+        if (status.unlimited) return { ok: true, ...status };
+        if (status.lives <= 0) return { ok: false, ...status };
+        if (data.flok.lives >= FLOK_MAX_LIVES) data.flok.updatedAt = Date.now();
+        data.flok.lives -= 1;
+        save();
+        return { ok: true, ...flokStatus() };
+    }
+    function buyFlokLife() {
+        const status = flokStatus();
+        if (status.lives >= FLOK_MAX_LIVES || data.feathers < FLOK_LIFE_COST) return { ok: false, ...status };
+        data.feathers -= FLOK_LIFE_COST;
+        data.flok.lives += 1;
+        save();
+        return { ok: true, ...flokStatus() };
+    }
+
     // Login calendar: one flight a day keeps the streak; rewards 1, 2, 3, 5, 8, 8, 8 feathers.
     const CALENDAR_REWARDS = Object.freeze([1, 2, 3, 5, 8, 8, 8]);
     function dayKey(date = new Date()) { return date.toISOString().slice(0, 10); }
@@ -934,7 +975,7 @@
         addFeathers, hasPlayerName, hasTestAccess, hasOpMode, settingValue, nameAllowed,
         NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
         EGG_TIERS, eggStatus, buyEgg, incubate, grantFoundEgg, starterChoice, chooseStarter,
-        weeklyChallenges, claimWeekly, challengeBook, claimBook, nearestChallenge,
+        weeklyChallenges, claimWeekly, challengeBook, claimBook, nearestChallenge, flokStatus, useFlokLife, buyFlokLife,
         stickers: () => ({ ...data.stickers }),
         findSticker(id) { if (data.stickers[id]) return false; data.stickers[id] = new Date().toISOString(); data.feathers += 3; save(); return true; },
         resetAll() { try { localStorage.clear(); } catch (_) { /* ignore */ } },

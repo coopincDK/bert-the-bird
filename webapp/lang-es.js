@@ -690,4 +690,7 @@ window.BertI18n.register('es', {
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Cinco pegatinas escondidas en cada nivel. Mantén los ojos abiertos mientras vuelas.",
     "Flokken": "La Bandada",
     "UDFORDRER": "RETADOR",
+    "NYT": "NUEVO",
+    "FLOKKEN": "LA BANDADA",
+    "ALLE MOD ALLE I EN STOR HIMMEL": "TODOS CONTRA TODOS EN UN GRAN CIELO",
 });

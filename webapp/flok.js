@@ -83,7 +83,7 @@
         return { hero, x: owner.x, y: owner.y, orbA: Math.random() * Math.PI * 2, orbR: Math.sqrt(Math.random()), orbSpin: rand(0.6, 1.4) * (Math.random() < 0.5 ? -1 : 1), flap: Math.random() * 6 };
     }
     function readName() {
-        try { return JSON.parse(localStorage.getItem('bertTheBird_meta') || '{}').player?.name || ''; } catch (_) { return ''; }
+        try { return window.BertMeta?.snapshot().player?.name || JSON.parse(localStorage.getItem('bertTheBird_meta_v1') || '{}').player?.name || ''; } catch (_) { return ''; }
     }
 
     const size = (e) => e.birds.length + 1;
@@ -168,6 +168,12 @@
         if (best) e.target = Math.atan2(best.y - e.y, best.x - e.x) + rand(-0.2, 0.2);
     }
     function avoid(e) {
+        // Edges are deadly now, so every bot (flok or chain) turns back well before them.
+        const m = e.form === 'orb' ? 420 : 300;
+        if (e.x < m) { e.target = 0; return; }
+        if (e.x > W - m) { e.target = Math.PI; return; }
+        if (e.y < 60 + m * 0.7) { e.target = Math.PI / 2; return; }
+        if (e.y > GROUND - m * 0.7) { e.target = -Math.PI / 2; return; }
         // Look ahead: steer away from any chain body in front of the head.
         if (e.form === 'orb') return;
         const lookX = e.x + Math.cos(e.angle) * 90;
@@ -183,10 +189,6 @@
                 }
             }
         }
-        if (e.x < 200) e.target = 0;
-        if (e.x > W - 200) e.target = Math.PI;
-        if (e.y < 240) e.target = Math.PI / 2;
-        if (e.y > GROUND - 160) e.target = -Math.PI / 2;
     }
 
     // ---------- simulation ----------
@@ -218,8 +220,15 @@
                 return false;
             });
             const v = speedOf(e) * gravity * (e.drafting ? 1.2 : 1);
-            e.x = Math.max(40, Math.min(W - 40, e.x + Math.cos(e.angle) * v * dt));
-            e.y = Math.max(80, Math.min(GROUND - 30, e.y + Math.sin(e.angle) * v * dt));
+            e.x += Math.cos(e.angle) * v * dt;
+            e.y += Math.sin(e.angle) * v * dt;
+            // The edge of the sky is deadly (feedback 10. okt.): the wind walls and the ground.
+            const pad = e.form === 'orb' ? orbRadius(e) * 0.5 : 0;
+            if (e.x < pad || e.x > W - pad || e.y < 60 + pad || e.y > GROUND - pad) {
+                e.edgeDeath = true;
+                kill(e, null);
+                continue;
+            }
             if (e.form === 'orb' && now >= e.orbUntil) unravel(e, now);
             if (e.form === 'chain') {
                 e.path.unshift({ x: e.x, y: e.y });
@@ -417,15 +426,24 @@
             }
             const birdSize = e.form === 'orb' ? 50 : 56;
             // Flap rate: a climbing chain beats hard, a diving one glides (no frames).
+            // Calm wings (feedback): glide most of the time, a short burst of beats now and
+            // then; steady beats only while climbing.
             const climb = -Math.sin(e.angle);
-            const diving = e.form === 'chain' && climb < -0.45;
-            const rate = e.form === 'orb' ? 14 : 10 + Math.max(0, climb) * 10;
+            const diving = e.form === 'chain' && climb < -0.3;
+            const climbing = climb > 0.35;
+            const rate = e.form === 'orb' ? 7 : climbing ? 7 + climb * 3 : 8;
+            const beat = (offset) => {
+                if (diving) return null;
+                const t = now / 1000 + offset;
+                if (climbing || e.form === 'orb') return t * rate;
+                return (t % 1.6) < 0.5 ? t * rate : null; // one short burst every 1.6 s
+            };
             for (let i = e.birds.length - 1; i >= 0; i -= 1) {
                 const b = e.birds[i];
-                const phase = diving ? null : now / 1000 * rate + b.flap;
+                const phase = beat(b.flap / 6);
                 drawBird(b.hero, b.x, b.y + Math.sin(now / 160 + i) * 2, birdSize, e.form === 'orb' ? (Math.cos(b.orbA) < 0 ? 1 : -1) * Math.sign(b.orbSpin) : facing, phase);
             }
-            drawBird(e.hero, e.x, e.y, 74, facing, diving ? null : now / 1000 * rate);
+            drawBird(e.hero, e.x, e.y, 74, facing, beat(0));
             if (e === sorted[sorted.length - 1] && ready(art.crown)) {
                 const cy = e.form === 'orb' ? e.y - orbRadius(e) - 64 : e.y - 78;
                 ctx.drawImage(art.crown, e.x - 22, cy, 44, 44);
@@ -544,6 +562,28 @@
         canvas.height = Math.floor(innerHeight * ratio);
         input.scale = ratio;
     }
+    function livesText() {
+        const st = window.BertMeta?.flokStatus?.();
+        if (!st || st.unlimited) return '';
+        const hearts = '❤'.repeat(st.lives) + '♡'.repeat(st.max - st.lives);
+        const mins = Math.ceil(st.nextInMs / 60000);
+        return st.lives >= st.max ? `${hearts}` : `${hearts} · nyt liv om ${mins} min`;
+    }
+    function refreshLives() {
+        const st = window.BertMeta?.flokStatus?.();
+        document.querySelectorAll('.lives').forEach((el) => { el.textContent = livesText(); });
+        document.querySelectorAll('.buy-life').forEach((btn) => {
+            const show = st && !st.unlimited && st.lives <= 0;
+            btn.hidden = !show;
+            if (show) { btn.textContent = `KØB ET LIV · ${st.cost} FJER (du har ${st.feathers})`; btn.disabled = st.feathers < st.cost; }
+        });
+        document.querySelectorAll('#play, #again').forEach((btn) => { btn.disabled = Boolean(st && !st.unlimited && st.lives <= 0); });
+    }
+    function tryStart() {
+        const used = window.BertMeta?.useFlokLife?.();
+        if (used && !used.ok) { refreshLives(); return; }
+        start();
+    }
     function start() {
         entities = []; stars = []; hawk = null; effects = [];
         for (let i = 0; i < STAR_TARGET; i += 1) addStar();
@@ -557,13 +597,13 @@
     function showDead(killer) {
         running = false;
         const seconds = Math.round((performance.now() - startedAt) / 1000);
-        document.getElementById('dead-title').textContent = killer ? `${killer.name} fangede dig!` : 'UDE!';
+        document.getElementById('dead-title').textContent = killer ? `${killer.name} fangede dig!` : player.edgeDeath ? 'Du fløj ud af himlen!' : 'UDE!';
         document.getElementById('dead-text').textContent = `Du nåede ${size(player)} fugle og fangede ${player.kills} på ${seconds} sekunder.`;
         try {
             const best = Number(localStorage.getItem('bertFlokBest') || 0);
             if (size(player) > best) localStorage.setItem('bertFlokBest', String(size(player)));
         } catch (_) { /* ignore */ }
-        setTimeout(() => document.getElementById('dead').classList.remove('hidden'), 700);
+        setTimeout(() => { refreshLives(); document.getElementById('dead').classList.remove('hidden'); }, 700);
     }
     function pointer(event) {
         input.x = event.clientX * (input.scale || 1);
@@ -591,8 +631,11 @@
     });
     window.addEventListener('keyup', () => { input.keyTurn = 0; });
     flokBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (player) formOrb(player, performance.now()); });
-    document.getElementById('play').addEventListener('click', start);
-    document.getElementById('again').addEventListener('click', start);
+    document.getElementById('play').addEventListener('click', tryStart);
+    document.getElementById('again').addEventListener('click', tryStart);
+    document.querySelectorAll('.buy-life').forEach((btn) => btn.addEventListener('click', () => { window.BertMeta?.buyFlokLife?.(); refreshLives(); }));
+    setInterval(refreshLives, 1000);
+    refreshLives();
     document.getElementById('exit').addEventListener('click', () => { location.href = './'; });
     window.addEventListener('resize', resize);
     // The main game locks to landscape; Flokken may be played either way round.
