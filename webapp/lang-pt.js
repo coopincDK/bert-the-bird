@@ -688,4 +688,5 @@ window.BertI18n.register('pt', {
     "Klistermærke fundet! Se det i albummet i reden": "Figurinha encontrada! Veja no álbum do ninho",
     "KLISTERMÆRKER": "FIGURINHAS",
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Cinco figurinhas escondidas em cada fase. Fique de olho enquanto voa.",
+    "Flokken": "O Bando",
 });

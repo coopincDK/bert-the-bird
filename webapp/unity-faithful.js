@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-90';
+    const BUILD_VERSION = 'worlds-relay-91';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1448,6 +1448,11 @@
                 b.addEventListener('click', () => { selectGameMode('adventure'); card.click(); });
                 balloons.appendChild(b);
             });
+            const flok = document.createElement('button');
+            flok.type = 'button'; flok.className = 'journey-balloon flok';
+            flok.innerHTML = `<img src="assets/v2/g6/journey/balloon.webp" alt="">${T('Flokken')}`;
+            flok.addEventListener('click', () => { location.href = 'flok.html'; });
+            balloons.appendChild(flok);
             document.getElementById('journey-balloons')?.replaceChildren(...balloons.children);
         } else {
             document.getElementById('journey-balloons')?.replaceChildren();

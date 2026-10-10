@@ -721,4 +721,5 @@ window.BertI18n.register('en', {
     "Klistermærke fundet! Se det i albummet i reden": "Sticker found! See it in the album in the nest",
     "KLISTERMÆRKER": "STICKERS",
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Five hidden stickers on each level. Keep your eyes open while you fly.",
+    "Flokken": "The Flock",
 });

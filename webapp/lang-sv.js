@@ -688,4 +688,5 @@ window.BertI18n.register('sv', {
     "Klistermærke fundet! Se det i albummet i reden": "Klistermärke hittat! Se det i albumet i boet",
     "KLISTERMÆRKER": "KLISTERMÄRKEN",
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Fem gömda klistermärken på varje bana. Håll utkik medan du flyger.",
+    "Flokken": "Flocken",
 });

@@ -1,0 +1,62 @@
+<!doctype html>
+<html lang="da">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#5ec6ef">
+<title>Bert The Bird – Flokken (prototype)</title>
+<style>
+  html, body { margin: 0; height: 100%; overflow: hidden; background: #5ec6ef; font-family: system-ui, -apple-system, "Segoe UI", sans-serif; touch-action: none; user-select: none; -webkit-user-select: none; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  .hud { position: fixed; left: 0; right: 0; top: env(safe-area-inset-top, 0); display: flex; justify-content: space-between; align-items: flex-start; padding: 10px 14px; pointer-events: none; color: #fff; font-weight: 900; text-shadow: 0 2px 0 rgba(27,42,68,.6); }
+  .hud .size { font-size: 22px; }
+  .hud .size small { display: block; font-size: 11px; letter-spacing: .1em; opacity: .85; }
+  .board { background: rgba(8,20,32,.6); border-radius: 10px; padding: 6px 10px; font-size: 12px; line-height: 1.5; min-width: 130px; }
+  .board b { color: #ffd98a; }
+  .board .me { color: #b6ff3b; }
+  .flok-btn { position: fixed; right: calc(18px + env(safe-area-inset-right, 0)); bottom: calc(18px + env(safe-area-inset-bottom, 0)); width: 104px; height: 104px; border-radius: 50%;
+    border: 4px solid #fff; background: #7b4dff; color: #fff; font-weight: 900; font-size: 15px; letter-spacing: .06em; box-shadow: 0 5px 0 #1b2a44; touch-action: none; }
+  .flok-btn[disabled] { background: #4a5a6a; opacity: .8; }
+  .flok-btn .ring { position: absolute; inset: -4px; border-radius: 50%; }
+  .exit { position: fixed; left: calc(14px + env(safe-area-inset-left, 0)); bottom: calc(14px + env(safe-area-inset-bottom, 0)); border: 0; border-radius: 12px; padding: 8px 14px; background: rgba(8,20,32,.7); color: #fff; font-weight: 900; font-size: 12px; }
+  .screen { position: fixed; inset: 0; display: grid; place-items: center; background: rgba(8,20,32,.55); color: #fff; text-align: center; }
+  .screen.hidden { display: none; }
+  .card { background: #123a6b; border: 3px solid #ffd98a; border-radius: 18px; padding: 18px 24px; max-width: 520px; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+  .card h1 { margin: 0 0 6px; font-size: 30px; letter-spacing: .04em; }
+  .card p { margin: 6px 0; font-size: 14px; line-height: 1.4; }
+  .card button { margin-top: 12px; border: 0; border-radius: 14px; padding: 12px 28px; background: #b6ff3b; color: #123018; font-weight: 900; font-size: 18px; box-shadow: 0 4px 0 #3c7a12; }
+  .card .rules { text-align: left; font-size: 13px; opacity: .92; }
+  .proto { position: fixed; left: 50%; top: calc(8px + env(safe-area-inset-top, 0)); transform: translateX(-50%); font-size: 10px; letter-spacing: .12em; color: rgba(255,255,255,.85); font-weight: 900; pointer-events: none; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div class="proto">FLOKKEN · PROTOTYPE · COMPUTERFUGLE</div>
+<div class="hud">
+  <div class="size"><span id="size">0</span><small>FUGLE</small></div>
+  <div class="board" id="board"></div>
+</div>
+<button class="flok-btn" id="flok-btn" type="button">FLOK</button>
+<button class="exit" id="exit" type="button">← TILBAGE</button>
+<div class="screen" id="start">
+  <div class="card">
+    <h1>FLOKKEN</h1>
+    <p>Alle mod alle i en stor himmel.</p>
+    <div class="rules">
+      <p><b>Kæden:</b> Styr Bert med fingeren. Saml stjerner, så kommer flere fugle med. Rammer dit hoved en andens kæde, er du ude.</p>
+      <p><b>Flokken:</b> Med 15 fugle kan du trykke FLOK. I kort tid bliver I til en stor, langsom kugle, der spiser mindre flokke og kæder. Så folder I jer ud igen.</p>
+      <p><b>Fang en flok:</b> Flyv rundt om den med din kæde. Lukker ringen sig, er den din.</p>
+    </div>
+    <button id="play" type="button">FLYV</button>
+  </div>
+</div>
+<div class="screen hidden" id="dead">
+  <div class="card">
+    <h1 id="dead-title">UDE!</h1>
+    <p id="dead-text"></p>
+    <button id="again" type="button">FLYV IGEN</button>
+  </div>
+</div>
+<script src="flok.js"></script>
+</body>
+</html>
