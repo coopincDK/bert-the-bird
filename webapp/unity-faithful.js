@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-84';
+    const BUILD_VERSION = 'worlds-relay-85';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1313,6 +1313,116 @@
         });
     }
 
+    // ---------- Rejsen (fase 2): every level is a stop on one long journey ----------
+    // Desert → Jungle → Himlen → Byen → Tunnelen → Havnen → … → Fugleklat. Each stop shows
+    // its three stars (bronze, silver, gold) or a lock; Bert sits on the last stop played.
+    // The test worlds float above as balloons. Tapping a stop is the same as its card.
+    const JOURNEY = Object.freeze([
+        { area: T('Ørkenen'), ids: [1] }, { area: T('Junglen'), ids: [4] }, { area: T('Himlen'), ids: [5] },
+        { area: T('Byen'), ids: [3, 6, 7] }, { area: T('Tunnelen'), ids: [2, 8, 9] },
+        { area: T('Havnen'), ids: [21] }, { area: T('Natten'), ids: [22] }, { area: T('Vinden'), ids: [24] },
+        { area: T('Vulkanen'), ids: [23] }, { area: T('Isen'), ids: [20] }, { area: T('Fugleklat-øen'), ids: [25] },
+    ]);
+    const AREA_TINT = ['#f3c56b', '#5fbf5a', '#8fd3ff', '#7a8cff', '#2d2f6e', '#3aa6c9', '#272b58', '#7ed0f0', '#e2583a', '#bfe6ff', '#f7d77a'];
+    function levelById(id) {
+        return UNITY_LEVELS.find((l) => l.id === id) || ADVENTURE_LEVELS.find((l) => l.id === id) || EVENT_LEVELS.find((l) => l.id === id);
+    }
+    function stopIsOpen(level) {
+        if (!level) return false;
+        if (level.modeGroup === 'adventure' || level.modeGroup === 'event') return adventureStatus(level).unlocked;
+        return unlockedLevels().some((l) => l.id === level.id);
+    }
+    function renderJourney() {
+        let journey = document.getElementById('journey');
+        if (!journey) {
+            journey = document.createElement('div');
+            journey.id = 'journey';
+            journey.className = 'journey';
+            dom.levelMenu.querySelector('.mode-tabs')?.insertAdjacentElement('beforebegin', journey);
+        }
+        dom.levelMenu.classList.add('journey-mode');
+        const last = Number(localStorage.getItem('bertTheBird_lastLevel')) || 1;
+        const track = document.createElement('div');
+        track.className = 'journey-track';
+        const stops = [];
+        let index = 0;
+        JOURNEY.forEach((section, areaIndex) => {
+            const area = document.createElement('div');
+            area.className = 'journey-area';
+            area.style.setProperty('--tint', AREA_TINT[areaIndex]);
+            area.style.width = `${section.ids.length * 150 + 40}px`;
+            area.innerHTML = `<span class="journey-area-name">${section.area}</span>`;
+            section.ids.forEach((id, i) => {
+                const level = levelById(id);
+                if (!level) return;
+                const open = stopIsOpen(level);
+                const best = loadHighscore(id);
+                const stars = (best >= 20) + (best >= 50) + (best >= 100);
+                const card = dom.levelGrid.querySelector(`.level-card[data-level-id="${id}"]`);
+                const thumb = card?.querySelector('.level-thumb');
+                const art = thumb?.dataset.src || thumb?.src || '';
+                const stop = document.createElement('button');
+                stop.type = 'button';
+                stop.className = `journey-stop${open ? '' : ' locked'}${id === last ? ' here' : ''}`;
+                const top = index % 2 === 0 ? 50 : 66;
+                stop.style.left = `${40 + i * 150}px`;
+                stop.style.top = `${top}%`;
+                const lockText = !open ? (level.modeGroup === 'adventure' ? adventureStatus(level).short : T('LÅST')) : '';
+                stop.innerHTML = `<span class="journey-thumb" style="background-image:url('${art}')"><b>${index + 1}</b></span>`
+                    + `<span class="journey-name">${level.name}</span>`
+                    + (open ? `<span class="journey-stars">${[0, 1, 2].map((k) => `<i class="${k < stars ? 'on' : ''}">★</i>`).join('')}</span>`
+                        : `<span class="journey-lock"><img src="assets/adventure/ui/lock.webp" alt="">${lockText}</span>`);
+                stop.addEventListener('click', () => {
+                    if (!card) return;
+                    selectGameMode(card.dataset.mode);
+                    card.click();
+                });
+                area.appendChild(stop);
+                stops.push({ stop, area, top, x: 40 + i * 150 });
+                index += 1;
+            });
+            track.appendChild(area);
+        });
+        // Test worlds as balloons above the journey, once Eventyr is open.
+        if (adventureOpen()) {
+            const balloons = document.createElement('div');
+            balloons.className = 'journey-balloons';
+            EVENT_LEVELS.forEach((level) => {
+                const card = dom.levelGrid.querySelector(`.level-card[data-level-id="${level.id}"]`);
+                if (!card) return;
+                const b = document.createElement('button');
+                b.type = 'button'; b.className = 'journey-balloon';
+                b.innerHTML = `<span>🎈</span>${level.name}`;
+                b.addEventListener('click', () => { selectGameMode('adventure'); card.click(); });
+                balloons.appendChild(b);
+            });
+            document.getElementById('journey-balloons')?.replaceChildren(...balloons.children);
+        } else {
+            document.getElementById('journey-balloons')?.replaceChildren();
+        }
+        journey.replaceChildren(track);
+        // Dotted path between stops, drawn after layout.
+        requestAnimationFrame(() => {
+            const svgNs = 'http://www.w3.org/2000/svg';
+            const svg = document.createElementNS(svgNs, 'svg');
+            svg.classList.add('journey-path');
+            svg.setAttribute('width', String(track.scrollWidth));
+            svg.setAttribute('height', String(track.clientHeight));
+            const base = track.getBoundingClientRect();
+            const points = stops.map(({ stop }) => {
+                const r = stop.querySelector('.journey-thumb').getBoundingClientRect();
+                return [r.left - base.left + r.width / 2 + track.scrollLeft, r.top - base.top + r.height / 2];
+            });
+            const path = document.createElementNS(svgNs, 'path');
+            path.setAttribute('d', points.map(([x, y], i) => (i ? `S ${x - 60} ${y} ${x} ${y}` : `M ${x} ${y}`)).join(' '));
+            svg.appendChild(path);
+            track.prepend(svg);
+            // Scroll so Bert's stop is in view.
+            const here = track.querySelector('.journey-stop.here');
+            if (here) journey.scrollLeft = Math.max(0, here.offsetLeft + here.parentElement.offsetLeft - journey.clientWidth / 2 + 60);
+        });
+    }
+
     function selectGameMode(mode = 'classic') {
         const selectedMode = ['classic', 'flappy', 'tunnel', 'adventure'].includes(mode) ? mode : 'classic';
         document.querySelectorAll('.mode-tab').forEach((button) => {
@@ -1345,6 +1455,7 @@
         setVisible(dom.hud, false);
         selectGameMode(mode);
         updateLevelHighscores();
+        renderJourney();
         const earned = BertWorldMastery.read(localStorage);
         for (const [id, buttonId] of [[10, 'edm-event-btn'], [11, 'bird-run-event-btn'], [12, 'stormline-event-btn']]) {
             const kicker = document.querySelector(`#${buttonId} .edm-event-kicker`);
@@ -1917,6 +2028,7 @@
         state.dailyKey = options.dailyKey || null;
         state.dailyTarget = Number(options.dailyTarget) || 0;
         state.challenge = options.challenge || null;
+        try { if (!isEventLevel()) localStorage.setItem('bertTheBird_lastLevel', String(currentLevel.id)); } catch (_) { /* ignore */ }
         state.ghostRecorder = isEventLevel() ? null : BertSocial.createGhostRecorder();
         // Your own best run flies along as a faint ghost (feedback 10. okt.).
         state.ownGhost = null;

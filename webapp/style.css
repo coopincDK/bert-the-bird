@@ -2525,3 +2525,33 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .result-actions button:first-child { min-width: 240px; min-height: 64px; font-size: 26px !important; order: 2; }
 .result-actions button:not(:first-child) { min-height: 48px; font-size: 14px !important; order: 1; }
 .challenge-button { transform: scale(.85); }
+
+/* ---- Rejsen: ét kort med alle baner som stop ---- */
+.level-menu.journey-mode .mode-tabs, .level-menu.journey-mode #level-grid { position: absolute !important; left: -9999px !important; width: 10px; height: 10px; overflow: hidden; }
+.journey { position: relative; width: 100%; flex: 1; min-height: 210px; overflow-x: auto; overflow-y: hidden; border-radius: 16px;
+    background: linear-gradient(#8fd6f5, #c8ecfb); box-shadow: inset 0 0 0 2px rgba(255,255,255,.3); -webkit-overflow-scrolling: touch; scrollbar-width: none; }
+.journey::-webkit-scrollbar { display: none; }
+.journey-track { position: relative; display: flex; height: 100%; min-height: 210px; }
+.journey-area { position: relative; flex: 0 0 auto; height: 100%; background: linear-gradient(transparent 45%, color-mix(in srgb, var(--tint) 75%, transparent) 100%); }
+.journey-area::after { content: ''; position: absolute; left: 10%; right: 10%; bottom: 8%; height: 18%; border-radius: 50%; background: color-mix(in srgb, var(--tint) 60%, #000 10%); opacity: .35; filter: blur(4px); }
+.journey-area-name { position: absolute; left: 12px; bottom: 8px; font: 900 13px "Bert Display", sans-serif; letter-spacing: .08em; color: #fff; text-shadow: 0 2px 0 rgba(0,0,0,.4); z-index: 2; }
+.journey-path { position: absolute; inset: 0; pointer-events: none; z-index: 1; }
+.journey-path path { fill: none; stroke: #fff; stroke-width: 4; stroke-dasharray: 2 12; stroke-linecap: round; opacity: .9; }
+.journey-stop { position: absolute; z-index: 2; transform: translateY(-50%); width: 120px; display: grid; justify-items: center; gap: 2px; border: 0; background: none; cursor: pointer; padding: 0; }
+.journey-thumb { position: relative; width: 74px; height: 74px; border-radius: 50%; background: #fff center / cover no-repeat; border: 4px solid #fff; box-shadow: 0 4px 0 #1b2a44, 0 0 0 3px rgba(27,42,68,.35); }
+.journey-thumb b { position: absolute; left: -6px; top: -6px; width: 26px; height: 26px; border-radius: 50%; background: #c8193c; color: #fff; display: grid; place-items: center; font: 900 13px "Bert Display", sans-serif; border: 2px solid #fff; }
+.journey-name { background: rgba(8,20,32,.82); color: #fff; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 8px; white-space: nowrap; }
+.journey-stars i { font-style: normal; font-size: 16px; color: rgba(255,255,255,.55); text-shadow: 0 1px 0 #1b2a44; }
+.journey-stars i.on { color: #ffd23b; }
+.journey-lock { display: flex; align-items: center; gap: 3px; font-size: 9px; font-weight: 900; color: #ffd98a; background: rgba(8,20,32,.82); padding: 1px 6px; border-radius: 6px; white-space: nowrap; }
+.journey-lock img { width: 11px; height: 11px; }
+.journey-stop.locked .journey-thumb { filter: grayscale(.9) brightness(.65); }
+.journey-stop.here .journey-thumb::after { content: ''; position: absolute; left: 50%; top: -52px; width: 54px; height: 50px; transform: translateX(-50%);
+    background: url(assets/heroes/bert/glide.webp) center / contain no-repeat; animation: pin-bob 1.2s ease-in-out infinite; }
+.journey-balloons { position: sticky; left: 0; z-index: 3; display: flex; gap: 8px; padding: 6px 10px 0; height: 0; overflow: visible; }
+.journey-balloon { border: 0; border-radius: 14px; background: rgba(255,255,255,.88); color: #1b2a44; font-weight: 900; font-size: 11px; padding: 4px 10px; box-shadow: 0 2px 0 rgba(27,42,68,.3); cursor: pointer; white-space: nowrap; }
+.journey-balloon span { margin-right: 4px; }
+@media (prefers-reduced-motion: reduce) { .journey-stop.here .journey-thumb::after { animation: none; } }
+
+.journey-balloons { position: static !important; height: auto !important; display: flex; flex-wrap: wrap; gap: 6px; padding: 0 !important; margin-left: auto; align-self: center; max-width: 52%; justify-content: flex-end; }
+.level-menu.journey-mode .level-menu-head, .level-menu.journey-mode header { display: flex; align-items: center; gap: 14px; }
