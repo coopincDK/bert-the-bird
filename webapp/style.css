@@ -2612,3 +2612,4 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .bert-spin { position: absolute; width: 120px; height: 120px; left: 50%; top: -96px; transform: translateX(-50%); pointer-events: none; z-index: 6; }
 
 #game-over .scoreboard { position: relative; }
+.sticker-row { background: rgba(255,250,240,.88) !important; }
