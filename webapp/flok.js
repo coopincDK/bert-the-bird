@@ -20,6 +20,10 @@
     const img = (src) => images[src] || (images[src] = Object.assign(new Image(), { src }));
     const heroArt = (hero) => img(`assets/heroes/${hero}/glide.webp`);
     const starArt = img('assets/unity/ui/menu-star.webp');
+    const hawkFrames = [1, 2, 3, 4].map((n) => img(`assets/v2/birdrun/predator-fly-${n}.webp`));
+    // The hawk: a computer predator that always hunts the biggest bird group. It makes
+    // number 1 a target and gives the small ones a chance (feedback 10. okt.).
+    let hawk = null;
 
     let entities = [];
     let stars = [];
@@ -181,7 +185,19 @@
             }
             const turn = e.form === 'orb' ? 1.8 : 3.4;
             e.angle += Math.max(-turn * dt, Math.min(turn * dt, angleDiff(e.angle, e.target)));
-            const v = speedOf(e);
+            // Side view, so gravity counts: diving is faster, climbing slower.
+            const gravity = 1 + Math.sin(e.angle) * (e.form === 'orb' ? 0.1 : 0.25);
+            // Slipstream: close behind another chain, heading the same way, gives +20 %.
+            e.drafting = e.form === 'chain' && entities.some((o) => {
+                if (o === e || !o.alive || o.form !== 'chain' || Math.cos(o.angle - e.angle) < 0.75) return false;
+                for (let i = 0; i < o.birds.length; i += 3) {
+                    const b = o.birds[i];
+                    const d = dist2(e.x, e.y, b.x, b.y);
+                    if (d < 110 * 110 && d > 30 * 30) return true;
+                }
+                return false;
+            });
+            const v = speedOf(e) * gravity * (e.drafting ? 1.2 : 1);
             e.x = Math.max(40, Math.min(W - 40, e.x + Math.cos(e.angle) * v * dt));
             e.y = Math.max(80, Math.min(GROUND - 30, e.y + Math.sin(e.angle) * v * dt));
             if (e.form === 'orb' && now >= e.orbUntil) unravel(e, now);
@@ -220,8 +236,33 @@
             }
         }
         collide(now);
+        stepHawk(dt, now);
         entities = entities.filter((e) => e.alive);
         while (stars.length < STAR_TARGET) addStar();
+    }
+
+    function stepHawk(dt, now) {
+        hawk ||= { x: W / 2, y: 200, angle: 0, restUntil: now + 8000, frame: 0 };
+        hawk.frame += dt * 10;
+        const prey = entities.filter((e) => e.alive && now - e.spawnedAt > 3000).sort((a, b) => size(b) - size(a))[0];
+        if (!prey || size(prey) < 20) { hawk.angle += dt * 0.3; }
+        else if (now >= hawk.restUntil) hawk.angle += Math.max(-2.2 * dt, Math.min(2.2 * dt, angleDiff(hawk.angle, Math.atan2(prey.y - hawk.y, prey.x - hawk.x))));
+        const speed = now < hawk.restUntil ? 160 : 300;
+        hawk.x = Math.max(60, Math.min(W - 60, hawk.x + Math.cos(hawk.angle) * speed * dt));
+        hawk.y = Math.max(100, Math.min(GROUND - 60, hawk.y + Math.sin(hawk.angle) * speed * dt));
+        hawk.prey = prey;
+        if (!prey || now < hawk.restUntil) return;
+        // A catch takes up to 5 birds from the back, never the leader, then the hawk rests.
+        const reach = prey.form === 'orb' ? orbRadius(prey) + 30 : 50;
+        const touching = dist2(hawk.x, hawk.y, prey.x, prey.y) < reach * reach
+            || (prey.form === 'chain' && prey.birds.some((b) => dist2(hawk.x, hawk.y, b.x, b.y) < 40 * 40));
+        if (touching) {
+            const taken = prey.birds.splice(Math.max(0, prey.birds.length - 5));
+            taken.forEach((b) => addStar(b.x + rand(-20, 20), Math.min(GROUND - 20, b.y + 40), 1));
+            hawk.restUntil = now + 6000;
+            hawk.angle = -Math.PI / 2;
+            if (prey.form === 'orb') unravel(prey, now);
+        }
     }
 
     function pointInPolygon(x, y, poly) {
@@ -352,7 +393,42 @@
                 ctx.strokeText(`${e.name} · ${size(e)}`, e.x, y); ctx.fillText(`${e.name} · ${size(e)}`, e.x, y);
             }
         }
+        if (hawk) {
+            const frame = hawkFrames[Math.floor(hawk.frame) % 4];
+            if (frame.complete && frame.naturalWidth) {
+                ctx.save();
+                ctx.translate(hawk.x, hawk.y);
+                if (Math.cos(hawk.angle) > 0) ctx.scale(-1, 1);
+                ctx.drawImage(frame, -80, -80, 160, 160);
+                ctx.restore();
+            }
+        }
+        // Wind lines behind a drafting head.
+        entities.forEach((e) => {
+            if (!e.drafting || e.x < viewL || e.x > viewR) return;
+            ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 3;
+            for (let i = 0; i < 3; i += 1) {
+                const off = (i - 1) * 12;
+                ctx.beginPath();
+                ctx.moveTo(e.x - Math.cos(e.angle) * 30 - Math.sin(e.angle) * off, e.y - Math.sin(e.angle) * 30 + Math.cos(e.angle) * off);
+                ctx.lineTo(e.x - Math.cos(e.angle) * 70 - Math.sin(e.angle) * off, e.y - Math.sin(e.angle) * 70 + Math.cos(e.angle) * off);
+                ctx.stroke();
+            }
+        });
         ctx.restore();
+        // The hawk is after you: a warning at the screen edge pointing at it.
+        if (hawk && hawk.prey === player && now >= hawk.restUntil && running) {
+            const a = Math.atan2(hawk.y - camY, hawk.x - camX);
+            const ex = cw / 2 + Math.cos(a) * Math.min(cw, ch) * 0.42;
+            const ey = ch / 2 + Math.sin(a) * Math.min(cw, ch) * 0.42;
+            ctx.save();
+            ctx.globalAlpha = 0.6 + Math.sin(now / 120) * 0.3;
+            ctx.fillStyle = '#ff4d5e';
+            ctx.beginPath(); ctx.arc(ex, ey, 22 * (input.scale || 1), 0, Math.PI * 2); ctx.fill();
+            ctx.fillStyle = '#fff'; ctx.font = `900 ${22 * (input.scale || 1)}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+            ctx.fillText('!', ex, ey);
+            ctx.restore();
+        }
         if (input.active && running) {
             const k = input.scale || 1;
             const max = 70 * k;
@@ -411,7 +487,7 @@
         input.scale = ratio;
     }
     function start() {
-        entities = []; stars = [];
+        entities = []; stars = []; hawk = null;
         for (let i = 0; i < STAR_TARGET; i += 1) addStar();
         for (let i = 0; i < BOT_COUNT; i += 1) spawn(false, Math.floor(rand(5, 30)));
         player = spawn(true, 6);
