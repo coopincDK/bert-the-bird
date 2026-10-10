@@ -677,4 +677,8 @@ window.BertI18n.register('pt', {
     "Vinden": "O vento",
     "Isen": "O gelo",
     "Fugleklat-øen": "Ilha do Cocô",
+    "Spejlbanen": "Fase espelho",
+    "GLID & OPVIND · TESTBANE": "PLANE & CORRENTES · FASE DE TESTE",
+    "GLID & OPVIND": "PLANE & CORRENTES",
+    "Svæv": "Planar",
 });

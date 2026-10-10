@@ -677,4 +677,8 @@ window.BertI18n.register('es', {
     "Vinden": "El viento",
     "Isen": "El hielo",
     "Fugleklat-øen": "Isla Caquita",
+    "Spejlbanen": "Nivel espejo",
+    "GLID & OPVIND · TESTBANE": "PLANEA Y CORRIENTES · NIVEL DE PRUEBA",
+    "GLID & OPVIND": "PLANEA Y CORRIENTES",
+    "Svæv": "Planear",
 });

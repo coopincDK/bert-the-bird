@@ -677,4 +677,8 @@ window.BertI18n.register('de', {
     "Vinden": "Der Wind",
     "Isen": "Das Eis",
     "Fugleklat-øen": "Vogelklecks-Insel",
+    "Spejlbanen": "Spiegelstrecke",
+    "GLID & OPVIND · TESTBANE": "GLEITEN & AUFWIND · TESTSTRECKE",
+    "GLID & OPVIND": "GLEITEN & AUFWIND",
+    "Svæv": "Gleiten",
 });

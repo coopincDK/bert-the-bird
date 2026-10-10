@@ -2555,3 +2555,6 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 
 .journey-balloons { position: static !important; height: auto !important; display: flex; flex-wrap: wrap; gap: 6px; padding: 0 !important; margin-left: auto; align-self: center; max-width: 52%; justify-content: flex-end; }
 .level-menu.journey-mode .level-menu-head, .level-menu.journey-mode header { display: flex; align-items: center; gap: 14px; }
+
+.journey-mirror { position: absolute; z-index: 4; width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; background: #7b4dff; color: #fff; font-weight: 900; font-size: 16px;
+    box-shadow: 0 3px 0 #1b2a44; cursor: pointer; }

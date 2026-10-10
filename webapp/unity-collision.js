@@ -137,6 +137,14 @@
                 obstacle.y + obstacle.height * body[1],
                 obstacle.width * body[2], obstacle.height * body[3])];
         }
+        if (obstacle.kind === 'glide-tower') {
+            // The tower body (the art has a rounded top and transparent edges).
+            return [box(obstacle.x + obstacle.width * 0.12, obstacle.y + 18, obstacle.width * 0.76, obstacle.height)];
+        }
+        if (obstacle.kind === 'glide-balloon') {
+            return [circle(obstacle.x + obstacle.width / 2, obstacle.y + obstacle.height * 0.36, obstacle.width * 0.4)];
+        }
+        if (obstacle.kind === 'glide-thermal') return [];
         if (obstacle.kind === 'storm-sail') {
             // The triangular canvas is solid; thin tails and transparent margins are not.
             return [circle(obstacle.x + obstacle.width * 0.35,

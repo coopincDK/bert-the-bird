@@ -677,4 +677,8 @@ window.BertI18n.register('sv', {
     "Vinden": "Vinden",
     "Isen": "Isen",
     "Fugleklat-øen": "Fågelklick-ön",
+    "Spejlbanen": "Spegelbanan",
+    "GLID & OPVIND · TESTBANE": "GLID & UPPVIND · TESTBANA",
+    "GLID & OPVIND": "GLID & UPPVIND",
+    "Svæv": "Sväva",
 });

@@ -677,4 +677,8 @@ window.BertI18n.register('fr', {
     "Vinden": "Le vent",
     "Isen": "La glace",
     "Fugleklat-øen": "L'île Fiente",
+    "Spejlbanen": "Niveau miroir",
+    "GLID & OPVIND · TESTBANE": "PLANE & ASCENDANCES · NIVEAU TEST",
+    "GLID & OPVIND": "PLANE & ASCENDANCES",
+    "Svæv": "Planer",
 });

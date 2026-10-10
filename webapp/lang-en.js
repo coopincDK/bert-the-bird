@@ -710,4 +710,8 @@ window.BertI18n.register('en', {
     "Vinden": "The wind",
     "Isen": "The ice",
     "Fugleklat-øen": "Bird Drop Island",
+    "Spejlbanen": "Mirror level",
+    "GLID & OPVIND · TESTBANE": "GLIDE & THERMALS · TEST LEVEL",
+    "GLID & OPVIND": "GLIDE & THERMALS",
+    "Svæv": "Glide",
 });

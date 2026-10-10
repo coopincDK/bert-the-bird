@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-85';
+    const BUILD_VERSION = 'worlds-relay-86';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -325,12 +325,26 @@
         return result.ok ? { unlocked: true } : { unlocked: false, short: result.short, long: result.long };
     }
     // The four test worlds live in the Eventyr tab too, after the five new levels.
-    const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT]);
+    // Svæv (feedback 10. okt.): Bert has no wingbeats, only pitch. Nose up costs speed,
+    // nose down gains it; warm air (thermals) lifts him; speed is points.
+    const GLIDE_EVENT = Object.freeze({
+        id: 14, modeGroup: 'event', modeOrder: 5, unlockScore: 0,
+        name: 'Svæv', sourceName: 'Svæv', cardText: T('GLID & OPVIND · TESTBANE'),
+        mode: MODE.DEFAULT, startSpeed: 0.7, kind: 'glide', variant: 'thermals', spacing: 820,
+        stages: [
+            { duration: 40, speed: 0.70, difficulty: 0.6 },
+            { duration: 60, speed: 0.78, difficulty: 0.75 },
+            { duration: 180, speed: 0.86, difficulty: 0.9 },
+        ],
+        layers: [],
+    });
+    const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT, GLIDE_EVENT]);
     const EVENT_CARD = Object.freeze({
         11: { name: 'Bird Run', card: T('FUGLE & ROVFUGL'), order: 7 },
         10: { name: 'Neon Encore', card: T('RIGGE & BOLDE'), order: 8 },
         12: { name: 'Stormline', card: T('VIND & GENSTANDE'), order: 9 },
         13: { name: 'Sky Relay', card: T('PORTE & KLOKKE'), order: 10 },
+        14: { name: 'Svæv', card: T('GLID & OPVIND'), order: 11 },
     });
 
     function isEventLevel(level = currentLevel) {
@@ -620,8 +634,14 @@
         }
         if (kind === 'birdRun') for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCarry${i}`);
         if (kind === 'skyRelay') extra.push('relayGateLit', 'relaySkyRing');
+        if (kind === 'glide') {
+            [['v2Tower0', 'tower-happy'], ['v2Tower1', 'tower-sleepy'], ['v2Tower2', 'tower-cheeky'], ['v2Balloon', 'balloon']].forEach(([key, file]) => {
+                ASSET_PATHS[key] ||= `assets/v2/levels/happysky/${file}.webp`;
+                extra.push(key);
+            });
+        }
         if (kind === 'stormline') extra.push('stormSkyDark', 'stormGust', 'stormLeaves');
-        if ((kind === 'birdRun' || kind === 'skyRelay') && V2.levels.has('happySky')) extra.push(...v2LayerKeys('happySky'));
+        if ((kind === 'birdRun' || kind === 'skyRelay' || kind === 'glide') && V2.levels.has('happySky')) extra.push(...v2LayerKeys('happySky'));
         if (kind === 'birdRun' && ASSET_PATHS.v2HawkFly0) {
             for (let i = 0; i < 4; i += 1) extra.push(`v2HawkFly${i}`);
             for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCatch${i}`);
@@ -1378,6 +1398,18 @@
                     card.click();
                 });
                 area.appendChild(stop);
+                if (open && stars === 3) {
+                    // Gold opens the mirrored version of the level.
+                    const mirror = document.createElement('button');
+                    mirror.type = 'button';
+                    mirror.className = 'journey-mirror';
+                    mirror.title = T('Spejlbanen');
+                    mirror.textContent = '⇄';
+                    mirror.style.left = `${40 + i * 150 + 88}px`;
+                    mirror.style.top = `calc(${top}% - 44px)`;
+                    mirror.addEventListener('click', (event) => { event.stopPropagation(); startLevel(id, { mirror: true }); });
+                    area.appendChild(mirror);
+                }
                 stops.push({ stop, area, top, x: 40 + i * 150 });
                 index += 1;
             });
@@ -1888,6 +1920,7 @@
             : Number(levelId) === BIRD_RUN_EVENT.id ? BIRD_RUN_EVENT
                 : Number(levelId) === STORMLINE_EVENT.id ? STORMLINE_EVENT
                     : Number(levelId) === SKY_RELAY_EVENT.id ? SKY_RELAY_EVENT
+                    : Number(levelId) === GLIDE_EVENT.id ? GLIDE_EVENT
                     : ADVENTURE_LEVELS.find((level) => level.id === Number(levelId))
                     || UNITY_LEVELS.find((level) => level.id === Number(levelId)) || UNITY_LEVELS[0];
         const unlock = isEventLevel(requestedLevel) || isAdventureLevel(requestedLevel)
@@ -1950,6 +1983,9 @@
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
         state.runFeathers = 0;
+        state.glideSpeed = 1;
+        state.glideDistance = 0;
+        state.glideCount = 0;
         state.runPowerups = 0;
         state.maxNoStar = 0;
         state.lastStarAt = 0;
@@ -2028,6 +2064,7 @@
         state.dailyKey = options.dailyKey || null;
         state.dailyTarget = Number(options.dailyTarget) || 0;
         state.challenge = options.challenge || null;
+        state.mirror = Boolean(options.mirror);
         try { if (!isEventLevel()) localStorage.setItem('bertTheBird_lastLevel', String(currentLevel.id)); } catch (_) { /* ignore */ }
         state.ghostRecorder = isEventLevel() ? null : BertSocial.createGhostRecorder();
         // Your own best run flies along as a faint ghost (feedback 10. okt.).
@@ -2134,6 +2171,7 @@
 
         if (state.focusPhase === 'idle') {
             state.speed = BertEventPowerups.speed(values.speed, state.activePowerup)
+                * (currentLevel.kind === 'glide' ? (state.glideSpeed || 1) : 1)
                 * (1 + Math.min(0.24, ((state.levelStep || 1) - 1) * 0.04))
                 * (BertMeta.nestPerks?.().boost && !isEventLevel() && state.elapsed < 5 ? 1.15 : 1);
             state.difficulty = values.difficulty;
@@ -2227,7 +2265,21 @@
                 : state.focusPhase === 'exit'
                     ? lerp(0.4, 1, focusProgress)
                     : 1;
-        if (BertEventPowerups.isFlap(currentLevel.mode, state.activePowerup)) {
+        if (currentLevel.kind === 'glide' && state.phase === 'playing') {
+            // Glide: pitch only. Up = climb but lose speed; down = dive and gain speed;
+            // nothing = a slow sink. Thermals push up hard.
+            state.glideSpeed ??= 1;
+            if (state.inputUp) { bird.velocity -= 560 * delta; state.glideSpeed -= 0.32 * delta; }
+            else if (state.inputDown) { bird.velocity += 720 * delta; state.glideSpeed += 0.42 * delta; }
+            else { bird.velocity += 170 * delta; state.glideSpeed += (0.9 - state.glideSpeed) * 0.15 * delta; }
+            const cx = bird.x + BIRD.width / 2;
+            const inThermal = obstacles.some((o) => o.kind === 'glide-thermal' && cx > o.x && cx < o.x + o.width);
+            if (inThermal) bird.velocity -= 1050 * delta;
+            state.inThermal = inThermal;
+            bird.velocity *= 1 - Math.min(0.5, 1.1 * delta);
+            bird.velocity = clamp(bird.velocity, -420, 560);
+            state.glideSpeed = clamp(state.glideSpeed, 0.55, 1.7);
+        } else if (BertEventPowerups.isFlap(currentLevel.mode, state.activePowerup)) {
             bird.velocity += (isReversed() ? -FLAPPY_GRAVITY : FLAPPY_GRAVITY) * delta;
             bird.velocity = isReversed() ? clamp(bird.velocity, -700, 620) : clamp(bird.velocity, -620, 700);
         } else {
@@ -2260,6 +2312,16 @@
                 profile.minimumVelocity, profile.maximumVelocity);
         }
         bird.y += bird.velocity * delta;
+        if (currentLevel.kind === 'glide' && state.phase === 'playing') {
+            if (bird.y < 40) { bird.y = 40; bird.velocity = Math.max(0, bird.velocity); }
+            if (bird.y + BIRD.height > VIEW.height - 30 && !DEBUG_NOCLIP) { triggerDeath(null); return; }
+            // Speed is points: every 150 px flown gives points, more the faster you go.
+            state.glideDistance = (state.glideDistance || 0) + BertProgression.scrollPixelsPerSecond(state.speed) * delta;
+            while (state.glideDistance >= 150) {
+                state.glideDistance -= 150;
+                state.score += Math.max(1, Math.round((state.glideSpeed || 1) * 2 - 1));
+            }
+        }
         if (currentLevel.kind === 'skyRelay') {
             const lowest = VIEW.height - BIRD.height - 58;
             const impact = Math.abs(bird.velocity);
@@ -2959,7 +3021,27 @@
         ctx.restore();
     }
 
+    function spawnGlideGroup() {
+        // A tower from the ground, sometimes a balloon in the air, and a thermal every other group.
+        const x = VIEW.width + 80;
+        const height = randomBetween(170, 200 + Math.min(260, state.elapsed * 3));
+        const art = ['v2Tower0', 'v2Tower1', 'v2Tower2'][Math.floor(gameRandom() * 3)];
+        obstacles.push({ id: state.obstacleId++, kind: 'glide-tower', art, x, y: VIEW.height - height, width: 110, height, harmful: true, age: 0 });
+        if (gameRandom() < 0.4 + Math.min(0.3, state.elapsed / 200)) {
+            obstacles.push({ id: state.obstacleId++, kind: 'glide-balloon', x: x + 330, y: randomBetween(90, 330), width: 110, height: 150, harmful: true, age: 0, phase: gameRandom() * 6 });
+        }
+        state.glideCount = (state.glideCount || 0) + 1;
+        if (state.glideCount % 2 === 1) {
+            obstacles.push({ id: state.obstacleId++, kind: 'glide-thermal', x: x + 170, y: 0, width: 150, height: VIEW.height, harmful: false, age: 0 });
+        }
+        // A short arc of stars to dive through.
+        for (let i = 0; i < 4; i += 1) {
+            collectibles.push({ x: x + 420 + i * 70, y: VIEW.height - height - 120 + Math.sin(i / 3 * Math.PI) * -60, width: 52, height: 52, kind: 'star', spin: 0, age: 0, collected: false });
+        }
+    }
+
     function spawnObstacle() {
+        if (currentLevel.kind === 'glide') { spawnGlideGroup(); return; }
         const x = VIEW.width + 120;
         const id = state.obstacleId++;
         if (currentLevel.kind === 'poop') {
@@ -4575,7 +4657,7 @@
         // Mirrored top edge only where it reads as natural (an ice overhang); a mirrored
         // quay or street looked upside down and made harbour read as water-sky-water-sky.
         if (currentLevel.kind === 'iceberg') v2Edge('iceberg', assets.icebergFg, false);
-        if ((currentLevel.kind === 'birdRun' || currentLevel.kind === 'skyRelay') && V2.levels.has('happySky')) {
+        if ((currentLevel.kind === 'birdRun' || currentLevel.kind === 'skyRelay' || currentLevel.kind === 'glide') && V2.levels.has('happySky')) {
             if (v2Edge('happySky', assets.v2_happySky_Fg)) return;
         }
         if (V2.levels.has(currentLevel.kind) && v2Edge(currentLevel.kind, assets[`v2_${currentLevel.kind}_Fg`])) return;
@@ -5848,6 +5930,26 @@
                 ? assets[`snake${idleSequence[Math.floor((obstacle.age + obstacle.animationPhase) * 10) % idleSequence.length]}`]
                 : assets[`snakeJump${obstacle.attackFrame}`];
             ctx.drawImage(frame, obstacle.renderX, obstacle.renderY, obstacle.renderWidth, obstacle.renderHeight);
+        } else if (obstacle.kind === 'glide-tower') {
+            const tower = assets[obstacle.art];
+            if (tower?.naturalWidth) ctx.drawImage(tower, obstacle.x - 10, obstacle.y, obstacle.width + 20, obstacle.height + 40);
+        } else if (obstacle.kind === 'glide-balloon') {
+            obstacle.y += Math.sin(state.worldTime * 1.4 + obstacle.phase) * 0.4;
+            if (assets.v2Balloon?.naturalWidth) ctx.drawImage(assets.v2Balloon, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
+        } else if (obstacle.kind === 'glide-thermal') {
+            // Warm air: a soft orange column with arrows rising through it.
+            const g = ctx.createLinearGradient(obstacle.x, 0, obstacle.x + obstacle.width, 0);
+            g.addColorStop(0, 'rgba(255,180,90,0)'); g.addColorStop(0.5, 'rgba(255,170,80,.22)'); g.addColorStop(1, 'rgba(255,180,90,0)');
+            ctx.fillStyle = g;
+            ctx.fillRect(obstacle.x, 0, obstacle.width, VIEW.height);
+            ctx.strokeStyle = 'rgba(255,255,255,.75)';
+            ctx.lineWidth = 4;
+            ctx.lineCap = 'round';
+            for (let i = 0; i < 5; i += 1) {
+                const y = ((VIEW.height + 80) - ((state.worldTime * 160 + i * 150) % (VIEW.height + 80)));
+                const cx = obstacle.x + obstacle.width / 2 + Math.sin(state.worldTime * 2 + i) * 18;
+                ctx.beginPath(); ctx.moveTo(cx - 14, y + 12); ctx.lineTo(cx, y); ctx.lineTo(cx + 14, y + 12); ctx.stroke();
+            }
         } else if (obstacle.kind === 'happy-balloon') {
             if (assets.v2Balloon?.naturalWidth) ctx.drawImage(assets.v2Balloon, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
         } else if (obstacle.kind === 'happy-rainbow') {
@@ -6637,6 +6739,9 @@
             const amp = state.shake * state.shake * 14;
             ctx.translate((Math.random() - 0.5) * amp, (Math.random() - 0.5) * amp);
         }
+        // Spejlbanen: the whole world is drawn mirrored, so Bert flies to the left.
+        ctx.save();
+        if (state.mirror) { ctx.translate(VIEW.width, 0); ctx.scale(-1, 1); }
         drawBackground();
         drawDepthHaze();
         drawAmbient();
@@ -6714,6 +6819,7 @@
         // decorative scenery behind him. Only the outer, non-playable bands cover him.
         drawForeground();
         drawEDMFrontLasers();
+        ctx.restore();
         drawFlyingPickups();
         drawComboText();
         if (DEBUG_COLLIDERS && state.phase !== 'menu' && state.phase !== 'levels') {
