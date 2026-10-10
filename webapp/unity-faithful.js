@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-100';
+    const BUILD_VERSION = 'worlds-relay-101';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -6864,7 +6864,7 @@
     }
 
     function drawRelayNearEdge() {
-        if (assets.relayGate?.src?.includes('/g4/')) return; // the new gate art is one piece
+        if (assets.relayGate?.src?.includes('/g4/')) { drawRelayFrontRim(); return; }
         if (currentLevel.kind !== 'skyRelay' || !state.relayRoute
             || !assets.relayGateFront?.naturalWidth
             || !['prewarm', 'playing', 'relay-finish'].includes(state.phase)) return;
@@ -6883,6 +6883,29 @@
                 size, size);
         });
         ctx.restore();
+    }
+
+    // The new one-piece gate art: draw its near (left) rim again on top of Bert, so he
+    // visibly flies THROUGH the ring rather than across it (feedback 10. okt.).
+    function drawRelayFrontRim() {
+        if (currentLevel.kind !== 'skyRelay' || !state.relayRoute
+            || !['prewarm', 'playing', 'relay-finish'].includes(state.phase)) return;
+        const centerX = BertCollision.bertCollider(bird, BIRD).x;
+        state.relayRoute.gates.forEach((gate, index) => {
+            const pose = BertSkyRelay.gatePose(gate, state.worldTime);
+            const x = centerX + pose.worldDistance - state.worldDistance;
+            if (x < -300 || x > VIEW.width + 300) return;
+            const size = 350 * (gate.scale || 1);
+            const passed = state.relayGates[index]?.passed;
+            const art = passed && assets.relayGateLit?.naturalWidth ? assets.relayGateLit : assets.relayGate;
+            if (!art?.naturalWidth) return;
+            ctx.save();
+            ctx.beginPath();
+            ctx.rect(x - size / 2, pose.centerY - size, size * 0.27, size * 2);
+            ctx.clip();
+            ctx.drawImage(art, x - size / 2, pose.centerY - size * 0.47, size, size);
+            ctx.restore();
+        });
     }
 
     function drawRelayLabels() {

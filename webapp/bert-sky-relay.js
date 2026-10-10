@@ -103,16 +103,18 @@
         const centers = firstRound ? GATE_CENTERS : GATE_CENTERS.map(() => Math.round(
             CORRIDOR.top + 60 + random() * (CORRIDOR.bottom - CORRIDOR.top - 120)));
         const gates = centers.map((centerY, index) => {
-            // Fixed art has a fixed opening. Never move the lethal edge invisibly
-            // between seeds while rendering the same painted cloud ring.
-            const openingRadius = Math.round(106 * settings.scale);
+            // Gates start 1.5× big and shrink a little for every gate passed, across rounds
+            // (feedback 10. okt.: hard to hit the hole at first). Art and collider scale together.
+            const gateNumber = (settings.round - 1) * centers.length + index;
+            const gateScale = clamp(1.5 - 0.08 * gateNumber, 0.66, 1.5);
+            const openingRadius = Math.round(106 * gateScale);
             const passRadius = openingRadius - BIRD.visibleBody.halfHeight;
             const previewX = 1000;
-            const capDepth = Math.round(GATE_CAP_DEPTH * settings.scale);
+            const capDepth = Math.round(GATE_CAP_DEPTH * gateScale);
             return {
                 id: index + 1,
                 round: settings.round,
-                scale: settings.scale,
+                scale: gateScale,
                 capDepth,
                 bob: { amplitude: settings.bobAmplitude, speed: settings.bobSpeed, phase: random() * Math.PI * 2 },
                 sway: { amplitude: settings.swayAmplitude, speed: settings.swaySpeed, phase: random() * Math.PI * 2 },

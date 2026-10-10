@@ -31,7 +31,8 @@ assert.deepEqual(first.gates.map((gate) => gate.centerY), [230, 420, 300]);
 assert.equal(first.target.worldDistance, 6100);
 
 for (const gate of first.gates) {
-    assert(gate.openingRadius >= 95 && gate.openingRadius <= 120);
+    // Gates start 1.5× big in round 1 and shrink gate by gate (feedback 10. okt.).
+    assert(gate.openingRadius >= 95 && gate.openingRadius <= 160);
     assert(gate.passRadius > 0 && gate.passRadius < gate.openingRadius);
     assert(gate.openingBounds.top >= 0 && gate.openingBounds.bottom <= skyRelay.VIEW.height,
         'Every open gate has visible canvas bounds.');
