@@ -8,7 +8,7 @@
   "start_url": "./?source=installed",
   "scope": "./",
   "display": "fullscreen",
-  "orientation": "landscape",
+  "orientation": "any",
   "background_color": "#3cc4f0",
   "theme_color": "#c50f38",
   "categories": [

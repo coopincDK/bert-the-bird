@@ -295,7 +295,9 @@
         sky.addColorStop(0, '#4fb8ec'); sky.addColorStop(1, '#bfe9fb');
         ctx.fillStyle = sky; ctx.fillRect(0, 0, cw, ch);
         if (!player) return;
-        const zoom = (ch / 620) * Math.max(0.55, 1 - (size(player) - 6) * 0.004);
+        // Same amount of sky in both orientations: portrait sees high and low,
+        // landscape sees far ahead and behind. The phone's way round is a choice.
+        const zoom = (Math.sqrt(cw * ch) / 900) * Math.max(0.55, 1 - (size(player) - 6) * 0.004);
         const camX = player.x; const camY = Math.min(player.y, GROUND - ch / 2 / zoom + 60);
         // Far clouds (parallax).
         ctx.fillStyle = 'rgba(255,255,255,.75)';
@@ -459,6 +461,8 @@
     document.getElementById('again').addEventListener('click', start);
     document.getElementById('exit').addEventListener('click', () => { location.href = './'; });
     window.addEventListener('resize', resize);
+    // The main game locks to landscape; Flokken may be played either way round.
+    try { screen.orientation?.unlock?.(); } catch (_) { /* not supported */ }
     resize();
     // Idle sky behind the start screen.
     for (let i = 0; i < STAR_TARGET; i += 1) addStar();
