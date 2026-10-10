@@ -139,7 +139,7 @@
         addStar(e.x, e.y, 1);
         if (killer) killer.kills += 1;
         if (e.isPlayer) showDead(killer);
-        else setTimeout(() => { if (running) spawn(false, Math.floor(rand(5, 12))); }, 2500);
+        else setTimeout(() => { if (running) spawn(false, Math.floor(rand(3, 7))); }, 2500);
     }
     function grow(e, n) {
         for (let i = 0; i < n; i += 1) e.birds.push(newBird(e, e.birds.length));
@@ -644,7 +644,9 @@
         startMusic();
         entities = []; stars = []; hawk = null; effects = [];
         for (let i = 0; i < STAR_TARGET; i += 1) addStar();
-        for (let i = 0; i < BOT_COUNT; i += 1) spawn(false, Math.floor(rand(5, 30)));
+        // Everyone starts from the bottom, like the player (feedback 10. okt.: too hard for
+        // new players when the bots began with up to 30 birds). They grow during the round.
+        for (let i = 0; i < BOT_COUNT; i += 1) spawn(false, Math.floor(rand(3, 7)));
         player = spawn(true, 6);
         startedAt = performance.now();
         running = true;
