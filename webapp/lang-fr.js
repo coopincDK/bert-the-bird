@@ -689,4 +689,5 @@ window.BertI18n.register('fr', {
     "KLISTERMÆRKER": "AUTOCOLLANTS",
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Cinq autocollants cachés dans chaque niveau. Ouvre l'œil en volant.",
     "Flokken": "La Volée",
+    "UDFORDRER": "CHALLENGER",
 });

@@ -722,4 +722,5 @@ window.BertI18n.register('en', {
     "KLISTERMÆRKER": "STICKERS",
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Five hidden stickers on each level. Keep your eyes open while you fly.",
     "Flokken": "The Flock",
+    "UDFORDRER": "CHALLENGER",
 });

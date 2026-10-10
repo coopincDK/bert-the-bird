@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-91';
+    const BUILD_VERSION = 'worlds-relay-92';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -6669,6 +6669,40 @@
         if (!Number.isFinite(centerY)) return;
         const heroId = state.challenge?.hero || BertMeta.currentHero();
         const hero = Object.prototype.hasOwnProperty.call(birdFrames, heroId) ? heroId : 'bert';
+        // Where the ghost's run ended, it crashes: it falls to the ground and stays behind
+        // in the world while you fly on (feedback: it must stop, not keep following).
+        const last = ghost[ghost.length - 1];
+        const endTime = last[0] / 10;
+        const recordedToTheEnd = ghost.length < 1800;
+        if (recordedToTheEnd && state.elapsed > endTime + 0.05) {
+            const since = state.elapsed - endTime;
+            const ground = VIEW.height - BIRD.height - 40;
+            const y = Math.min(ground, last[1] - BIRD.height / 2 + 0.5 * 1500 * since * since);
+            const x = BIRD.x - (state.challenge ? 24 : 10) - since * BertProgression.scrollPixelsPerSecond(state.speed);
+            if (x < -BIRD.width * 2) return;
+            ctx.save();
+            ctx.globalAlpha = state.challenge ? 0.3 : 0.28;
+            ctx.translate(x + BIRD.width / 2, y + BIRD.height / 2);
+            ctx.rotate(Math.min(1.4, since * 3));
+            drawHeroAnimation(hero, endTime, false, -BIRD.width / 2, -BIRD.height / 2, BIRD.width, BIRD.height);
+            ctx.restore();
+            if (y >= ground) {
+                // Landed: a small marker where the old run ended.
+                ctx.save();
+                ctx.globalAlpha = 0.75;
+                if (assets.g6RecordFlag?.naturalWidth) ctx.drawImage(assets.g6RecordFlag, x + BIRD.width * 0.6, ground + BIRD.height - 54, 30, 38);
+                ctx.font = '900 13px "Bert Rounded", sans-serif';
+                ctx.fillStyle = '#ffffff';
+                ctx.strokeStyle = 'rgba(27,42,68,.7)';
+                ctx.lineWidth = 4;
+                ctx.textAlign = 'center';
+                const label = state.challenge ? T('UDFORDRER') : T('REKORD');
+                ctx.strokeText(label, x + BIRD.width / 2, ground + 6);
+                ctx.fillText(label, x + BIRD.width / 2, ground + 6);
+                ctx.restore();
+            }
+            return;
+        }
         if (!state.challenge) {
             // The record ghost: a faint copy of you, with a tiny "REKORD" tag.
             ctx.save();

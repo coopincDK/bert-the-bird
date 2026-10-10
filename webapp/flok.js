@@ -28,7 +28,9 @@
     let running = false;
     let lastTime = 0;
     let startedAt = 0;
-    const input = { active: false, x: 0, y: 0, keyTurn: 0 };
+    // A floating joystick: it appears where the finger lands, and the direction is from
+    // there to the finger. Release and Bert keeps his heading.
+    const input = { active: false, x: 0, y: 0, ox: 0, oy: 0, keyTurn: 0, id: null };
     const rand = (a, b) => a + Math.random() * (b - a);
     const dist2 = (ax, ay, bx, by) => (ax - bx) ** 2 + (ay - by) ** 2;
     const angleDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -168,7 +170,9 @@
         for (const e of entities) {
             if (!e.alive) continue;
             if (e.isPlayer) {
-                if (input.active) e.target = Math.atan2(input.y - canvas.height / 2, input.x - canvas.width / 2);
+                if (input.active && Math.hypot(input.x - input.ox, input.y - input.oy) > 8 * (input.scale || 1)) {
+                    e.target = Math.atan2(input.y - input.oy, input.x - input.ox);
+                }
                 if (input.keyTurn) e.target = e.angle + input.keyTurn * 0.8;
             } else {
                 e.think -= dt;
@@ -347,6 +351,21 @@
             }
         }
         ctx.restore();
+        if (input.active && running) {
+            const k = input.scale || 1;
+            const max = 70 * k;
+            const dx = input.x - input.ox; const dy = input.y - input.oy; const d = Math.hypot(dx, dy) || 1;
+            const kx = input.ox + dx / d * Math.min(d, max); const ky = input.oy + dy / d * Math.min(d, max);
+            ctx.save();
+            ctx.globalAlpha = 0.5;
+            ctx.fillStyle = 'rgba(8,20,32,.5)';
+            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3 * k;
+            ctx.beginPath(); ctx.arc(input.ox, input.oy, max, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.globalAlpha = 0.85;
+            ctx.fillStyle = '#b6ff3b';
+            ctx.beginPath(); ctx.arc(kx, ky, 30 * k, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            ctx.restore();
+        }
     }
     function drawBird(hero, x, y, s, facing) {
         const art = heroArt(hero);
@@ -411,14 +430,24 @@
         setTimeout(() => document.getElementById('dead').classList.remove('hidden'), 700);
     }
     function pointer(event) {
-        const p = event.touches ? event.touches[0] : event;
-        if (!p) return;
-        input.x = p.clientX * (input.scale || 1);
-        input.y = p.clientY * (input.scale || 1);
+        input.x = event.clientX * (input.scale || 1);
+        input.y = event.clientY * (input.scale || 1);
     }
-    canvas.addEventListener('pointerdown', (e) => { input.active = true; pointer(e); });
-    canvas.addEventListener('pointermove', (e) => { if (input.active || e.pointerType === 'mouse') { input.active = true; pointer(e); } });
-    window.addEventListener('pointerup', () => { input.active = false; });
+    canvas.addEventListener('pointerdown', (e) => {
+        input.active = true; input.id = e.pointerId; pointer(e);
+        input.ox = input.x; input.oy = input.y;
+    });
+    canvas.addEventListener('pointermove', (e) => {
+        if (!input.active || e.pointerId !== input.id) return;
+        pointer(e);
+        // The base follows if the finger goes far, so you never run out of stick.
+        const max = 70 * (input.scale || 1);
+        const dx = input.x - input.ox; const dy = input.y - input.oy; const d = Math.hypot(dx, dy);
+        if (d > max) { input.ox = input.x - dx / d * max; input.oy = input.y - dy / d * max; }
+    });
+    const release = (e) => { if (e.pointerId === input.id) { input.active = false; input.id = null; } };
+    window.addEventListener('pointerup', release);
+    window.addEventListener('pointercancel', release);
     window.addEventListener('keydown', (e) => {
         if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') input.keyTurn = -1;
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown') input.keyTurn = 1;

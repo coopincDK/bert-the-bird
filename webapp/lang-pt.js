@@ -689,4 +689,5 @@ window.BertI18n.register('pt', {
     "KLISTERMÆRKER": "FIGURINHAS",
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Cinco figurinhas escondidas em cada fase. Fique de olho enquanto voa.",
     "Flokken": "O Bando",
+    "UDFORDRER": "DESAFIANTE",
 });

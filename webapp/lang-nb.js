@@ -689,4 +689,5 @@ window.BertI18n.register('nb', {
     "KLISTERMÆRKER": "KLISTREMERKER",
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Fem skjulte klistremerker på hver bane. Hold øye mens du flyr.",
     "Flokken": "Flokken",
+    "UDFORDRER": "UTFORDRER",
 });

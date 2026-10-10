@@ -689,4 +689,5 @@ window.BertI18n.register('de', {
     "KLISTERMÆRKER": "STICKER",
     "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Fünf versteckte Sticker auf jeder Strecke. Halte beim Fliegen die Augen offen.",
     "Flokken": "Der Schwarm",
+    "UDFORDRER": "HERAUSFORDERER",
 });
