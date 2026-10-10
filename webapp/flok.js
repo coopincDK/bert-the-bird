@@ -640,6 +640,7 @@
         start();
     }
     function start() {
+        try { localStorage.setItem('bertFlokRounds', String((Number(localStorage.getItem('bertFlokRounds')) || 0) + 1)); } catch (_) { /* ignore */ }
         startMusic();
         entities = []; stars = []; hawk = null; effects = [];
         for (let i = 0; i < STAR_TARGET; i += 1) addStar();

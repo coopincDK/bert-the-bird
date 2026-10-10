@@ -697,4 +697,5 @@ window.BertI18n.register('sv', {
     "UGENS BONUS": "VECKANS BONUS",
     "DOBBELT BELØNNING · {0} DAGE TILBAGE": "DUBBEL BELÖNING · {0} DAGAR KVAR",
     "Ugens bonus: +{0} fjer til reden": "Veckans bonus: +{0} fjädrar till boet",
+    "2× FJER · {0} DAGE": "2× FJÄDRAR · {0} DAGAR",
 });

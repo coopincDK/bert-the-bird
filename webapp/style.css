@@ -2732,3 +2732,17 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
     #main-menu #hero-selector > span, #main-menu #daily-btn .daily-kicker { font-size: 8px !important; letter-spacing: .03em !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
     #main-menu #hero-selector > strong, #main-menu #daily-btn > strong { font-size: 11px !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
 }
+
+/* ---- Forsiden: tre kolonner, der tager højde for kameraøen i siderne (10. okt.) ----
+   Venstre: træ og helt (ca. 6–30 %), midten: SPIL (35–65 %), højre: Flokken (fra 70 %). */
+#main-menu .menu-actions { width: 30vw !important; left: calc(50% - 15vw) !important; }
+.flok-promo { width: 22vw !important; max-width: 250px; right: calc(env(safe-area-inset-right, 0px) + 1.5vw) !important; }
+#main-menu .menu-bird { left: calc(env(safe-area-inset-left, 0px) + 6vw) !important; width: min(17vw, 190px) !important; }
+#main-menu .menu-nest { left: calc(env(safe-area-inset-left, 0px) + 1vw) !important; width: min(24vw, 250px) !important; }
+.menu-secondary { gap: 8px !important; }
+.menu-secondary > .quick-play-button { flex: 0.75 1 0 !important; }
+#main-menu .quick-play-button .ui-house { font-size: clamp(12px, 3.2vh, 18px) !important; white-space: nowrap; }
+.flok-promo-new[hidden] { display: none !important; }
+/* Dagens rute: status i hjørnet, navnet får hele linjen. */
+#main-menu #daily-btn #daily-state { position: absolute !important; right: 14px !important; top: 9px !important; grid-column: auto !important; grid-row: auto !important; font-size: 9px !important; }
+#main-menu #daily-btn > strong { grid-column: 2 / -1 !important; }

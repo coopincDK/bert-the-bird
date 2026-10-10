@@ -730,4 +730,5 @@ window.BertI18n.register('en', {
     "UGENS BONUS": "WEEKLY BONUS",
     "DOBBELT BELØNNING · {0} DAGE TILBAGE": "DOUBLE REWARDS · {0} DAYS LEFT",
     "Ugens bonus: +{0} fjer til reden": "Weekly bonus: +{0} feathers for the nest",
+    "2× FJER · {0} DAGE": "2× FEATHERS · {0} DAYS",
 });

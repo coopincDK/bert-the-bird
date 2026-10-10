@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-106';
+    const BUILD_VERSION = 'worlds-relay-107';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1407,7 +1407,7 @@
 
         card.querySelector('strong').textContent = level.name;
         const open = adventureStatus(level).unlocked;
-        card.querySelector('small').textContent = open ? T`DOBBELT BELØNNING · ${daysLeftInWeek()} DAGE TILBAGE` : adventureStatus(level).short;
+        card.querySelector('small').textContent = open ? T`2× FJER · ${daysLeftInWeek()} DAGE` : adventureStatus(level).short;
         card.classList.toggle('locked', !open);
     }
 
@@ -1919,6 +1919,14 @@
     }
 
     function updateFlokPromo() {
+        // "NYT" stays for 14 days from the first time it is seen, or until 3 rounds are played.
+        try {
+            const first = Number(localStorage.getItem('bertFlokSeen')) || Date.now();
+            localStorage.setItem('bertFlokSeen', String(first));
+            const rounds = Number(localStorage.getItem('bertFlokRounds')) || 0;
+            const stillNew = Date.now() - first < 14 * 86400000 && rounds < 3;
+            document.querySelector('.flok-promo-new')?.toggleAttribute('hidden', !stillNew);
+        } catch (_) { /* ignore */ }
         const el = document.getElementById('flok-promo-lives');
         const st = BertMeta.flokStatus?.();
         if (!el || !st) return;
