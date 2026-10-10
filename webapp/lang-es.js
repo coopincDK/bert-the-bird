@@ -693,4 +693,8 @@ window.BertI18n.register('es', {
     "NYT": "NUEVO",
     "FLOKKEN": "LA BANDADA",
     "ALLE MOD ALLE I EN STOR HIMMEL": "TODOS CONTRA TODOS EN UN GRAN CIELO",
+    "Få sølv (50 point) i {0} for at åbne bonusbanen {1}.": "Consigue plata (50 puntos) en {0} para abrir el nivel extra {1}.",
+    "UGENS BONUS": "BONUS SEMANAL",
+    "DOBBELT BELØNNING · {0} DAGE TILBAGE": "RECOMPENSA DOBLE · QUEDAN {0} DÍAS",
+    "Ugens bonus: +{0} fjer til reden": "Bonus semanal: +{0} plumas para el nido",
 });

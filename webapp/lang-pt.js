@@ -693,4 +693,8 @@ window.BertI18n.register('pt', {
     "NYT": "NOVO",
     "FLOKKEN": "O BANDO",
     "ALLE MOD ALLE I EN STOR HIMMEL": "TODOS CONTRA TODOS NUM GRANDE CÉU",
+    "Få sølv (50 point) i {0} for at åbne bonusbanen {1}.": "Ganhe prata (50 pontos) em {0} para abrir a fase bônus {1}.",
+    "UGENS BONUS": "BÔNUS DA SEMANA",
+    "DOBBELT BELØNNING · {0} DAGE TILBAGE": "RECOMPENSA DUPLA · FALTAM {0} DIAS",
+    "Ugens bonus: +{0} fjer til reden": "Bônus da semana: +{0} penas para o ninho",
 });

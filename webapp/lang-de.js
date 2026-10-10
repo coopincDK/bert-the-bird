@@ -693,4 +693,8 @@ window.BertI18n.register('de', {
     "NYT": "NEU",
     "FLOKKEN": "DER SCHWARM",
     "ALLE MOD ALLE I EN STOR HIMMEL": "ALLE GEGEN ALLE IN EINEM GROSSEN HIMMEL",
+    "Få sølv (50 point) i {0} for at åbne bonusbanen {1}.": "Hol Silber (50 Punkte) in {0}, um die Bonusstrecke {1} zu öffnen.",
+    "UGENS BONUS": "WOCHENBONUS",
+    "DOBBELT BELØNNING · {0} DAGE TILBAGE": "DOPPELTE BELOHNUNG · NOCH {0} TAGE",
+    "Ugens bonus: +{0} fjer til reden": "Wochenbonus: +{0} Federn fürs Nest",
 });

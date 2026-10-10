@@ -2634,3 +2634,24 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
     transform: rotate(-10deg); box-shadow: 0 3px 0 #a3172a; }
 @keyframes flok-promo-bob { 0%, 100% { transform: translateY(0) rotate(1deg); } 50% { transform: translateY(-6px) rotate(-1deg); } }
 @media (prefers-reduced-motion: reduce) { .flok-promo { animation: none; } }
+
+/* Bonusbaner på rejsekortet */
+.journey-stop.bonus { width: 100px; }
+.journey-stop.bonus .journey-thumb { width: 50px !important; height: 50px !important; }
+.journey-stop.bonus .journey-thumb::before { inset: -10px; }
+.bonus-balloon { position: absolute; right: -16px; top: -22px; width: 22px; height: 32px; z-index: 4; }
+.journey-stop.bonus .journey-name { font-size: 10px; margin-top: 8px; background: rgba(123,77,255,.9); }
+.bonus-week { font-size: 8px; font-weight: 900; letter-spacing: .08em; color: #fff; background: #ff4d5e; padding: 1px 6px; border-radius: 6px; position: relative; z-index: 3; }
+.journey-stop.bonus.spotlight .journey-thumb { animation: pin-bob 1.4s ease-in-out infinite; }
+/* Ugens bonusbane på forsiden, under Flokken */
+.bonus-promo { position: absolute; right: calc(var(--pad, 16px) + 2vw); top: calc(22vh + min(24vw, 250px) * 0.95 + 18px); width: min(24vw, 250px); display: grid; grid-template-columns: 64px 1fr;
+    gap: 8px; align-items: center; padding: 6px 8px; border: 0; border-radius: 14px; background: rgba(8,20,32,.82); color: #fff; cursor: pointer; text-align: left; box-shadow: 0 4px 0 rgba(8,20,32,.5); z-index: 3; }
+.bonus-promo img { width: 64px; height: 40px; object-fit: cover; border-radius: 8px; }
+.bonus-promo strong { display: block; font: 900 14px "Bert Display", sans-serif; letter-spacing: .04em; }
+.bonus-promo small { display: block; font-size: 8px; font-weight: 900; letter-spacing: .08em; color: #ffd98a; }
+.bonus-promo-tag { position: absolute; top: -9px; left: 10px; font-size: 9px; font-weight: 900; letter-spacing: .1em; background: #ff4d5e; padding: 2px 8px; border-radius: 8px; }
+.bonus-promo.locked img { filter: grayscale(.9) brightness(.7); }
+
+.bonus-promo { right: auto !important; left: 50% !important; transform: translateX(-50%); top: 64vh !important; width: min(42vw, 380px) !important; grid-template-columns: 56px 1fr !important; padding: 5px 10px !important; }
+.bonus-promo img { width: 56px !important; height: 34px !important; }
+.bonus-promo { top: 68.5vh !important; }

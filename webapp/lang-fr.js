@@ -693,4 +693,8 @@ window.BertI18n.register('fr', {
     "NYT": "NOUVEAU",
     "FLOKKEN": "LA VOLÉE",
     "ALLE MOD ALLE I EN STOR HIMMEL": "TOUS CONTRE TOUS DANS UN GRAND CIEL",
+    "Få sølv (50 point) i {0} for at åbne bonusbanen {1}.": "Obtiens l'argent (50 points) dans {0} pour ouvrir le niveau bonus {1}.",
+    "UGENS BONUS": "BONUS DE LA SEMAINE",
+    "DOBBELT BELØNNING · {0} DAGE TILBAGE": "RÉCOMPENSE DOUBLE · {0} JOURS RESTANTS",
+    "Ugens bonus: +{0} fjer til reden": "Bonus de la semaine : +{0} plumes pour le nid",
 });

@@ -693,4 +693,8 @@ window.BertI18n.register('nb', {
     "NYT": "NYTT",
     "FLOKKEN": "FLOKKEN",
     "ALLE MOD ALLE I EN STOR HIMMEL": "ALLE MOT ALLE PÅ EN STOR HIMMEL",
+    "Få sølv (50 point) i {0} for at åbne bonusbanen {1}.": "Få sølv (50 poeng) i {0} for å åpne bonusbanen {1}.",
+    "UGENS BONUS": "UKENS BONUS",
+    "DOBBELT BELØNNING · {0} DAGE TILBAGE": "DOBBEL BELØNNING · {0} DAGER IGJEN",
+    "Ugens bonus: +{0} fjer til reden": "Ukens bonus: +{0} fjær til redet",
 });

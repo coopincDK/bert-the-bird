@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-102';
+    const BUILD_VERSION = 'worlds-relay-103';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -318,10 +318,19 @@
     function adventureOpen() {
         return BertMeta.hasTestAccess?.() || [21, 22, 24].some((id) => WORLD_RULES[id]().ok);
     }
+    // Bonus levels (feedback 10. okt.): every special level belongs to a world on the
+    // journey and opens with silver on that world's own level.
+    const BONUS_HOME = Object.freeze({ 15: 1, 11: 4, 13: 5, 14: 5, 10: 22, 12: 24 }); // 11 Bird Run, 10 Neon Encore
     function adventureStatus(level) {
         if (BertMeta.hasTestAccess?.()) return { unlocked: true };
-        if (level.modeGroup === 'event') return adventureOpen() ? { unlocked: true }
-            : { unlocked: false, short: T('ÅBNER MED EVENTYR'), long: T('Testbanerne åbner sammen med den første eventyrverden.') };
+        if (level.modeGroup === 'event') {
+            const home = BONUS_HOME[level.id];
+            const homeLevel = home && levelById(home);
+            if (!homeLevel) return { unlocked: true };
+            const ok = loadHighscore(home) >= SILVER_SCORE;
+            return ok ? { unlocked: true } : { unlocked: false, short: T`SØLV I ${homeLevel.name.toUpperCase()}`,
+                long: T`Få sølv (50 point) i ${homeLevel.name} for at åbne bonusbanen ${level.name}.` };
+        }
         const rule = WORLD_RULES[level.id];
         if (!rule) return { unlocked: true };
         const result = rule();
@@ -1361,9 +1370,9 @@
     // its three stars (bronze, silver, gold) or a lock; Bert sits on the last stop played.
     // The test worlds float above as balloons. Tapping a stop is the same as its card.
     const JOURNEY = Object.freeze([
-        { area: T('Ørkenen'), ids: [1] }, { area: T('Junglen'), ids: [4] }, { area: T('Himlen'), ids: [5] },
+        { area: T('Ørkenen'), ids: [1], bonus: [15] }, { area: T('Junglen'), ids: [4], bonus: [11] }, { area: T('Himlen'), ids: [5], bonus: [13, 14] },
         { area: T('Byen'), ids: [3, 6, 7] }, { area: T('Tunnelen'), ids: [2, 8, 9] },
-        { area: T('Havnen'), ids: [21] }, { area: T('Natten'), ids: [22] }, { area: T('Vinden'), ids: [24] },
+        { area: T('Havnen'), ids: [21] }, { area: T('Natten'), ids: [22], bonus: [10] }, { area: T('Vinden'), ids: [24], bonus: [12] },
         { area: T('Vulkanen'), ids: [23] }, { area: T('Isen'), ids: [20] }, { area: T('Fugleklat-øen'), ids: [25] },
     ]);
     const AREA_ART = ['desert', 'jungle', 'sky', 'city', 'tunnel', 'harbor', 'night', 'wind', 'volcano', 'ice', 'poop'];
@@ -1376,6 +1385,28 @@
         if (level.modeGroup === 'adventure' || level.modeGroup === 'event') return adventureStatus(level).unlocked;
         return unlockedLevels().some((l) => l.id === level.id);
     }
+    // Ugens bonusbane: one bonus level a week is in the spotlight with double rewards.
+    const BONUS_ROTATION = Object.freeze([13, 10, 11, 12, 14, 15]);
+    function weekNumber(date = new Date()) {
+        const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+        d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+        return Math.ceil(((d - new Date(Date.UTC(d.getUTCFullYear(), 0, 1))) / 86400000 + 1) / 7) + d.getUTCFullYear() * 53;
+    }
+    function weeklyBonusId() { return BONUS_ROTATION[weekNumber() % BONUS_ROTATION.length]; }
+    function daysLeftInWeek() { const day = (new Date().getDay() + 6) % 7; return 7 - day; }
+    function updateBonusPromo() {
+        const card = document.getElementById('bonus-promo');
+        if (!card) return;
+        const level = levelById(weeklyBonusId());
+        const lvlCard = dom.levelGrid.querySelector(`.level-card[data-level-id="${level.id}"]`);
+        const thumb = lvlCard?.querySelector('.level-thumb');
+        card.querySelector('img').src = thumb?.dataset.src || thumb?.src || '';
+        card.querySelector('strong').textContent = level.name;
+        const open = adventureStatus(level).unlocked;
+        card.querySelector('small').textContent = open ? T`DOBBELT BELØNNING · ${daysLeftInWeek()} DAGE TILBAGE` : adventureStatus(level).short;
+        card.classList.toggle('locked', !open);
+    }
+
     function renderJourney() {
         let journey = document.getElementById('journey');
         if (!journey) {
@@ -1398,7 +1429,7 @@
             area.className = 'journey-area';
             area.style.setProperty('--tint', AREA_TINT[areaIndex]);
             area.style.setProperty('--art', `url(assets/v2/g6/journey/area-${AREA_ART[areaIndex]}.webp)`);
-            area.style.width = `${section.ids.length * 150 + 40}px`;
+            area.style.width = `${section.ids.length * 150 + (section.bonus?.length || 0) * 110 + 40}px`;
             area.innerHTML = `<span class="journey-area-name">${section.area}</span>`;
             section.ids.forEach((id, i) => {
                 const level = levelById(id);
@@ -1441,25 +1472,33 @@
                 stops.push({ stop, area, top, x: 40 + i * 150 });
                 index += 1;
             });
+            // Bonus stops: smaller balloons on a side branch, after the world's own stop.
+            (section.bonus || []).forEach((id, b) => {
+                const level = levelById(id);
+                if (!level) return;
+                const open = stopIsOpen(level);
+                const best = loadHighscore(id);
+                const stars = (best >= 20) + (best >= 50) + (best >= 100);
+                const card = dom.levelGrid.querySelector(`.level-card[data-level-id="${id}"]`);
+                const thumb = card?.querySelector('.level-thumb');
+                const art = thumb?.dataset.src || thumb?.src || '';
+                const spotlight = id === weeklyBonusId();
+                const stop = document.createElement('button');
+                stop.type = 'button';
+                stop.className = `journey-stop bonus${open ? '' : ' locked'}${spotlight ? ' spotlight' : ''}`;
+                stop.style.left = `${40 + section.ids.length * 150 + b * 110}px`;
+                stop.style.top = '30%';
+                stop.innerHTML = `<span class="journey-thumb" style="background-image:url('${art}')"><img class="bonus-balloon" src="assets/v2/g6/journey/balloon.webp" alt=""></span>`
+                    + `<span class="journey-name">${level.name}</span>`
+                    + (spotlight ? `<span class="bonus-week">${T('UGENS BONUS')}</span>` : '')
+                    + (open ? `<span class="journey-stars">${[0, 1, 2].map((k) => `<i class="${k < stars ? 'on' : ''}">★</i>`).join('')}</span>`
+                        : `<span class="journey-lock"><img src="assets/adventure/ui/lock.webp" alt="">${adventureStatus(level).short}</span>`);
+                stop.addEventListener('click', () => { if (card) { selectGameMode('adventure'); card.click(); } });
+                area.appendChild(stop);
+            });
             track.appendChild(area);
         });
-        // Test worlds as balloons above the journey, once Eventyr is open.
-        if (adventureOpen()) {
-            const balloons = document.createElement('div');
-            balloons.className = 'journey-balloons';
-            EVENT_LEVELS.forEach((level) => {
-                const card = dom.levelGrid.querySelector(`.level-card[data-level-id="${level.id}"]`);
-                if (!card) return;
-                const b = document.createElement('button');
-                b.type = 'button'; b.className = 'journey-balloon';
-                b.innerHTML = `<img src="assets/v2/g6/journey/balloon.webp" alt="">${level.name}`;
-                b.addEventListener('click', () => { selectGameMode('adventure'); card.click(); });
-                balloons.appendChild(b);
-            });
-            document.getElementById('journey-balloons')?.replaceChildren(...balloons.children);
-        } else {
-            document.getElementById('journey-balloons')?.replaceChildren();
-        }
+        document.getElementById('journey-balloons')?.replaceChildren();
         journey.replaceChildren(track);
         // Dotted path between stops, drawn after layout.
         requestAnimationFrame(() => {
@@ -1883,6 +1922,7 @@
 
     function updateMetaMenu() {
         updateFlokPromo();
+        updateBonusPromo();
         const meta = BertMeta.snapshot();
         const daily = BertMeta.dailyChallenge(new Date(), unlockedLevels().map((level) => level.id));
         dom.totalStars.textContent = String(meta.totalStars);
@@ -3804,7 +3844,7 @@
             try { localStorage.setItem(`bertTheBird_ghost_${currentLevel.id}`, JSON.stringify(state.completedGhost)); } catch (_) { /* full storage */ }
         }
         const mode = currentLevel.kind === 'tunnel' ? 'tunnel' : currentLevel.mode === MODE.FLAPPY ? 'flappy' : 'classic';
-        const savedRun = isEventLevel() || opRun ? { unlockedHeroes: [] } : BertMeta.recordRun({
+        const savedRun = opRun ? { unlockedHeroes: [] } : BertMeta.recordRun({
             ...run,
             stars: state.starsCollected,
             levelId: currentLevel.id,
@@ -3913,6 +3953,10 @@
         setVisible(dom.gameOver, true);
         revealResult(improved && state.score > 0);
         settleNest(opRun);
+        if (!opRun && currentLevel.id === weeklyBonusId()) {
+            const reward = BertMeta.claimBonusWeek?.(String(weekNumber()), state.score);
+            if (reward?.feathers) setTimeout(() => window.BertApp?.showToast(T`Ugens bonus: +${reward.feathers} fjer til reden`), 2600);
+        }
         maybeOfferStarter();
     }
 
@@ -7816,6 +7860,12 @@
             });
         });
         document.getElementById('flok-promo')?.addEventListener('click', () => { location.href = 'flok.html'; });
+        document.getElementById('bonus-promo')?.addEventListener('click', () => {
+            const id = weeklyBonusId();
+            const card = dom.levelGrid.querySelector(`.level-card[data-level-id="${id}"]`);
+            if (adventureStatus(levelById(id)).unlocked) startLevel(id);
+            else { showLevelMenu(); card?.click(); }
+        });
         setInterval(() => { if (state.phase === 'menu') updateFlokPromo(); }, 30000);
         document.getElementById('reset-all-btn')?.addEventListener('click', () => {
             const button = document.getElementById('reset-all-btn');

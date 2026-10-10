@@ -26,6 +26,7 @@
         challengeClaims: {},
         stickers: {},
         flok: { lives: 5, updatedAt: 0 },
+        bonusWeeks: {},
         counters: { causes: {}, heroesFlown: {}, levelRuns: {} },
         economy: { continueSpins: 0, revivesWon: 0, feathersSpent: 0 },
         settings: { music: true, sfx: true, haptics: true, lights: true, musicVolume: 0.7, sfxVolume: 0.7 },
@@ -92,6 +93,7 @@
                 challengeClaims: stored.challengeClaims && typeof stored.challengeClaims === 'object' ? stored.challengeClaims : {},
                 stickers: stored.stickers && typeof stored.stickers === 'object' ? stored.stickers : {},
                 flok: { lives: 5, updatedAt: 0, ...(stored.flok || {}) },
+                bonusWeeks: stored.bonusWeeks && typeof stored.bonusWeeks === 'object' ? stored.bonusWeeks : {},
                 counters: { causes: {}, heroesFlown: {}, levelRuns: {}, ...(stored.counters || {}) },
                 economy: { ...DEFAULTS.economy, ...(stored.economy || {}) },
                 settings: { ...DEFAULTS.settings, ...(stored.settings || {}) },
@@ -976,6 +978,17 @@
         NEST_STEPS, nestLevel, nestStatus, buildNest, nestPerks, noteDailyFlight, calendarStatus, badgeList, awardBadges,
         EGG_TIERS, eggStatus, buyEgg, incubate, grantFoundEgg, starterChoice, chooseStarter,
         weeklyChallenges, claimWeekly, challengeBook, claimBook, nearestChallenge, flokStatus, useFlokLife, buyFlokLife,
+        /** Weekly bonus level: first bronze, silver and gold each week pay 10, 20 and 40 feathers. */
+        claimBonusWeek(week, score) {
+            const done = (data.bonusWeeks[week] ||= {});
+            let feathers = 0;
+            [['bronze', 20, 10], ['silver', 50, 20], ['gold', 100, 40]].forEach(([medal, need, pay]) => {
+                if (score >= need && !done[medal]) { done[medal] = true; feathers += pay; }
+            });
+            if (feathers) { data.feathers += feathers; data.stats.feathersEver = (data.stats.feathersEver || 0) + feathers; }
+            save();
+            return { feathers };
+        },
         stickers: () => ({ ...data.stickers }),
         findSticker(id) { if (data.stickers[id]) return false; data.stickers[id] = new Date().toISOString(); data.feathers += 3; save(); return true; },
         resetAll() { try { localStorage.clear(); } catch (_) { /* ignore */ } },

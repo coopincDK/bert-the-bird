@@ -726,4 +726,8 @@ window.BertI18n.register('en', {
     "NYT": "NEW",
     "FLOKKEN": "THE FLOCK",
     "ALLE MOD ALLE I EN STOR HIMMEL": "EVERYONE AGAINST EVERYONE IN A BIG SKY",
+    "Få sølv (50 point) i {0} for at åbne bonusbanen {1}.": "Get silver (50 points) in {0} to open the bonus level {1}.",
+    "UGENS BONUS": "WEEKLY BONUS",
+    "DOBBELT BELØNNING · {0} DAGE TILBAGE": "DOUBLE REWARDS · {0} DAYS LEFT",
+    "Ugens bonus: +{0} fjer til reden": "Weekly bonus: +{0} feathers for the nest",
 });
