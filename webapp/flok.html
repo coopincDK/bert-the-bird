@@ -39,6 +39,43 @@
   .buy-life { display: block; margin: 8px auto 0 !important; background: #ffd98a !important; color: #3a2a1a !important; font-size: 14px !important; padding: 10px 18px !important; }
   .buy-life[hidden] { display: none !important; }
   .proto { position: fixed; left: 50%; bottom: calc(6px + env(safe-area-inset-bottom, 0)); transform: translateX(-50%); white-space: nowrap; font-size: 10px; letter-spacing: .12em; color: rgba(255,255,255,.85); font-weight: 900; pointer-events: none; }
+
+  @font-face { font-family: 'Bert Display'; src: url('assets/unity/fonts/bert-display.woff2') format('woff2'); font-display: swap; }
+  @font-face { font-family: 'Bert Rounded'; src: url('assets/unity/fonts/bert-rounded.woff2') format('woff2'); font-weight: 200 1000; font-display: swap; }
+  body { font-family: 'Bert Rounded', system-ui, sans-serif; }
+  /* Menus hide the in-game HUD so the call to action stands alone. */
+  body.menu .hud, body.menu .flok-btn, body.menu .proto { display: none !important; }
+  .screen { background: rgba(8,20,32,.62); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); padding: env(safe-area-inset-top, 0) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0); box-sizing: border-box; }
+  .card { max-width: none !important; width: min(94vw, 780px); max-height: 94vh; overflow-y: auto; box-sizing: border-box; padding: 14px 20px !important; }
+  .card h1 { font-family: 'Bert Display', sans-serif; font-size: clamp(26px, 7vh, 40px) !important; margin: 0 !important; letter-spacing: .05em; text-shadow: 0 3px 0 #0a2342; }
+  .tagline { margin: 0 0 4px !important; font-weight: 800; opacity: .9; }
+  .cta { display: block; width: 100%; max-width: 320px; margin: 8px auto 0 !important; min-height: 64px; font-family: 'Bert Display', sans-serif; font-size: 30px !important; letter-spacing: .08em;
+    border-radius: 18px !important; background: #b6ff3b !important; color: #123018 !important; box-shadow: 0 6px 0 #3c7a12 !important; animation: cta-pulse 1.6s ease-in-out infinite; }
+  .cta[disabled] { animation: none; background: #6a7a8a !important; box-shadow: none !important; color: #dfe6ec !important; }
+  @keyframes cta-pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.04); } }
+  @media (prefers-reduced-motion: reduce) { .cta { animation: none; } }
+  .start-card { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; align-items: center; }
+  .start-main { text-align: center; }
+  .start-art { max-height: 22vh !important; margin: 0 auto !important; }
+  .start-rules { text-align: left; background: rgba(255,255,255,.07); border-radius: 14px; padding: 10px 14px; }
+  .start-rules h2 { margin: 0 0 6px; font-family: 'Bert Display', sans-serif; font-size: 15px; letter-spacing: .1em; color: #ffd98a; }
+  .start-rules ul { margin: 0; padding-left: 16px; font-size: 13px; line-height: 1.45; }
+  .start-rules li { margin: 2px 0; }
+  .dead-card { display: grid; grid-template-columns: auto 1fr; gap: 16px; align-items: center; width: min(94vw, 640px); }
+  .caught-art { max-height: 40vh !important; max-width: 34vw !important; margin: 0 !important; }
+  .dead-main { text-align: center; }
+  .stats { display: flex; justify-content: center; gap: 18px; margin: 8px 0 2px; }
+  .stats div { display: grid; }
+  .stats b { font-family: 'Bert Display', sans-serif; font-size: 30px; color: #ffd98a; text-shadow: 0 2px 0 #0a2342; }
+  .stats small { font-size: 10px; font-weight: 900; letter-spacing: .12em; opacity: .8; }
+  .best { margin: 2px 0 !important; font-size: 13px !important; color: #b6ff3b; font-weight: 900; }
+  .link { background: none !important; box-shadow: none !important; color: #fff !important; font-size: 12px !important; letter-spacing: .1em; opacity: .8; margin-top: 6px !important; padding: 6px !important; }
+  @media (orientation: portrait) {
+    .start-card, .dead-card { grid-template-columns: 1fr; gap: 10px; }
+    .caught-art { max-width: 60vw !important; max-height: 24vh !important; margin: 0 auto !important; }
+    .start-rules ul { font-size: 12px; }
+  }
+  @media (max-height: 430px) and (orientation: landscape) { .start-rules ul { font-size: 12px; line-height: 1.35; } .cta { min-height: 56px; font-size: 26px !important; } }
 </style>
 </head>
 <body>
@@ -51,30 +88,44 @@
 <button class="flok-btn" id="flok-btn" type="button">FLOK</button>
 <button class="exit" id="exit" type="button">← TILBAGE</button>
 <div class="screen" id="start">
-  <div class="card">
-    <img class="start-art" src="assets/v2/g7/flock/title.webp" alt="">
-    <h1>FLOKKEN</h1>
-    <p>Alle mod alle i en stor himmel.</p>
-    <div class="rules">
-      <p><b>Kæden:</b> Sæt fingeren et sted på skærmen og træk: så styrer du med joysticket, der dukker op. Saml stjerner, så kommer flere fugle med. Rammer dit hoved en andens kæde, er du ude.</p>
-      <p><b>Flokken:</b> Med 15 fugle kan du trykke FLOK. I kort tid bliver I til en stor, langsom kugle, der spiser mindre flokke og kæder. Så folder I jer ud igen.</p>
-      <p><b>Fang en flok:</b> Flyv rundt om den med din kæde. Lukker ringen sig, er den din.</p>
-      <p><b>Kanten:</b> Flyver du ud i vindvæggen eller ned i jorden, er du ude.</p>
-      <p><b>Tricks:</b> Dyk for fart, stigning koster. Flyv tæt bag en anden kæde for 20 % ekstra fart. Pas på høgen: den jagter altid den største.</p>
+  <div class="card start-card">
+    <div class="start-main">
+      <img class="start-art" src="assets/v2/g7/flock/title.webp" alt="">
+      <h1>FLOKKEN</h1>
+      <p class="tagline">Alle mod alle i en stor himmel</p>
+      <p class="lives"></p>
+      <button id="play" class="cta" type="button">FLYV</button>
+      <button class="buy-life" type="button" hidden></button>
     </div>
-    <p class="lives"></p>
-    <button id="play" type="button">FLYV</button>
-    <button class="buy-life" type="button" hidden></button>
+    <div class="start-rules">
+      <h2>SÅDAN SPILLER DU</h2>
+      <ul>
+        <li><b>Styr:</b> sæt fingeren på skærmen og træk.</li>
+        <li><b>Voks:</b> 3 stjerner giver en ny fugl.</li>
+        <li><b>Pas på:</b> rammer dit hoved en anden kæde, kanten eller jorden, er du ude.</li>
+        <li><b>FLOK:</b> ved 15 fugle bliver I kort til en kugle, der spiser mindre fugle.</li>
+        <li><b>Fang:</b> flyv en ring om en flok.</li>
+        <li><b>Tricks:</b> dyk for fart, flyv bag andre for slipstrøm, og flygt fra høgen.</li>
+      </ul>
+    </div>
   </div>
 </div>
 <div class="screen hidden" id="dead">
-  <div class="card">
+  <div class="card dead-card">
     <img class="caught-art" src="assets/v2/g7/flock/caught.webp" alt="">
-    <h1 id="dead-title">UDE!</h1>
-    <p id="dead-text"></p>
-    <p class="lives"></p>
-    <button id="again" type="button">FLYV IGEN</button>
-    <button class="buy-life" type="button" hidden></button>
+    <div class="dead-main">
+      <h1 id="dead-title">UDE!</h1>
+      <div class="stats">
+        <div><b id="stat-birds">0</b><small>FUGLE</small></div>
+        <div><b id="stat-kills">0</b><small>FANGET</small></div>
+        <div><b id="stat-time">0:00</b><small>TID</small></div>
+      </div>
+      <p class="best" id="stat-best"></p>
+      <p class="lives"></p>
+      <button id="again" class="cta" type="button">FLYV IGEN</button>
+      <button class="buy-life" type="button" hidden></button>
+      <button id="dead-home" class="link" type="button">TIL FORSIDEN</button>
+    </div>
   </div>
 </div>
 <script src="bert-hero-store.js"></script>

@@ -143,6 +143,7 @@
     }
     function grow(e, n) {
         for (let i = 0; i < n; i += 1) e.birds.push(newBird(e, e.birds.length));
+        e.peak = Math.max(e.peak || 0, size(e));
     }
     // Eating birds: 60 % join you, the rest fall as stars, so one big flok cannot snowball forever.
     function eat(e, n, x, y) {
@@ -627,17 +628,23 @@
         running = true;
         document.getElementById('start').classList.add('hidden');
         document.getElementById('dead').classList.add('hidden');
+        document.body.classList.remove('menu');
     }
     function showDead(killer) {
         running = false;
         const seconds = Math.round((performance.now() - startedAt) / 1000);
-        document.getElementById('dead-title').textContent = killer ? `${killer.name} fangede dig!` : player.edgeDeath ? 'Du fløj ud af himlen!' : 'UDE!';
-        document.getElementById('dead-text').textContent = `Du nåede ${size(player)} fugle og fangede ${player.kills} på ${seconds} sekunder.`;
+        document.getElementById('dead-title').textContent = killer ? `${killer.name} fangede dig!` : player.edgeDeath ? 'Du fløj ud af himlen!' : 'Ude!';
+        const peak = Math.max(size(player), player.peak || 0);
+        document.getElementById('stat-birds').textContent = String(peak);
+        document.getElementById('stat-kills').textContent = String(player.kills);
+        document.getElementById('stat-time').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
+        let best = 0;
         try {
-            const best = Number(localStorage.getItem('bertFlokBest') || 0);
-            if (size(player) > best) localStorage.setItem('bertFlokBest', String(size(player)));
+            best = Number(localStorage.getItem('bertFlokBest') || 0);
+            if (peak > best) localStorage.setItem('bertFlokBest', String(peak));
         } catch (_) { /* ignore */ }
-        setTimeout(() => { refreshLives(); document.getElementById('dead').classList.remove('hidden'); }, 700);
+        document.getElementById('stat-best').textContent = peak > best ? 'Ny rekord!' : `Din rekord: ${best} fugle`;
+        setTimeout(() => { refreshLives(); document.body.classList.add('menu'); document.getElementById('dead').classList.remove('hidden'); }, 700);
     }
     function pointer(event) {
         input.x = event.clientX * (input.scale || 1);
@@ -671,6 +678,8 @@
     setInterval(refreshLives, 1000);
     refreshLives();
     document.getElementById('exit').addEventListener('click', () => { location.href = './'; });
+    document.getElementById('dead-home').addEventListener('click', () => { location.href = './'; });
+    document.body.classList.add('menu');
     window.addEventListener('resize', resize);
     // The main game locks to landscape; Flokken may be played either way round.
     try { screen.orientation?.unlock?.(); } catch (_) { /* not supported */ }
