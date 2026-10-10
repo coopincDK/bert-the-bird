@@ -2675,3 +2675,60 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .bonus-path { top: 30px !important; left: -70px !important; opacity: 1 !important; filter: drop-shadow(0 1px 1px rgba(27,42,68,.6)); }
 
 #bonus-promo img.bonus-promo-double { width: 38px !important; height: 38px !important; border-radius: 0 !important; object-fit: contain !important; filter: none !important; right: -12px; top: -16px; position: absolute; }
+
+/* ======================================================================
+   Forside, ryddet op (10. okt.): én tydelig midte, ingen overlap.
+   ====================================================================== */
+/* Toasten vises øverst i midten, så den aldrig dækker kortene i bunden. */
+.app-status { right: auto !important; left: 50% !important; bottom: auto !important; top: max(14px, env(safe-area-inset-top)) !important;
+    transform: translate(-50%, -20px) !important; text-align: center; max-width: min(90vw, 520px); }
+.app-status.visible { transform: translate(-50%, 0) !important; }
+/* Midterkolonnen: SPIL øverst, derunder Quick Play og Ugens bonus side om side. */
+#main-menu .menu-actions { width: min(46vw, 460px) !important; left: calc(50% - min(23vw, 230px)) !important; top: 25vh !important;
+    display: flex !important; flex-direction: column; align-items: stretch; gap: 1.6vh; }
+#main-menu .play-button { width: 100% !important; margin: 0 !important; }
+.menu-secondary { display: grid; grid-template-columns: 0.8fr 1.2fr; gap: 10px; align-items: stretch; margin-top: 4px; }
+#main-menu .quick-play-button { position: static !important; width: 100% !important; margin: 0 !important; min-height: 52px; border-radius: 16px;
+    background: rgba(8,20,32,.78) !important; box-shadow: 0 4px 0 rgba(8,20,32,.5); display: flex; align-items: center; justify-content: center; }
+#main-menu .quick-play-button .ui-house { font-size: clamp(14px, 3.6vh, 20px) !important; }
+.menu-secondary .bonus-promo { position: relative !important; left: auto !important; right: auto !important; top: auto !important; transform: none !important;
+    width: 100% !important; height: auto !important; min-height: 52px; }
+#main-menu .install-button { position: fixed !important; }
+/* Flokken-kortet midt for SPIL i højden. */
+.flok-promo { top: 25vh !important; }
+/* Dagens rute: navn og "SPIL"/"KLARET" overlapper ikke. */
+#daily-btn.daily-card { grid-template-columns: auto 1fr !important; }
+#daily-btn #daily-state { position: absolute; right: 12px; top: 8px; font-size: 9px !important; letter-spacing: .1em; }
+#daily-btn strong { max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Lave skærme (iPhone på tværs): lidt tættere. */
+@media (max-height: 430px) {
+    #main-menu .menu-actions { top: 23vh !important; gap: 1.2vh; }
+    .menu-secondary { gap: 8px; }
+    #main-menu .quick-play-button, .menu-secondary .bonus-promo { min-height: 46px; }
+}
+/* Rækken under SPIL: fleksibel, så Ugens bonus fylder det hele, når Quick Play ikke vises endnu. */
+.menu-secondary { display: flex !important; gap: 10px; }
+.menu-secondary > .quick-play-button { flex: 0.8 1 0; }
+.menu-secondary > .bonus-promo { flex: 1.2 1 0; }
+.menu-secondary > .hidden { display: none !important; }
+#main-menu .menu-actions { width: min(38vw, 400px) !important; left: calc(50% - min(19vw, 200px)) !important; }
+#main-menu .menu-bird { left: calc(var(--pad, 16px) + 7vw) !important; }
+.menu-secondary .bonus-promo strong { font-size: clamp(11px, 3vh, 14px) !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.menu-secondary .bonus-promo small { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.bonus-promo-text { max-width: 70%; overflow: hidden; }
+/* Smalle telefoner (fx iPhone SE på tværs): mindre tekst i bundkortene i stedet for afkortede ord. */
+@media (max-width: 700px) {
+    .bottom-cards .daily-kicker, #hero-selector > span, #missions-btn span { font-size: 9px !important; letter-spacing: .06em !important; }
+    #hero-selector strong, #daily-btn strong { font-size: 12px !important; }
+    .flok-promo small { display: none; }
+}
+@media (orientation: landscape) and (max-width: 720px) {
+    #main-menu #missions-btn span { display: block !important; font-size: 11px !important; }
+    #hero-selector > span, #daily-btn .daily-kicker { font-size: 8px !important; letter-spacing: .04em !important; white-space: nowrap; }
+    #hero-selector strong, #daily-btn strong { font-size: 12px !important; }
+    #daily-btn #daily-state { display: none !important; }
+}
+@media (orientation: landscape) and (max-width: 720px) {
+    #main-menu #hero-selector > span, #main-menu #daily-btn .daily-kicker { font-size: 8px !important; letter-spacing: .03em !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
+    #main-menu #hero-selector > strong, #main-menu #daily-btn > strong { font-size: 11px !important; overflow: visible !important; text-overflow: clip !important; max-width: none !important; }
+}
