@@ -300,7 +300,7 @@
         hawk ||= { x: W / 2, y: 200, angle: 0, restUntil: now + 8000, frame: 0 };
         hawk.frame += dt * 10;
         const prey = entities.filter((e) => e.alive && now - e.spawnedAt > 3000).sort((a, b) => size(b) - size(a))[0];
-        if (!prey || size(prey) < 20) { hawk.angle += dt * 0.3; }
+        if (!prey || size(prey) < 15) { hawk.angle += dt * 0.3; }
         else if (now >= hawk.restUntil) {
             // A screech when it turns its attention to you.
             if (prey === player && hawk.lastTarget !== player) sfx('hawk', 0.8);
@@ -312,18 +312,39 @@
         hawk.y = Math.max(100, Math.min(GROUND - 60, hawk.y + Math.sin(hawk.angle) * speed * dt));
         hawk.prey = prey;
         if (!prey || now < hawk.restUntil) return;
-        // A catch takes up to 5 birds from the back, never the leader, then the hawk rests.
-        const reach = prey.form === 'orb' ? orbRadius(prey) + 30 : 50;
-        const touching = dist2(hawk.x, hawk.y, prey.x, prey.y) < reach * reach
-            || (prey.form === 'chain' && prey.birds.some((b) => dist2(hawk.x, hawk.y, b.x, b.y) < 40 * 40));
-        if (touching) {
+        // How the hawk catches (feedback 10. okt.):
+        //  - it hits the LEADER: that chain is out;
+        //  - it hits the middle of a chain: it takes 3 birds there and breaks the chain,
+        //    the birds behind the break flutter loose as stars (quick: you can grab them back);
+        //  - it hits a flok: it takes 3 birds and scatters the flok back into a chain.
+        let caught = false;
+        if (prey.form === 'orb') {
+            const r = orbRadius(prey) + 30;
+            if (dist2(hawk.x, hawk.y, prey.x, prey.y) < r * r) {
+                prey.birds.splice(0, Math.min(3, prey.birds.length));
+                unravel(prey, now);
+                caught = true;
+            }
+        } else if (dist2(hawk.x, hawk.y, prey.x, prey.y) < 55 * 55) {
+            prey.hawkDeath = true;
+            kill(prey, null);
+            caught = true;
+        } else {
+            const hit = prey.birds.findIndex((b) => dist2(hawk.x, hawk.y, b.x, b.y) < 45 * 45);
+            if (hit >= 0) {
+                const from = Math.max(0, hit - 1);
+                prey.birds.splice(from, 3);                       // the three in its claws
+                const loose = prey.birds.splice(from);            // the broken-off tail
+                loose.forEach((b) => addStar(b.x + rand(-15, 15), Math.min(GROUND - 20, b.y + rand(10, 40)), 1));
+                caught = true;
+            }
+        }
+        if (caught) {
             sfx('hawk', prey.isPlayer ? 1 : nearPlayer(hawk.x, hawk.y) ? 0.5 : 0);
-            if (prey.isPlayer) sfx('shield-break', 0.7);
-            const taken = prey.birds.splice(Math.max(0, prey.birds.length - 5));
-            taken.forEach((b) => addStar(b.x + rand(-20, 20), Math.min(GROUND - 20, b.y + 40), 1));
+            if (prey.isPlayer && prey.alive) sfx('shield-break', 0.7);
+            effect('eat', hawk.x, hawk.y, 170);
             hawk.restUntil = now + 6000;
             hawk.angle = -Math.PI / 2;
-            if (prey.form === 'orb') unravel(prey, now);
         }
     }
 
@@ -633,7 +654,7 @@
     function showDead(killer) {
         running = false;
         const seconds = Math.round((performance.now() - startedAt) / 1000);
-        document.getElementById('dead-title').textContent = killer ? `${killer.name} fangede dig!` : player.edgeDeath ? 'Du fløj ud af himlen!' : 'Ude!';
+        document.getElementById('dead-title').textContent = killer ? `${killer.name} fangede dig!` : player.hawkDeath ? 'Høgen tog dig!' : player.edgeDeath ? 'Du fløj ud af himlen!' : 'Ude!';
         const peak = Math.max(size(player), player.peak || 0);
         document.getElementById('stat-birds').textContent = String(peak);
         document.getElementById('stat-kills').textContent = String(player.kills);
