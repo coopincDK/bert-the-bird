@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-119';
+    const BUILD_VERSION = 'worlds-relay-120';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -7844,9 +7844,9 @@
             const st = F.status();
             card.innerHTML = `<button class="round-close" type="button" aria-label="${T('Luk')}">×</button>
                 <h2>${T('SAMLEFIGURER')} · ${st.count}/${st.total}</h2>
-                <div class="figure-bar"><span class="coins">🪙 ${st.coins}</span>
-                <button class="pack-btn" type="button" ${st.coins < F.PACK_COST ? 'disabled' : ''}>${T`ÅBN PAKKE · ${F.PACK_COST} MØNTER`}</button>
-                <button class="swap-btn" type="button" ${st.duplicates < 3 ? 'disabled' : ''}>${T`BYT 3 DUBLETTER (${st.duplicates})`}</button></div>
+                <div class="figure-bar"><span class="coins"><img src="assets/v2/g12/coin.webp" alt="">${st.coins}</span>
+                <button class="pack-btn" type="button" ${st.coins < F.PACK_COST ? 'disabled' : ''}><img src="assets/v2/g12/pack.webp" alt="">${T`ÅBN PAKKE · ${F.PACK_COST} MØNTER`}</button>
+                <button class="swap-btn" type="button" ${st.duplicates < 3 ? 'disabled' : ''}><img src="assets/v2/g12/swap.webp" alt="">${T`BYT 3 DUBLETTER (${st.duplicates})`}</button></div>
                 <p class="odds">${T('Pakke med 3 figurer, den sidste mindst sjælden. Chancer: almindelig 70 %, sjælden 22 %, episk 7 %, legendarisk 1 %.')}</p>`;
             if (reveal) {
                 const row = document.createElement('div'); row.className = 'pack-reveal';
@@ -7870,9 +7870,13 @@
             card.querySelector('.pack-btn').onclick = () => {
                 const res = F.openPack();
                 if (!res.ok) return;
-                playAudio('fanfare'); BertMeta.haptic('reward');
-                render(res.figures);
-                card.scrollTop = 0;
+                BertMeta.haptic('reward');
+                const burst = document.createElement('div');
+                burst.className = 'pack-burst';
+                burst.innerHTML = '<img src="assets/v2/g12/pack.webp" alt=""><img class="open" src="assets/v2/g12/pack-open.webp" alt="">';
+                modal.appendChild(burst);
+                playAudio('whoosh');
+                setTimeout(() => { playAudio('fanfare'); burst.remove(); render(res.figures); card.scrollTop = 0; }, prefersReducedMotion() ? 0 : 1100);
             };
             card.querySelector('.swap-btn').onclick = () => {
                 const res = F.swapDuplicates();

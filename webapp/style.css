@@ -2815,3 +2815,24 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 @keyframes figure-flip { from { opacity: 0; transform: rotateY(90deg) scale(.8); } to { opacity: 1; transform: none; } }
 @media (prefers-reduced-motion: reduce) { .pack-reveal .figure-card { animation: none; opacity: 1; } }
 @media (max-width: 700px) { .figure-grid { grid-template-columns: repeat(4, 1fr); } }
+
+/* Runde 12: rigtig grafik til samlefigurerne */
+.figure-album { background: linear-gradient(rgba(12,30,60,.78), rgba(12,30,60,.86)), url(assets/v2/g12/album-bg.webp) center / cover no-repeat !important; }
+.figure-card { border: 0 !important; background: url(assets/v2/g12/card-common.webp) center / 100% 100% no-repeat !important; box-shadow: none !important; }
+.figure-card.rare { background-image: url(assets/v2/g12/card-rare.webp) !important; }
+.figure-card.epic { background-image: url(assets/v2/g12/card-epic.webp) !important; }
+.figure-card.legendary { background-image: url(assets/v2/g12/card-legendary.webp) !important; }
+.figure-card img { width: 78% !important; height: 78% !important; }
+.figure-card b { color: #1b2a44; opacity: .8; left: 10px; top: 8px; }
+.figure-card i { color: #1b2a44; right: 10px; bottom: 6px; }
+.figure-card.missing { filter: saturate(.3) brightness(.75); }
+.figure-bar .coins { display: inline-flex; align-items: center; gap: 6px; }
+.figure-bar .coins img { width: 26px; height: 26px; }
+.pack-btn img, .swap-btn img { width: 26px; height: 32px; object-fit: contain; vertical-align: middle; margin-right: 6px; }
+.pack-burst { position: absolute; inset: 0; display: grid; place-items: center; z-index: 5; pointer-events: none; }
+.pack-burst img { grid-area: 1 / 1; width: min(40vw, 240px); }
+.pack-burst img:first-child { animation: pack-shake .5s ease-in-out 2; }
+.pack-burst img.open { opacity: 0; animation: pack-open .4s ease-out .65s forwards; }
+@keyframes pack-shake { 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+@keyframes pack-open { from { opacity: 0; transform: scale(.8); } to { opacity: 1; transform: scale(1.1); } }
+.pack-reveal small, .pack-reveal em { color: #1b2a44 !important; }
