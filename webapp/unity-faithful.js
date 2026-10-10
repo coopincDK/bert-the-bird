@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-114';
+    const BUILD_VERSION = 'worlds-relay-115';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -611,6 +611,8 @@
     const V2_HERO_FOLDER = Object.freeze({
         bert: 'bert', blue: 'blue', block: 'block', brain: 'brain', eagle: 'eagle', mecha: 'mecha', noir: 'noir', vulture: 'vulture',
         sugar: 'sugar', moss: 'moss', ink: 'ink', prism: 'prism', pingo: 'pingo', mogens: 'mogens', ninja: 'ninja', pakke: 'pakke', gold: 'gold', eggbert: 'eggbert',
+        // Round 11: creator heroes (nicknames until each creator has approved).
+        pixelara: 'pixelara', skyggeravn: 'skyggeravn', turbokolibri: 'turbokolibri', kongeaben: 'kongeaben', tukantwist: 'tukantwist',
         epicMalthe: 'epic-malthe', epicJohan: 'epic-johan', epicSos: 'epic-sos', epicThor: 'epic-thor', epicFan: 'fanbert', epicCoop: 'coopinc',
     });
     // Existing art keys that simply point at a new file once the level is delivered.
@@ -809,7 +811,7 @@
     }));
     let edmSmokeStamp = null;
     const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [],
-        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], eggbert: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
+        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], eggbert: [], pixelara: [], skyggeravn: [], turbokolibri: [], kongeaben: [], tukantwist: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     // Heroes redrawn in the shared style (see docs: grafikplan). Folder under assets/.
     const V2_FPS = 12;
@@ -846,6 +848,11 @@
         pakke: 'assets/pakkeb/up.webp',
         gold: 'assets/goldbert/up.webp',
         eggbert: 'assets/heroes/eggbert/flap-03.webp',
+        pixelara: 'assets/heroes/pixelara/flap-03.webp',
+        skyggeravn: 'assets/heroes/skyggeravn/flap-03.webp',
+        turbokolibri: 'assets/heroes/turbokolibri/flap-03.webp',
+        kongeaben: 'assets/heroes/kongeaben/flap-03.webp',
+        tukantwist: 'assets/heroes/tukantwist/flap-03.webp',
         epicMalthe: 'assets/epic-malthe/up.webp',
         epicJohan: 'assets/epic-johan/up.webp',
         epicSos: 'assets/epic-sos/up.webp',

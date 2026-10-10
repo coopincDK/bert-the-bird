@@ -24,7 +24,12 @@
         { id: 'ninja', name: T('Ninja-Bert'), price: 340, goal: T('Kun fra et æg i reden'), target: 1, eggOnly: true },
         { id: 'pakke', name: T('Pakke-Bert'), price: 300, goal: T('Kun fra et æg i reden'), target: 1, eggOnly: true },
         { id: 'gold', name: T('Guld-Bert'), price: 1500, goal: T('Kun fra et æg i reden (sjælden)'), target: 1, eggOnly: true },
-        { id: 'eggbert', name: T('Æggebert'), price: 0, goal: T('Klæk alle helte fra rugepladsen'), target: 16 },
+        { id: 'pixelara', name: 'Pixel-Ara', price: 260, goal: T('Kun fra et æg i reden'), target: 1, eggOnly: true },
+        { id: 'skyggeravn', name: 'Skyggeravnen', price: 260, goal: T('Kun fra et æg i reden'), target: 1, eggOnly: true },
+        { id: 'turbokolibri', name: 'Turbo-Kolibri', price: 260, goal: T('Kun fra et æg i reden'), target: 1, eggOnly: true },
+        { id: 'kongeaben', name: 'Kongeaben', price: 260, goal: T('Kun fra et æg i reden'), target: 1, eggOnly: true },
+        { id: 'tukantwist', name: 'Tukan-Twist', price: 260, goal: T('Kun fra et æg i reden'), target: 1, eggOnly: true },
+        { id: 'eggbert', name: T('Æggebert'), price: 0, goal: T('Klæk alle helte fra rugepladsen'), target: 21 },
         // Epic heroes: only for players with a specific pilot name. The names are
         // stored as hashes, so they are not readable in the public source code.
         { id: 'epicMalthe', name: 'Storm Royale', price: 0, goal: T('Hemmelig helt'), target: 1, secret: true, nameHash: 3598967373 },

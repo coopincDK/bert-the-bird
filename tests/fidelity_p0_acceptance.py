@@ -19,7 +19,7 @@ def available_port():
 
 
 PORT = available_port()
-URL = f"http://127.0.0.1:{PORT}/?qa=1&rev=worlds-relay-114"
+URL = f"http://127.0.0.1:{PORT}/?qa=1&rev=worlds-relay-115"
 
 
 def ensure(condition, message):
