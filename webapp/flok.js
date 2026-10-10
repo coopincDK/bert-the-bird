@@ -19,6 +19,8 @@
     const images = {};
     const img = (src) => images[src] || (images[src] = Object.assign(new Image(), { src }));
     const heroArt = (hero) => img(`assets/heroes/${hero}/glide.webp`);
+    // Wingbeats (feedback): the heroes' 8 flap frames, loaded the first time a hero is drawn.
+    const flapArt = (hero, frame) => img(`assets/heroes/${hero}/flap-0${(frame % 8) + 1}.webp`);
     const G7 = 'assets/v2/g7/flock/';
     const starArt = img(`${G7}star-food.webp`);
     const art = {
@@ -414,11 +416,16 @@
                 ctx.beginPath(); ctx.arc(e.x, e.y, r + 12, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, left)); ctx.stroke();
             }
             const birdSize = e.form === 'orb' ? 50 : 56;
+            // Flap rate: a climbing chain beats hard, a diving one glides (no frames).
+            const climb = -Math.sin(e.angle);
+            const diving = e.form === 'chain' && climb < -0.45;
+            const rate = e.form === 'orb' ? 14 : 10 + Math.max(0, climb) * 10;
             for (let i = e.birds.length - 1; i >= 0; i -= 1) {
                 const b = e.birds[i];
-                drawBird(b.hero, b.x, b.y + Math.sin(now / 160 + i) * 2, birdSize, e.form === 'orb' ? (Math.cos(b.orbA) < 0 ? 1 : -1) * Math.sign(b.orbSpin) : facing);
+                const phase = diving ? null : now / 1000 * rate + b.flap;
+                drawBird(b.hero, b.x, b.y + Math.sin(now / 160 + i) * 2, birdSize, e.form === 'orb' ? (Math.cos(b.orbA) < 0 ? 1 : -1) * Math.sign(b.orbSpin) : facing, phase);
             }
-            drawBird(e.hero, e.x, e.y, 74, facing);
+            drawBird(e.hero, e.x, e.y, 74, facing, diving ? null : now / 1000 * rate);
             if (e === sorted[sorted.length - 1] && ready(art.crown)) {
                 const cy = e.form === 'orb' ? e.y - orbRadius(e) - 64 : e.y - 78;
                 ctx.drawImage(art.crown, e.x - 22, cy, 44, 44);
@@ -491,8 +498,12 @@
             ctx.restore();
         }
     }
-    function drawBird(hero, x, y, s, facing) {
-        const art = heroArt(hero);
+    function drawBird(hero, x, y, s, facing, flap = null) {
+        let art = heroArt(hero);
+        if (flap !== null) {
+            const frame = flapArt(hero, Math.floor(flap));
+            if (frame.complete && frame.naturalWidth) art = frame;
+        }
         if (!art.complete || !art.naturalWidth) return;
         ctx.save();
         ctx.translate(x, y);
