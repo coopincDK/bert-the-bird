@@ -28,7 +28,7 @@
         clouds: [1, 2, 3, 4].map((n) => img(`${G7}clouds-${n}.webp`)),
         orb: img(`${G7}orb-glow.webp`), orbMe: img(`${G7}orb-glow-me.webp`),
         catch: img(`${G7}catch.webp`), eat: img(`${G7}eat.webp`), crown: img(`${G7}crown.webp`),
-        edge: img('assets/v2/g10/flock/edge-bonk.webp'),
+        edgeBonk: img('assets/v2/g10/flock/edge-bonk.webp'),
     };
     const ready = (image) => image.complete && image.naturalWidth > 0;
     // Short picture effects in the world: something eaten, a flok caught in a ring.
@@ -127,8 +127,36 @@
         e.orbUntil = now + orbDuration(e) * 1000;
         return true;
     }
+    // DEL (feedback: like agar.io): a flok of 20+ splits in two. The front half shoots
+    // forward to catch prey, steered like you; it merges back after 6 s or when the flok ends.
+    const piecesOf = (owner) => entities.filter((o) => o.alive && o.pieceOf === owner.id);
+    function splitOrb(e, now) {
+        if (e.form !== 'orb' || size(e) < 20 || piecesOf(e).length) return false;
+        const half = Math.floor(e.birds.length / 2);
+        const piece = {
+            id: nextId++, isPlayer: false, pieceOf: e.id, name: e.name, hero: e.hero,
+            x: e.x + Math.cos(e.angle) * 40, y: e.y + Math.sin(e.angle) * 40, angle: e.angle, target: e.angle,
+            form: 'orb', path: [], birds: e.birds.splice(0, half), orbUntil: e.orbUntil, orbReadyAt: 0, kills: 0, alive: true,
+            think: 0, plan: null, spawnedAt: now - 5000, launch: 1, mergeAt: now + 6000,
+        };
+        piece.birds.forEach((b) => { b.orbR = Math.sqrt(Math.random()); });
+        entities.push(piece);
+        if (e.isPlayer) sfx('whoosh');
+        return true;
+    }
+    function mergePieces(owner) {
+        piecesOf(owner).forEach((piece) => {
+            owner.birds.push(...piece.birds);
+            piece.birds = [];
+            owner.kills += piece.kills;
+            piece.alive = false;
+            effect('catch', piece.x, piece.y, 120);
+        });
+    }
+
     function unravel(e, now) {
         if (e.form !== 'orb') return;
+        mergePieces(e);
         if (e.isPlayer) sfx('whoosh');
         e.form = 'chain';
         e.orbReadyAt = now + 8000;
@@ -147,6 +175,16 @@
         points.forEach((p) => addStar(p.x + rand(-10, 10), Math.min(GROUND - 20, p.y + rand(-10, 10)), 1));
         addStar(e.x, e.y, 1);
         if (killer) killer.kills += 1;
+        const survivor = piecesOf(e)[0];
+        if (survivor) {
+            survivor.pieceOf = null;
+            survivor.isPlayer = e.isPlayer;
+            survivor.kills += e.kills;
+            survivor.peak = Math.max(e.peak || 0, survivor.peak || 0);
+            if (e.isPlayer) player = survivor;
+            return;
+        }
+        if (e.pieceOf) return; // a lost half is not a whole bird group dying
         if (e.isPlayer) showDead(killer);
         else setTimeout(() => { if (running) spawn(false, Math.floor(rand(3, 7))); }, 2500);
     }
@@ -175,8 +213,16 @@
             return best;
         };
         if (e.form === 'orb') {
-            const prey = near((o) => size(o) < size(e) * 0.9, 900);
-            if (prey) { e.target = Math.atan2(prey.y - e.y, prey.x - e.x); return; }
+            const prey = near((o) => size(o) < size(e) * 0.45 && !o.pieceOf, 900);
+            if (prey) {
+                e.target = Math.atan2(prey.y - e.y, prey.x - e.x);
+                // Big bot floks split to snap up prey that is a little out of reach.
+                const d = Math.sqrt(dist2(e.x, e.y, prey.x, prey.y));
+                if (d > orbRadius(e) + 40 && d < 420 && Math.abs(angleDiff(e.angle, e.target)) < 0.3) splitOrb(e, now);
+                return;
+            }
+            const prey2 = near((o) => size(o) < size(e) * 0.9, 900);
+            if (prey2) { e.target = Math.atan2(prey2.y - e.y, prey2.x - e.x); return; }
         } else {
             // Run from bigger floks.
             e.boost = false;
@@ -237,12 +283,19 @@
     function step(dt, now) {
         for (const e of entities) {
             if (!e.alive) continue;
-            if (e.isPlayer) {
+            if (e.pieceOf) {
+                const owner = entities.find((o) => o.id === e.pieceOf && o.alive);
+                if (!owner) { e.pieceOf = null; }
+                else {
+                    e.target = owner.target;
+                    if (now >= e.mergeAt || now >= owner.orbUntil) { mergePieces(owner); continue; }
+                }
+            } else if (e.isPlayer) {
                 if (input.active && Math.hypot(input.x - input.ox, input.y - input.oy) > 8 * (input.scale || 1)) {
                     e.target = Math.atan2(input.y - input.oy, input.x - input.ox);
                 }
                 if (input.keyTurn) e.target = e.angle + input.keyTurn * 0.8;
-            } else {
+            } else if (!e.pieceOf) {
                 e.think -= dt;
                 if (e.think <= 0) { e.think = rand(0.15, 0.3); think(e, now); }
                 avoid(e);
@@ -273,14 +326,15 @@
                     addStar(dropped.x, Math.min(GROUND - 20, dropped.y), 1);
                 }
             } else e.boostClock = 0;
-            const v = speedOf(e) * gravity * (e.drafting ? 1.2 : 1) * (boosting ? 1.7 : 1);
+            if (e.launch) e.launch = Math.max(0, e.launch - dt * 1.6);
+            const v = speedOf(e) * gravity * (e.drafting ? 1.2 : 1) * (boosting ? 1.7 : 1) * (1 + (e.launch || 0) * 3.5);
             e.x += Math.cos(e.angle) * v * dt;
             e.y += Math.sin(e.angle) * v * dt;
             // The edge of the sky is deadly (feedback 10. okt.): the wind walls and the ground.
             const pad = e.form === 'orb' ? orbRadius(e) * 0.5 : 0;
             if (e.x < pad || e.x > W - pad || e.y < 60 + pad || e.y > GROUND - pad) {
                 e.edgeDeath = true;
-                if (e.isPlayer) effect('edge', e.x, e.y, 200);
+                if (e.isPlayer) effect('edgeBonk', e.x, e.y, 200);
                 kill(e, null);
                 continue;
             }
@@ -394,6 +448,7 @@
             if (!a.alive) continue;
             for (const b of alive) {
                 if (a === b || !b.alive || !a.alive) continue;
+                if (a.pieceOf === b.id || b.pieceOf === a.id || (a.pieceOf && a.pieceOf === b.pieceOf)) continue;
                 if (now - b.spawnedAt < 3000 || now - a.spawnedAt < 3000) continue; // a 3 s spawn shield
                 if (a.form === 'chain' && b.form === 'chain') {
                     // Head into body: the head's owner is out.
@@ -477,6 +532,25 @@
         const viewL = camX - cw / 2 / zoom - 80; const viewR = camX + cw / 2 / zoom + 80;
         const viewT = camY - ch / 2 / zoom - 80; const viewB = camY + ch / 2 / zoom + 80;
         // World edges and ground.
+        // The edge of the world, all the way round (feedback: you must see where it ends):
+        // everything outside is darkened and a moving dashed border marks the line. It turns
+        // red and pulses when you are close to it.
+        {
+            const close = player && (player.x < 380 || player.x > W - 380 || player.y < 60 + 300 || player.y > GROUND - 260);
+            ctx.save();
+            ctx.fillStyle = 'rgba(10,20,45,.5)';
+            const far = 5000;
+            ctx.fillRect(-far, -far, W + far * 2, far + 60);   // above the top
+            ctx.fillRect(-far, 60, far, GROUND - 60 + far);     // left of the world
+            ctx.fillRect(W, 60, far, GROUND - 60 + far);        // right of the world
+            ctx.lineWidth = 12;
+            ctx.setLineDash([46, 26]);
+            ctx.lineDashOffset = -now / 30;
+            ctx.strokeStyle = close ? `rgba(255,77,94,${0.75 + Math.sin(now / 110) * 0.25})` : 'rgba(255,255,255,.85)';
+            ctx.strokeRect(0, 60, W, GROUND - 60);
+            ctx.setLineDash([]);
+            ctx.restore();
+        }
         // World edges: walls of wind pointing inward.
         if (ready(art.edge)) {
             for (let y = 60; y < GROUND; y += 256) {
@@ -505,7 +579,7 @@
             if (e.form === 'orb') {
                 const r = orbRadius(e);
                 const left = (e.orbUntil - now) / (orbDuration(e) * 1000);
-                const glow = e.isPlayer ? art.orbMe : art.orb;
+                const glow = e.isPlayer || (player && e.pieceOf === player.id) ? art.orbMe : art.orb;
                 if (ready(glow)) ctx.drawImage(glow, e.x - (r + 30), e.y - (r + 30), (r + 30) * 2, (r + 30) * 2);
                 ctx.strokeStyle = e.isPlayer ? '#b6ff3b' : 'rgba(255,255,255,.85)'; ctx.lineWidth = 5;
                 ctx.beginPath(); ctx.arc(e.x, e.y, r + 12, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, left)); ctx.stroke();
@@ -641,13 +715,20 @@
     function hud(now) {
         if (!player) return;
         sizeEl.textContent = String(size(player));
-        const top = entities.slice().sort((a, b) => size(b) - size(a)).slice(0, 5);
-        boardEl.innerHTML = top.map((e, i) => `<div class="${e.isPlayer ? 'me' : ''}"><b>${i + 1}.</b> ${e.name} · ${size(e)}</div>`).join('')
-            + (top.includes(player) ? '' : `<div class="me">… Dig · ${size(player)}</div>`);
+        const total = (e) => size(e) + piecesOf(e).reduce((sum, p) => sum + p.birds.length, 0);
+        const top = entities.filter((e) => !e.pieceOf).sort((a, b) => total(b) - total(a)).slice(0, 5);
+        boardEl.innerHTML = top.map((e, i) => `<div class="${e.isPlayer ? 'me' : ''}"><b>${i + 1}.</b> ${e.name} · ${total(e)}</div>`).join('')
+            + (top.includes(player) ? '' : `<div class="me">… Dig · ${total(player)}</div>`);
+        sizeEl.textContent = String(total(player));
         const ready = player.form === 'chain' && size(player) >= ORB_MIN && now >= player.orbReadyAt;
         flokBtn.disabled = !ready;
         flokBtn.classList.toggle('on', ready || player.form === 'orb');
-        if (boostBtn) boostBtn.disabled = player.form !== 'chain' || player.birds.length <= 5;
+        if (boostBtn) {
+            const orb = player.form === 'orb';
+            boostBtn.textContent = orb ? 'DEL' : 'FART';
+            boostBtn.classList.toggle('split', orb);
+            boostBtn.disabled = orb ? (size(player) < 20 || piecesOf(player).length > 0) : player.birds.length <= 5;
+        }
         flokBtn.textContent = player.form === 'orb' ? `${Math.ceil((player.orbUntil - now) / 1000)}s`
             : size(player) < ORB_MIN ? `${size(player)}/${ORB_MIN}` : now < player.orbReadyAt ? `${Math.ceil((player.orbReadyAt - now) / 1000)}s` : 'FLOK';
     }
@@ -748,9 +829,16 @@
         if (e.key === ' ' && player) formOrb(player, performance.now());
     });
     window.addEventListener('keyup', (e) => { if (e.key === 'Shift') input.boost = false; else input.keyTurn = 0; });
-    window.addEventListener('keydown', (e) => { if (e.key === 'Shift') input.boost = true; });
+    window.addEventListener('keydown', (e) => {
+        if (e.key !== 'Shift') return;
+        if (player?.form === 'orb') splitOrb(player, performance.now()); else input.boost = true;
+    });
     const boostBtn = document.getElementById('boost-btn');
-    boostBtn?.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); input.boost = true; boostBtn.classList.add('on'); });
+    boostBtn?.addEventListener('pointerdown', (e) => {
+        e.stopPropagation(); e.preventDefault();
+        if (player?.form === 'orb') { splitOrb(player, performance.now()); return; }
+        input.boost = true; boostBtn.classList.add('on');
+    });
     ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => boostBtn?.addEventListener(type, () => { input.boost = false; boostBtn.classList.remove('on'); }));
     flokBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (player) formOrb(player, performance.now()); });
     document.getElementById('play').addEventListener('click', tryStart);
