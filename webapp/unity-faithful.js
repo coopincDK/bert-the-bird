@@ -50,6 +50,8 @@
         GROW: 'Grow', SHRINK: 'Shrink' });
     const SIZE_POWERUP = Object.freeze({ Grow: 1.45, Shrink: 0.6 });
     const BIRD_DRAW_SCALE = 1.15;
+    // The old Unity snake (coils, hop, eyes between the coils) is back until it is redrawn.
+    const OLD_SNAKE = true;
     // Omvendt styring: op er ned, og i flappy-styring flyver Bert på hovedet.
     const REVERSE_SECONDS = 7;
     const isReversed = () => state.activePowerup === POWERUP.REVERSE;
@@ -581,9 +583,8 @@
             v2CanopyRight: 'canopy-right',
             ...Object.fromEntries([0, 1, 2, 3, 4, 5].map((i) => [`spider${i}`, `fit-spider-idle-${i + 1}`])),
             ...Object.fromEntries(Array.from({ length: 18 }, (_, i) => [`spiderCatch${i}`, `fit-spider-catch-${Math.floor(i / 3) + 1}`])),
-            ...Object.fromEntries(Array.from({ length: 7 }, (_, i) => [`snake${i}`, `cut-snake-idle-${(i % 6) + 1}`])),
-            ...Object.fromEntries(Array.from({ length: 5 }, (_, i) => [`snakeJump${i}`, `cut-snake-jump-${i + 1}`])),
-            ...Object.fromEntries(Array.from({ length: 3 }, (_, i) => [`snakeCatch${i}`, `cut-snake-catch-${i + 1}`])),
+            // The old snake is back (feedback 10. okt.): coils, a sudden hop, and eyes peeking
+            // out between the coils after a catch. It stays until its redrawn version arrives.
         },
         happySky: { rainbow: 'rainbow', v2Tower0: 'tower-happy', v2Tower1: 'tower-sleepy', v2Tower2: 'tower-cheeky', v2Balloon: 'balloon' },
         flappy: { flappyPipe: 'chimney-brick', flappyPipeBlue: 'chimney-stone', flappyPipeGold: 'tower-gold', flappyCopper: 'tower-copper', flappyPearl: 'chimney-stone' },
@@ -2255,7 +2256,7 @@
                 obstacle.attackElapsed = 0;
             }
             const jumpSequence = [0, 1, 2, 3, 4, 4, 4, 3, 2, 1, 0];
-            if (V2.levels.has('jungle')) {
+            if (!OLD_SNAKE && V2.levels.has('jungle')) {
                 // New-style snake: the snake rises out of its coil and leaps off the rock,
                 // reaching as high as the old lunge did. The rock itself stays put.
                 obstacle.snakeHeight = obstacle.height * 1.05;
@@ -5673,7 +5674,7 @@
                 }
                 ctx.restore();
             }
-        } else if (obstacle.kind === 'jungle-snake' && V2.levels.has('jungle')) {
+        } else if (obstacle.kind === 'jungle-snake' && !OLD_SNAKE && V2.levels.has('jungle')) {
             const idleSequence = [0, 1, 2, 3, 4, 5, 5, 4, 3, 2, 1, 0];
             const frame = obstacle.attackFrame == null
                 ? assets[`snake${idleSequence[Math.floor((obstacle.age + obstacle.animationPhase) * 8) % idleSequence.length]}`]
@@ -5845,7 +5846,7 @@
             ctx.restore();
             return;
         }
-        if (state.deathCause === 'jungle-snake' && V2.levels.has('jungle')) {
+        if (state.deathCause === 'jungle-snake' && !OLD_SNAKE && V2.levels.has('jungle')) {
             // The snake sits back on its rock with a happy, full belly.
             const snake = obstacles.find((obstacle) => obstacle.id === state.deathObstacleId && obstacle.kind === 'jungle-snake');
             const frame = assets[`snakeCatch${Math.min(2, Math.floor(state.deathCaptureElapsed / 0.3))}`];
