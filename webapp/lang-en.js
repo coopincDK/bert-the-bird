@@ -718,4 +718,7 @@ window.BertI18n.register('en', {
     "FLOK & FORMATION · TESTBANE": "FLOCK & FORMATION · TEST LEVEL",
     "FLOK & FORMATION": "FLOCK & FORMATION",
     "Fuglesværm": "Bird swarm",
+    "Klistermærke fundet! Se det i albummet i reden": "Sticker found! See it in the album in the nest",
+    "KLISTERMÆRKER": "STICKERS",
+    "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Five hidden stickers on each level. Keep your eyes open while you fly.",
 });

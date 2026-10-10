@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-88';
+    const BUILD_VERSION = 'worlds-relay-89';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -50,8 +50,11 @@
         GROW: 'Grow', SHRINK: 'Shrink' });
     const SIZE_POWERUP = Object.freeze({ Grow: 1.45, Shrink: 0.6 });
     const BIRD_DRAW_SCALE = 1.15;
-    // The old Unity snake (coils, hop, eyes between the coils) is back until it is redrawn.
+    // The old Unity snake's behaviour (coils, hop, eyes between the coils), redrawn in
+    // round 6. The new frames are higher resolution: these factors map them to the old sizes.
     const OLD_SNAKE = true;
+    const SNAKE_JUMP_SCALE = 0.55;
+    const SNAKE_CATCH_SCALE = 0.7;
     // Omvendt styring: op er ned, og i flappy-styring flyver Bert på hovedet.
     const REVERSE_SECONDS = 7;
     const isReversed = () => state.activePowerup === POWERUP.REVERSE;
@@ -476,13 +479,13 @@
         ASSET_PATHS[`spiderCatch${index}`] = `assets/unity/props/spider-catch-${String(index).padStart(2, '0')}.webp`;
     }
     for (let index = 0; index < 7; index += 1) {
-        ASSET_PATHS[`snake${index}`] = `assets/unity/props/snake-${String(index).padStart(2, '0')}.webp`;
+        ASSET_PATHS[`snake${index}`] = `assets/v2/g6/snake/idle-${index}.webp`;
     }
     for (let index = 0; index < 5; index += 1) {
-        ASSET_PATHS[`snakeJump${index}`] = `assets/unity/props/snake-jump-${String(index).padStart(2, '0')}.webp`;
+        ASSET_PATHS[`snakeJump${index}`] = `assets/v2/g6/snake/jump-${index}.webp`;
     }
     for (let index = 0; index < 3; index += 1) {
-        ASSET_PATHS[`snakeCatch${index}`] = `assets/unity/props/snake-catch-${String(index).padStart(2, '0')}.webp`;
+        ASSET_PATHS[`snakeCatch${index}`] = `assets/v2/g6/snake/catch-${index}.webp`;
     }
 
     // ---------- Grafikrunde 2 (4. okt.): pickups, effects, deaths, EDM and Stormline ----------
@@ -521,6 +524,10 @@
         g4AmbConfetti: 'assets/v2/g4/fx/ambient-confetti.webp',
         g4Trail: 'assets/v2/g4/fx/trail.webp',
         g4ComboBurst: 'assets/v2/g4/fx/combo-burst.webp',
+        g6Bonk: 'assets/v2/g6/fx/bonk.webp',
+        ...Object.fromEntries(['desert', 'jungle', 'sky'].flatMap((set) => [1, 2, 3, 4, 5].map((n) => [`sticker_${set}_${n}`, ['assets/v2/g6/stickers', `${set}-${n}.webp`].join('/')]))),
+        g6LevelUp: 'assets/v2/g6/fx/level-up.webp',
+        g6RecordFlag: 'assets/v2/g6/fx/record-flag.webp',
         g4StarPop: 'assets/v2/g4/fx/star-pop.webp',
         g4Festival: 'assets/v2/g4/edm/festival-bg.webp',
         g4MedalRing: 'assets/v2/g4/ui/medal-ring.webp',
@@ -641,6 +648,8 @@
         }
         if (kind === 'birdRun') for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCarry${i}`);
         if (kind === 'skyRelay') extra.push('relayGateLit', 'relaySkyRing');
+        const stickerSet = { desert: 'desert', jungle: 'jungle', happySky: 'sky' }[kind];
+        if (stickerSet) for (let n = 1; n <= 5; n += 1) extra.push(`sticker_${stickerSet}_${n}`);
         if (kind === 'glide') {
             [['v2Tower0', 'tower-happy'], ['v2Tower1', 'tower-sleepy'], ['v2Tower2', 'tower-cheeky'], ['v2Balloon', 'balloon']].forEach(([key, file]) => {
                 ASSET_PATHS[key] ||= `assets/v2/levels/happysky/${file}.webp`;
@@ -1352,6 +1361,7 @@
         { area: T('Havnen'), ids: [21] }, { area: T('Natten'), ids: [22] }, { area: T('Vinden'), ids: [24] },
         { area: T('Vulkanen'), ids: [23] }, { area: T('Isen'), ids: [20] }, { area: T('Fugleklat-øen'), ids: [25] },
     ]);
+    const AREA_ART = ['desert', 'jungle', 'sky', 'city', 'tunnel', 'harbor', 'night', 'wind', 'volcano', 'ice', 'poop'];
     const AREA_TINT = ['#f3c56b', '#5fbf5a', '#8fd3ff', '#7a8cff', '#2d2f6e', '#3aa6c9', '#272b58', '#7ed0f0', '#e2583a', '#bfe6ff', '#f7d77a'];
     function levelById(id) {
         return UNITY_LEVELS.find((l) => l.id === id) || ADVENTURE_LEVELS.find((l) => l.id === id) || EVENT_LEVELS.find((l) => l.id === id);
@@ -1379,6 +1389,7 @@
             const area = document.createElement('div');
             area.className = 'journey-area';
             area.style.setProperty('--tint', AREA_TINT[areaIndex]);
+            area.style.setProperty('--art', `url(assets/v2/g6/journey/area-${AREA_ART[areaIndex]}.webp)`);
             area.style.width = `${section.ids.length * 150 + 40}px`;
             area.innerHTML = `<span class="journey-area-name">${section.area}</span>`;
             section.ids.forEach((id, i) => {
@@ -1393,7 +1404,7 @@
                 const stop = document.createElement('button');
                 stop.type = 'button';
                 stop.className = `journey-stop${open ? '' : ' locked'}${id === last ? ' here' : ''}`;
-                const top = index % 2 === 0 ? 50 : 66;
+                const top = index % 2 === 0 ? 54 : 66;
                 stop.style.left = `${40 + i * 150}px`;
                 stop.style.top = `${top}%`;
                 const lockText = !open ? (level.modeGroup === 'adventure' ? adventureStatus(level).short : T('LÅST')) : '';
@@ -1433,7 +1444,7 @@
                 if (!card) return;
                 const b = document.createElement('button');
                 b.type = 'button'; b.className = 'journey-balloon';
-                b.innerHTML = `<span>🎈</span>${level.name}`;
+                b.innerHTML = `<img src="assets/v2/g6/journey/balloon.webp" alt="">${level.name}`;
                 b.addEventListener('click', () => { selectGameMode('adventure'); card.click(); });
                 balloons.appendChild(b);
             });
@@ -1999,6 +2010,7 @@
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
         state.runFeathers = 0;
+        state.stickersShown = {};
         state.swarm = [];
         state.birdTrail = [];
         state.glideSpeed = 1;
@@ -2484,8 +2496,8 @@
                 const frameIndex = jumpSequence[Math.floor(progress * jumpSequence.length)];
                 const frame = assets[`snakeJump${frameIndex}`];
                 obstacle.attackFrame = frameIndex;
-                obstacle.renderWidth = (frame?.naturalWidth || 81) * obstacle.scale;
-                obstacle.renderHeight = (frame?.naturalHeight || 106) * obstacle.scale;
+                obstacle.renderWidth = (frame?.naturalWidth ? frame.naturalWidth * SNAKE_JUMP_SCALE : 81) * obstacle.scale;
+                obstacle.renderHeight = (frame?.naturalHeight ? frame.naturalHeight * SNAKE_JUMP_SCALE : 106) * obstacle.scale;
                 obstacle.renderX = obstacle.x - (obstacle.renderWidth - obstacle.width) * 0.45;
                 obstacle.renderY = obstacle.baseBottom - obstacle.renderHeight;
                 if (obstacle.attackElapsed >= 0.733333) obstacle.attackState = 'spent';
@@ -2574,7 +2586,7 @@
         for (const collectible of collectibles) {
             collectible.x -= scroll * (collectible.motion?.scrollFactor || 1);
             collectible.spin += delta * 5;
-            if ((collectible.kind === 'powerup' || collectible.kind === 'feather' || collectible.kind === 'egg') && collectible.motion) {
+            if ((collectible.kind === 'powerup' || collectible.kind === 'feather' || collectible.kind === 'egg' || collectible.kind === 'sticker') && collectible.motion) {
                 collectible.age += delta;
                 const corridor = collectible.motion.tunnel
                     ? BertTunnel.profileAt(state.worldDistance + collectible.x, state.difficulty, currentLevel.variant).center
@@ -2609,6 +2621,14 @@
                     collectible.collected = true;
                     if (collectible.kind === 'powerup') activatePowerup(collectible.type);
                     else if (collectible.kind === 'feather') collectFeather(collectible);
+                    else if (collectible.kind === 'sticker') {
+                        if (!opMode() && BertMeta.findSticker?.(collectible.sticker)) {
+                            playAudio('ding');
+                            window.BertApp?.showToast(T('Klistermærke fundet! Se det i albummet i reden'));
+                        }
+                        burst(collectible.x, collectible.y, '#ffffff', 12);
+                        BertMeta.haptic('reward');
+                    }
                     else if (collectible.kind === 'egg') {
                         const result = opMode() ? { ok: false } : BertMeta.grantFoundEgg?.();
                         playAudio(result?.ok ? 'fanfare' : 'pop');
@@ -2676,6 +2696,21 @@
                     : state.elapsed + 15 + gameRandom() * 10;
             }
 
+            // Klistermærker: five hidden per level (Desert, Jungle, Happy Sky). Each shows up
+            // once at its own moment in the run until it is found, then it is in the album.
+            const stickerSet = STICKER_SETS[currentLevel.id];
+            if (stickerSet && !isEventLevel() && !state.mirror) {
+                const found = BertMeta.stickers?.() || {};
+                STICKER_TIMES.forEach((at, index) => {
+                    const id = `${stickerSet}_${index + 1}`;
+                    if (found[id] || (state.stickersShown ||= {})[id] || state.elapsed < at) return;
+                    state.stickersShown[id] = true;
+                    spawnFeather('sticker');
+                    collectibles[collectibles.length - 1].sticker = id;
+                    collectibles[collectibles.length - 1].width = 62;
+                    collectibles[collectibles.length - 1].height = 62;
+                });
+            }
             // A rare feather for the nest economy, about once a minute (not in events).
             if (!isEventLevel() && state.elapsed >= state.nextFeatherAt) {
                 // Now and then the feather is an egg instead: free, random, only when the nest can take one.
@@ -3290,6 +3325,9 @@
         return true;
     }
 
+    const STICKER_SETS = Object.freeze({ 1: 'desert', 4: 'jungle', 5: 'sky' });
+    const STICKER_TIMES = Object.freeze([14, 33, 55, 82, 120]);
+
     function spawnFeather(kind = 'feather') {
         const rightmost = obstacles.reduce((x, obstacle) => Math.max(x, obstacle.x + obstacle.width), -Infinity);
         const y = randomBetween(170, VIEW.height - 170);
@@ -3574,6 +3612,7 @@
         state.deathFromWeb = obstacle?.kind === 'jungle-web';
         state.hitStop = 0.11;
         state.shake = Math.max(state.shake || 0, 0.6);
+        state.deathBonk = { x: bird.x + BIRD.width * 0.75, y: bird.y + BIRD.height * 0.3, age: 0 };
         setTimeout(() => playAudio('bert_ohno'), 140);
         state.slowmoUntil = state.worldTime + 0.55;
         BertMeta.haptic?.('death');
@@ -3967,6 +4006,21 @@
                 if (state.phase !== 'gameover') return;
                 playAudio('fanfare');
                 setTimeout(() => playAudio('bert_yay'), 650);
+                // Bert turns all the way round to the camera at a new record (round 6, "Bert i 3D").
+                const board = dom.gameOver.querySelector('.scoreboard');
+                if (board && BertMeta.currentHero() === 'bert' && !prefersReducedMotion()) {
+                    board.querySelector('.bert-spin')?.remove();
+                    const spin = document.createElement('img');
+                    spin.className = 'bert-spin'; spin.alt = '';
+                    board.appendChild(spin);
+                    let frame = 0;
+                    const timer = setInterval(() => {
+                        spin.src = ['assets/v2/g6/bert/turn', String((frame % 8) + 1)].join('-') + '.webp';
+                        frame += 1;
+                        if (frame > 16) { clearInterval(timer); spin.src = 'assets/v2/g6/bert/turn-1.webp'; }
+                    }, 90);
+                    resultTimers.push(timer);
+                }
                 for (let i = 0; i < 36; i += 1) {
                     const piece = document.createElement('i');
                     piece.className = 'confetti-piece';
@@ -4232,7 +4286,7 @@
             const step = 1 + Math.floor(state.elapsed / 30);
             if (state.phase === 'playing' && !isEventLevel() && step > (state.levelStep || 1)) {
                 state.levelStep = step;
-                state.comboText = { text: T`NIVEAU ${step}!`, age: 0 };
+                state.comboText = { text: T`NIVEAU ${step}!`, age: 0, levelUp: true };
                 playAudio('combo');
                 setTimeout(() => playAudio('bert_pip'), 250);
             }
@@ -6143,7 +6197,7 @@
             const frameIndex = Math.min(2, Math.floor(state.deathCaptureElapsed / 0.145));
             const frame = assets[`snakeCatch${frameIndex}`];
             if (!frame) return;
-            const scale = 1.1;
+            const scale = 1.1 * SNAKE_CATCH_SCALE;
             const width = frame.naturalWidth * scale;
             const height = frame.naturalHeight * scale;
             ctx.save();
@@ -6373,6 +6427,16 @@
                 ctx.fillStyle = '#f3dca8';
                 ctx.beginPath(); ctx.ellipse(-3, -2, 10, 6, 0.3, 0, Math.PI * 2); ctx.fill();
             }
+            ctx.restore();
+            return;
+        }
+        if (collectible.kind === 'sticker') {
+            const art = assets[`sticker_${collectible.sticker}`];
+            ctx.globalAlpha = 0.45 + Math.sin(collectible.spin * 2) * 0.15;
+            ctx.drawImage(assets.whiteGlow, -50, -50, 100, 100);
+            ctx.globalAlpha = 1;
+            ctx.rotate(Math.sin(collectible.spin * 0.8) * 0.2);
+            if (art?.naturalWidth) ctx.drawImage(art, -31, -31, 62, 62);
             ctx.restore();
             return;
         }
@@ -6610,6 +6674,7 @@
             ctx.fillStyle = '#ffffff';
             ctx.textAlign = 'center';
             ctx.fillText(T('REKORD'), BIRD.x - 10 + BIRD.width / 2, centerY - BIRD.height / 2 - 4);
+            if (assets.g6RecordFlag?.naturalWidth) ctx.drawImage(assets.g6RecordFlag, BIRD.x - 34, centerY - BIRD.height / 2 - 34, 26, 32);
             ctx.restore();
             return;
         }
@@ -6874,6 +6939,20 @@
         // decorative scenery behind him. Only the outer, non-playable bands cover him.
         drawForeground();
         drawEDMFrontLasers();
+        if (state.deathBonk && assets.g6Bonk?.naturalWidth) {
+            const b = state.deathBonk;
+            b.age += 1 / 60;
+            if (b.age > 0.7) state.deathBonk = null;
+            else {
+                const k = b.age < 0.1 ? b.age / 0.1 : 1;
+                ctx.save();
+                ctx.globalAlpha = b.age > 0.5 ? (0.7 - b.age) / 0.2 : 1;
+                ctx.translate(b.x, b.y);
+                ctx.rotate(b.age * 2);
+                ctx.drawImage(assets.g6Bonk, -60 * k, -60 * k, 120 * k, 120 * k);
+                ctx.restore();
+            }
+        }
         ctx.restore();
         drawFlyingPickups();
         drawComboText();
@@ -6930,7 +7009,9 @@
         ctx.scale(pop, pop);
         ctx.rotate(-0.08);
         ctx.globalAlpha = t > 0.7 ? (1 - t) / 0.3 : 1;
-        if (assets.g4ComboBurst?.naturalWidth) {
+        if (combo.levelUp && assets.g6LevelUp?.naturalWidth) {
+            ctx.drawImage(assets.g6LevelUp, -200, -78, 400, 125);
+        } else if (assets.g4ComboBurst?.naturalWidth) {
             ctx.save(); ctx.globalAlpha *= 0.85; ctx.rotate(t * 1.5);
             ctx.drawImage(assets.g4ComboBurst, -110, -110, 220, 220);
             ctx.restore();
@@ -7416,6 +7497,26 @@
         row.append(title, track, count, claim);
         return row;
     }
+    function openStickerAlbum() {
+        const found = BertMeta.stickers?.() || {};
+        document.getElementById('sticker-modal')?.remove();
+        const modal = document.createElement('section');
+        modal.id = 'sticker-modal'; modal.className = 'modal-backdrop';
+        const card = document.createElement('div'); card.className = 'sticker-album';
+        const sets = [['desert', 'Desert'], ['jungle', 'Jungle'], ['sky', 'Happy Sky']];
+        card.innerHTML = `<button class="round-close" type="button" aria-label="${T('Luk')}">×</button><h2>${T('KLISTERMÆRKER')} · ${Object.keys(found).length}/15</h2>`
+            + sets.map(([set, name]) => `<div class="sticker-row"><b>${name}</b>${[1, 2, 3, 4, 5].map((n) => {
+                const id = `${set}_${n}`;
+                const art = ['assets/v2/g6/stickers', `${set}-${n}.webp`].join('/');
+                return `<span class="sticker-slot${found[id] ? ' found' : ''}"><img src="${art}" alt=""></span>`;
+            }).join('')}</div>`).join('')
+            + `<p>${T('Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.')}</p>`;
+        card.querySelector('.round-close').addEventListener('click', () => modal.remove());
+        modal.addEventListener('click', (event) => { if (event.target === modal) modal.remove(); });
+        modal.appendChild(card);
+        document.body.appendChild(modal);
+    }
+
     function renderChallengeBook(openIds) {
         const weekly = document.getElementById('weekly-list');
         if (weekly) {
@@ -7424,6 +7525,11 @@
                 if (result.ok) { BertMeta.haptic('reward'); playAudio('ding'); window.BertApp?.showToast(T`+${result.reward} fjer til reden`); }
                 renderMissions();
             })));
+        }
+        const albumButton = document.getElementById('sticker-album-btn');
+        if (albumButton) {
+            albumButton.querySelector('small').textContent = `${Object.keys(BertMeta.stickers?.() || {}).length}/15`;
+            albumButton.onclick = openStickerAlbum;
         }
         const list = document.getElementById('book-list');
         if (!list) return;

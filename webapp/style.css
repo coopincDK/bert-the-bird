@@ -2558,3 +2558,57 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 
 .journey-mirror { position: absolute; z-index: 4; width: 34px; height: 34px; border-radius: 50%; border: 3px solid #fff; background: #7b4dff; color: #fff; font-weight: 900; font-size: 16px;
     box-shadow: 0 3px 0 #1b2a44; cursor: pointer; }
+
+/* Rejsekortet med rigtig grafik (runde 6) */
+.journey-area { background: var(--art) center bottom / cover no-repeat, linear-gradient(transparent 45%, color-mix(in srgb, var(--tint) 55%, transparent) 100%) !important; }
+.journey-area::after { display: none; }
+.journey-thumb { border: 0 !important; box-shadow: none !important; overflow: visible; }
+.journey-thumb::before { content: ''; position: absolute; inset: -14px; background: url(assets/v2/g6/journey/stop-frame.webp) center / contain no-repeat; z-index: 1; pointer-events: none; }
+.journey-stop.locked .journey-thumb::before { background-image: url(assets/v2/g6/journey/stop-locked.webp); filter: none; }
+.journey-thumb b { z-index: 2; }
+.journey-stop.here .journey-thumb::after { background-image: url(assets/v2/g6/journey/bert-map.webp) !important; width: 60px !important; height: 54px !important; top: -60px !important; z-index: 3; }
+.journey-balloon { display: inline-flex; align-items: center; gap: 4px; }
+.journey-balloon img { width: 16px; height: 22px; }
+.journey-area-name { background: rgba(8,20,32,.55); padding: 2px 8px; border-radius: 8px; }
+.journey-thumb { width: 64px !important; height: 64px !important; }
+.journey-name { margin-top: 12px; position: relative; z-index: 3; }
+.journey-stars, .journey-lock { position: relative; z-index: 3; }
+.journey-balloon { font-size: 10px !important; padding: 3px 8px !important; }
+.journey-balloons { max-width: 60% !important; gap: 4px !important; }
+.level-menu.journey-mode h2, .level-menu.journey-mode h2 + p, .level-menu.journey-mode p { white-space: nowrap; }
+.journey-balloons { max-width: 48% !important; }
+.journey-balloon { font-size: 9px !important; padding: 2px 6px !important; }
+.journey-balloon img { width: 12px !important; height: 17px !important; }
+
+/* Udfordrings-ikoner og bjælker (runde 6) */
+.mission-row[data-difficulty]::before { width: 22px !important; height: 22px !important; flex: 0 0 22px !important; border-radius: 0 !important; background: center / contain no-repeat !important; }
+.mission-row[data-difficulty="easy"]::before { background-image: url(assets/v2/g6/ui/challenge-easy.webp) !important; }
+.mission-row[data-difficulty="medium"]::before { background-image: url(assets/v2/g6/ui/challenge-medium.webp) !important; }
+.mission-row[data-difficulty="hard"]::before { background-image: url(assets/v2/g6/ui/challenge-hard.webp) !important; }
+.book-tab::before { content: ''; display: block; width: 30px; height: 30px; margin: 0 auto 2px; background: center / contain no-repeat; }
+.book-tab[data-book="milestones"]::before { background-image: url(assets/v2/g6/ui/challenge-milestone.webp); }
+.book-tab[data-book="mastery"]::before { background-image: url(assets/v2/g6/ui/challenge-mastery.webp); }
+.book-tab[data-book="hidden"]::before { background-image: url(assets/v2/g6/ui/challenge-secret.webp); }
+.weekly-list .mission-row::before { content: ''; width: 22px; height: 22px; flex: 0 0 22px; margin-right: 6px; background: url(assets/v2/g6/ui/challenge-week.webp) center / contain no-repeat; }
+.mission-track { border: 6px solid transparent !important; border-image: url(assets/v2/g6/ui/progress-bar.webp) 18 fill / 6px stretch !important; background: none !important; }
+
+/* Klistermærker */
+.sticker-album-btn { display: flex; align-items: center; gap: 10px; width: 100%; margin: 6px 0; padding: 6px 12px; border-radius: 12px; border: 2px solid rgba(255,255,255,.25);
+    background: rgba(255,255,255,.08); color: #fff; font-weight: 900; letter-spacing: .08em; cursor: pointer; }
+.sticker-album-btn img { width: 34px; height: 34px; }
+.sticker-album-btn small { margin-left: auto; color: #ffd98a; }
+.sticker-album { position: relative; width: min(94vw, 760px); max-height: 92vh; overflow: auto; padding: 18px 24px; border-radius: 18px;
+    background: url(assets/v2/g6/stickers/album.webp) center / cover no-repeat; color: #3a2a1a; box-shadow: 0 10px 40px rgba(0,0,0,.4); }
+.sticker-album h2 { margin: 0 0 8px; font: 900 22px "Bert Display", sans-serif; color: #5a3a1a; text-align: center; }
+.sticker-album p { text-align: center; font-weight: 700; margin: 8px 0 0; }
+.sticker-row { display: flex; align-items: center; gap: 8px; margin: 6px 0; padding: 4px 10px; background: rgba(255,255,255,.55); border-radius: 12px; }
+.sticker-row b { width: 82px; font-size: 12px; }
+.sticker-slot { width: 64px; height: 64px; display: grid; place-items: center; border-radius: 10px; border: 2px dashed rgba(90,58,26,.35); }
+.sticker-slot img { width: 58px; height: 58px; filter: brightness(0) opacity(.18); }
+.sticker-slot.found { border-style: solid; border-color: transparent; }
+.sticker-slot.found img { filter: none; transform: rotate(-4deg); }
+.sticker-album .round-close { position: absolute; right: 10px; top: 10px; }
+/* Bert drejer ved ny rekord */
+.bert-spin { position: absolute; width: 120px; height: 120px; left: 50%; top: -96px; transform: translateX(-50%); pointer-events: none; z-index: 6; }
+
+#game-over .scoreboard { position: relative; }

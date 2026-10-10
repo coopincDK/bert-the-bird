@@ -685,4 +685,7 @@ window.BertI18n.register('es', {
     "FLOK & FORMATION · TESTBANE": "BANDADA Y FORMACIÓN · NIVEL DE PRUEBA",
     "FLOK & FORMATION": "BANDADA Y FORMACIÓN",
     "Fuglesværm": "Bandada",
+    "Klistermærke fundet! Se det i albummet i reden": "¡Pegatina encontrada! Mírala en el álbum del nido",
+    "KLISTERMÆRKER": "PEGATINAS",
+    "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Cinco pegatinas escondidas en cada nivel. Mantén los ojos abiertos mientras vuelas.",
 });

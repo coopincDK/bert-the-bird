@@ -685,4 +685,7 @@ window.BertI18n.register('fr', {
     "FLOK & FORMATION · TESTBANE": "VOLÉE & FORMATION · NIVEAU TEST",
     "FLOK & FORMATION": "VOLÉE & FORMATION",
     "Fuglesværm": "Nuée d'oiseaux",
+    "Klistermærke fundet! Se det i albummet i reden": "Autocollant trouvé ! Regarde-le dans l'album du nid",
+    "KLISTERMÆRKER": "AUTOCOLLANTS",
+    "Fem skjulte klistermærker i hver bane. Hold øje, mens du flyver.": "Cinq autocollants cachés dans chaque niveau. Ouvre l'œil en volant.",
 });
