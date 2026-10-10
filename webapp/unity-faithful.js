@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-104';
+    const BUILD_VERSION = 'worlds-relay-105';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1387,6 +1387,9 @@
     }
     // Ugens bonusbane: one bonus level a week is in the spotlight with double rewards.
     const BONUS_ROTATION = Object.freeze([13, 10, 11, 12, 14, 15]);
+    // Round 9 art per bonus level: its own balloon on the map and banner on the front page.
+    const BONUS_ART = Object.freeze({ 15: 'swarm', 11: 'birdrun', 13: 'skyrelay', 14: 'glide', 10: 'encore', 12: 'storm' });
+    const bonusArt = (id, kind) => ['assets/v2/g9/bonus', `${kind}-${BONUS_ART[id]}.webp`].join('/');
     function weekNumber(date = new Date()) {
         const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
         d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
@@ -1400,7 +1403,8 @@
         const level = levelById(weeklyBonusId());
         const lvlCard = dom.levelGrid.querySelector(`.level-card[data-level-id="${level.id}"]`);
         const thumb = lvlCard?.querySelector('.level-thumb');
-        card.querySelector('img').src = thumb?.dataset.src || thumb?.src || '';
+        card.style.setProperty('--banner', `url('${bonusArt(level.id, 'banner')}')`);
+
         card.querySelector('strong').textContent = level.name;
         const open = adventureStatus(level).unlocked;
         card.querySelector('small').textContent = open ? T`DOBBELT BELØNNING · ${daysLeftInWeek()} DAGE TILBAGE` : adventureStatus(level).short;
@@ -1487,8 +1491,9 @@
                 stop.type = 'button';
                 stop.className = `journey-stop bonus${open ? '' : ' locked'}${spotlight ? ' spotlight' : ''}`;
                 stop.style.left = `${40 + section.ids.length * 150 + b * 110}px`;
-                stop.style.top = '30%';
-                stop.innerHTML = `<span class="journey-thumb" style="background-image:url('${art}')"><img class="bonus-balloon" src="assets/v2/g6/journey/balloon.webp" alt=""></span>`
+                stop.style.top = '46%';
+                stop.innerHTML = `<img class="bonus-path" src="assets/v2/g9/bonus/path.webp" alt="">`
+                    + `<span class="journey-thumb" style="background-image:url('${art}')"><img class="bonus-balloon" src="${bonusArt(id, 'balloon')}" alt=""></span>`
                     + `<span class="journey-name">${level.name}</span>`
                     + (spotlight ? `<span class="bonus-week">${T('UGENS BONUS')}</span>` : '')
                     + (open ? `<span class="journey-stars">${[0, 1, 2].map((k) => `<i class="${k < stars ? 'on' : ''}">★</i>`).join('')}</span>`

@@ -2655,3 +2655,23 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 .bonus-promo { right: auto !important; left: 50% !important; transform: translateX(-50%); top: 64vh !important; width: min(42vw, 380px) !important; grid-template-columns: 56px 1fr !important; padding: 5px 10px !important; }
 .bonus-promo img { width: 56px !important; height: 34px !important; }
 .bonus-promo { top: 68.5vh !important; }
+
+/* Runde 9: bonusballoner, ramme og sidevej på kortet */
+.journey-stop.bonus .journey-thumb::before { background-image: url(assets/v2/g9/bonus/stop-frame.webp) !important; inset: -12px !important; }
+.bonus-balloon { width: 34px !important; height: 48px !important; right: -24px !important; top: -40px !important; animation: pin-bob 2.2s ease-in-out infinite; }
+.bonus-path { position: absolute; left: -64px; top: 48px; width: 90px; height: 27px; pointer-events: none; opacity: .9; transform: scaleY(-1); }
+/* Ugens bonus på forsiden: banneret som baggrund, teksten til venstre */
+.bonus-promo { background: center right / cover no-repeat, rgba(8,20,32,.82) !important; grid-template-columns: 1fr !important; height: 54px; padding: 6px 12px !important; overflow: visible; }
+.bonus-promo > img:not(.bonus-promo-double) { display: none; }
+.bonus-promo-text { background: linear-gradient(90deg, rgba(8,20,32,.85) 55%, rgba(8,20,32,0)); padding: 4px 30px 4px 8px; border-radius: 8px; justify-self: start; }
+.bonus-promo-tag { background: url(assets/v2/g9/bonus/tag.webp) center / 100% 100% no-repeat !important; padding: 4px 14px !important; top: -12px !important; }
+.bonus-promo-double { position: absolute; right: -10px; top: -14px; width: 40px; height: 40px; }
+
+.bonus-promo { background: var(--banner) center right / cover no-repeat, rgba(8,20,32,.82) !important; height: 50px !important; top: 67vh !important; }
+.bonus-promo.locked { filter: none; }
+.bonus-promo.locked .bonus-promo-text small { color: #ffb3b3; }
+.bonus-promo.locked img.bonus-promo-double { filter: none !important; }
+.bonus-balloon { top: -30px !important; }
+.bonus-path { top: 30px !important; left: -70px !important; opacity: 1 !important; filter: drop-shadow(0 1px 1px rgba(27,42,68,.6)); }
+
+#bonus-promo img.bonus-promo-double { width: 38px !important; height: 38px !important; border-radius: 0 !important; object-fit: contain !important; filter: none !important; right: -12px; top: -16px; position: absolute; }
