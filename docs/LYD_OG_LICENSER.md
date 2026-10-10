@@ -45,7 +45,15 @@ Al gammel musik med ukendt kilde (Unity 2014, Manus-perioden og Chopin-indspilni
 
 ## Artlist
 
-Artlists katalog (stockmusik og -lydeffekter) må **ikke** bruges i spillet med SmartPacks Max Pro-licens (Artlist support, 3. okt. 2026: spil og apps kræver en særlig Business-licens). Ingen Artlist-filer er brugt i spillet.
+Artlists katalog (stockmusik og -lydeffekter) må **ikke** bruges i spillet med SmartPacks Max Pro-licens (Artlist support, 3. okt. 2026: spil og apps kræver en særlig Business-licens).
+
+**Brugt fra Artlist (10. okt. 2026):**
+
+| Fil i spillet | Nummer | Kunstner | Status |
+| --- | --- | --- | --- |
+| `webapp/assets/music/focus.mp3` | Nocturne in E-Flat Major (Chopin) | Brooklyn Classical | Lagt ind efter Martins besked om licens. **Afventer skriftlig bekræftelse fra Artlist på, at licensen dækker brug i et spil/en app.** Udskiftes med en offentligt fri indspilning (fx Musopen), hvis Artlist siger nej. |
+
+Gem Artlists svar og licensbeviset for nummeret her, når det kommer.
 
 ## Dokumentation for Suno-numrene
 
