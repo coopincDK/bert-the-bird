@@ -38,6 +38,24 @@
     // number 1 a target and gives the small ones a chance (feedback 10. okt.).
     let hawk = null;
 
+    // ---------- sound: effects via the shared Web Audio player, music as a loop ----------
+    const setting = (name, fallback) => { const v = window.BertMeta?.settingValue?.(name); return v === undefined ? fallback : v; };
+    const SFX = ['coin', 'pop', 'combo', 'whoosh', 'ding', 'fanfare', 'hawk', 'bert-ohno', 'bert-yay', 'bert-pip', 'shield-break'];
+    SFX.forEach((name) => window.BertSfx?.load(name, `assets/sfx/${name}.mp3`));
+    function sfx(name, volume = 1) {
+        if (setting('sfx', true) === false) return;
+        window.BertSfx?.play(name, 0.45 * Number(setting('sfxVolume', 0.7)) * volume);
+    }
+    const music = new Audio('assets/music/windfarm.mp3');
+    music.loop = true;
+    function startMusic() {
+        if (setting('music', true) === false) return;
+        music.volume = 0.4 * Number(setting('musicVolume', 0.7));
+        music.play().catch(() => {});
+    }
+    ['pointerdown', 'keydown'].forEach((type) => window.addEventListener(type, () => window.BertSfx?.unlock(), { passive: true }));
+    const nearPlayer = (x, y) => player && dist2(x, y, player.x, player.y) < 900 * 900;
+
     let entities = [];
     let stars = [];
     let player = null;
@@ -95,12 +113,14 @@
 
     function formOrb(e, now) {
         if (e.form !== 'chain' || size(e) < ORB_MIN || now < e.orbReadyAt) return false;
+        if (e.isPlayer) sfx('combo'); else if (nearPlayer(e.x, e.y)) sfx('combo', 0.4);
         e.form = 'orb';
         e.orbUntil = now + orbDuration(e) * 1000;
         return true;
     }
     function unravel(e, now) {
         if (e.form !== 'orb') return;
+        if (e.isPlayer) sfx('whoosh');
         e.form = 'chain';
         e.orbReadyAt = now + 8000;
         // The birds string out behind the leader along the current heading.
@@ -110,6 +130,9 @@
     function kill(e, killer = null) {
         if (!e.alive) return;
         e.alive = false;
+        if (e.isPlayer) sfx('bert-ohno');
+        else if (killer?.isPlayer) { sfx('ding'); setTimeout(() => sfx('bert-yay', 0.8), 200); }
+        else if (nearPlayer(e.x, e.y)) sfx('pop', 0.5);
         // The birds fall out as stars: going after big ones pays off.
         const points = e.form === 'orb' ? e.birds.map(() => ({ x: e.x + rand(-orbRadius(e), orbRadius(e)), y: e.y + rand(-orbRadius(e), orbRadius(e)) })) : e.birds;
         points.forEach((p) => addStar(p.x + rand(-10, 10), Math.min(GROUND - 20, p.y + rand(-10, 10)), 1));
@@ -124,6 +147,7 @@
     // Eating birds: 60 % join you, the rest fall as stars, so one big flok cannot snowball forever.
     function eat(e, n, x, y) {
         effect('eat', x, y, 140 + Math.min(120, n * 4));
+        if (e.isPlayer) sfx('pop'); else if (nearPlayer(x, y)) sfx('pop', 0.4);
         const keep = Math.ceil(n * 0.6);
         grow(e, keep);
         for (let i = 0; i < (n - keep) * 3; i += 1) addStar(x + rand(-90, 90), Math.min(GROUND - 20, y + rand(-90, 90)), 1);
@@ -260,7 +284,8 @@
                     // Three stars make a new bird, so growth stays readable.
                     stars.splice(i, 1);
                     e.bank = (e.bank || 0) + s.value;
-                    while (e.bank >= 3) { e.bank -= 3; grow(e, 1); }
+                    if (e.isPlayer) sfx('coin', 0.5);
+                    while (e.bank >= 3) { e.bank -= 3; grow(e, 1); if (e.isPlayer) sfx('bert-pip', 0.5); }
                 }
             }
         }
@@ -275,7 +300,12 @@
         hawk.frame += dt * 10;
         const prey = entities.filter((e) => e.alive && now - e.spawnedAt > 3000).sort((a, b) => size(b) - size(a))[0];
         if (!prey || size(prey) < 20) { hawk.angle += dt * 0.3; }
-        else if (now >= hawk.restUntil) hawk.angle += Math.max(-2.2 * dt, Math.min(2.2 * dt, angleDiff(hawk.angle, Math.atan2(prey.y - hawk.y, prey.x - hawk.x))));
+        else if (now >= hawk.restUntil) {
+            // A screech when it turns its attention to you.
+            if (prey === player && hawk.lastTarget !== player) sfx('hawk', 0.8);
+            hawk.lastTarget = prey;
+            hawk.angle += Math.max(-2.2 * dt, Math.min(2.2 * dt, angleDiff(hawk.angle, Math.atan2(prey.y - hawk.y, prey.x - hawk.x))));
+        }
         const speed = now < hawk.restUntil ? 160 : 300;
         hawk.x = Math.max(60, Math.min(W - 60, hawk.x + Math.cos(hawk.angle) * speed * dt));
         hawk.y = Math.max(100, Math.min(GROUND - 60, hawk.y + Math.sin(hawk.angle) * speed * dt));
@@ -286,6 +316,8 @@
         const touching = dist2(hawk.x, hawk.y, prey.x, prey.y) < reach * reach
             || (prey.form === 'chain' && prey.birds.some((b) => dist2(hawk.x, hawk.y, b.x, b.y) < 40 * 40));
         if (touching) {
+            sfx('hawk', prey.isPlayer ? 1 : nearPlayer(hawk.x, hawk.y) ? 0.5 : 0);
+            if (prey.isPlayer) sfx('shield-break', 0.7);
             const taken = prey.birds.splice(Math.max(0, prey.birds.length - 5));
             taken.forEach((b) => addStar(b.x + rand(-20, 20), Math.min(GROUND - 20, b.y + 40), 1));
             hawk.restUntil = now + 6000;
@@ -348,6 +380,7 @@
                             if (o !== a && o.alive && o.form === 'orb' && pointInPolygon(o.x, o.y, ring)) {
                                 const n = size(o); o.birds.length = 0;
                                 effect('catch', o.x, o.y, orbRadius(o) * 2.6);
+                                if (a.isPlayer) sfx('fanfare');
                                 eat(a, n, o.x, o.y);
                                 kill(o, a);
                             }
@@ -585,6 +618,7 @@
         start();
     }
     function start() {
+        startMusic();
         entities = []; stars = []; hawk = null; effects = [];
         for (let i = 0; i < STAR_TARGET; i += 1) addStar();
         for (let i = 0; i < BOT_COUNT; i += 1) spawn(false, Math.floor(rand(5, 30)));
