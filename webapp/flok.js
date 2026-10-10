@@ -551,13 +551,7 @@
             ctx.setLineDash([]);
             ctx.restore();
         }
-        // World edges: walls of wind pointing inward.
-        if (ready(art.edge)) {
-            for (let y = 60; y < GROUND; y += 256) {
-                if (viewL < 200) ctx.drawImage(art.edge, -60, y, 200, 256);
-                if (viewR > W - 200) { ctx.save(); ctx.translate(W + 60, y); ctx.scale(-1, 1); ctx.drawImage(art.edge, 0, 0, 200, 256); ctx.restore(); }
-            }
-        }
+        // (The wind walls are gone: the darkened outside and the border are enough.)
         // Ground far below: the round-7 strip, then plain green under it.
         ctx.fillStyle = '#7fcf5a'; ctx.fillRect(-2000, GROUND + 260, W + 4000, 800);
         if (ready(art.ground)) {
