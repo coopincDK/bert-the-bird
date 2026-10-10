@@ -19,7 +19,18 @@
     const images = {};
     const img = (src) => images[src] || (images[src] = Object.assign(new Image(), { src }));
     const heroArt = (hero) => img(`assets/heroes/${hero}/glide.webp`);
-    const starArt = img('assets/unity/ui/menu-star.webp');
+    const G7 = 'assets/v2/g7/flock/';
+    const starArt = img(`${G7}star-food.webp`);
+    const art = {
+        sky: img(`${G7}sky.webp`), ground: img(`${G7}ground.webp`), edge: img(`${G7}edge.webp`),
+        clouds: [1, 2, 3, 4].map((n) => img(`${G7}clouds-${n}.webp`)),
+        orb: img(`${G7}orb-glow.webp`), orbMe: img(`${G7}orb-glow-me.webp`),
+        catch: img(`${G7}catch.webp`), eat: img(`${G7}eat.webp`), crown: img(`${G7}crown.webp`),
+    };
+    const ready = (image) => image.complete && image.naturalWidth > 0;
+    // Short picture effects in the world: something eaten, a flok caught in a ring.
+    let effects = [];
+    const effect = (kind, x, y, size = 160) => effects.push({ kind, x, y, size, age: 0 });
     const hawkFrames = [1, 2, 3, 4].map((n) => img(`assets/v2/birdrun/predator-fly-${n}.webp`));
     // The hawk: a computer predator that always hunts the biggest bird group. It makes
     // number 1 a target and gives the small ones a chance (feedback 10. okt.).
@@ -45,8 +56,14 @@
 
     function spawn(isPlayer = false, size = 6) {
         const hero = isPlayer ? (localStorage.getItem('bertFlokHero') || 'bert') : HEROES[Math.floor(Math.random() * HEROES.length)];
-        const x = rand(400, W - 400);
-        const y = rand(300, GROUND - 300);
+        // Start somewhere quiet: the spot (of 20 tries) farthest from everyone else.
+        let x = rand(400, W - 400); let y = rand(300, GROUND - 300); let bestGap = -1;
+        for (let t = 0; t < 20; t += 1) {
+            const cx = rand(400, W - 400); const cy = rand(300, GROUND - 300);
+            let gap = Infinity;
+            for (const o of entities) { gap = Math.min(gap, dist2(cx, cy, o.x, o.y)); for (let i = 0; i < o.birds.length; i += 4) gap = Math.min(gap, dist2(cx, cy, o.birds[i].x, o.birds[i].y)); }
+            if (gap > bestGap) { bestGap = gap; x = cx; y = cy; }
+        }
         const e = {
             id: nextId++, isPlayer, name: isPlayer ? (readName() || 'Dig') : NAMES[Math.floor(Math.random() * NAMES.length)],
             hero, x, y, angle: Math.random() * Math.PI * 2, target: 0, form: 'chain', path: [], birds: [],
@@ -104,6 +121,7 @@
     }
     // Eating birds: 60 % join you, the rest fall as stars, so one big flok cannot snowball forever.
     function eat(e, n, x, y) {
+        effect('eat', x, y, 140 + Math.min(120, n * 4));
         const keep = Math.ceil(n * 0.6);
         grow(e, keep);
         for (let i = 0; i < (n - keep) * 3; i += 1) addStar(x + rand(-90, 90), Math.min(GROUND - 20, y + rand(-90, 90)), 1);
@@ -280,7 +298,7 @@
             if (!a.alive) continue;
             for (const b of alive) {
                 if (a === b || !b.alive || !a.alive) continue;
-                if (now - b.spawnedAt < 1500 || now - a.spawnedAt < 1500) continue; // a short spawn shield
+                if (now - b.spawnedAt < 3000 || now - a.spawnedAt < 3000) continue; // a 3 s spawn shield
                 if (a.form === 'chain' && b.form === 'chain') {
                     // Head into body: the head's owner is out.
                     for (let i = 0; i < b.birds.length; i += 1) {
@@ -318,6 +336,7 @@
                         for (const o of alive) {
                             if (o !== a && o.alive && o.form === 'orb' && pointInPolygon(o.x, o.y, ring)) {
                                 const n = size(o); o.birds.length = 0;
+                                effect('catch', o.x, o.y, orbRadius(o) * 2.6);
                                 eat(a, n, o.x, o.y);
                                 kill(o, a);
                             }
@@ -332,20 +351,27 @@
     // ---------- drawing ----------
     function draw(now) {
         const cw = canvas.width; const ch = canvas.height;
-        const sky = ctx.createLinearGradient(0, 0, 0, ch);
-        sky.addColorStop(0, '#4fb8ec'); sky.addColorStop(1, '#bfe9fb');
-        ctx.fillStyle = sky; ctx.fillRect(0, 0, cw, ch);
+        if (ready(art.sky)) {
+            // Cover the screen whatever the orientation.
+            const k = Math.max(cw / 1280, ch / 720);
+            ctx.drawImage(art.sky, (cw - 1280 * k) / 2, (ch - 720 * k) / 2, 1280 * k, 720 * k);
+        } else {
+            const sky = ctx.createLinearGradient(0, 0, 0, ch);
+            sky.addColorStop(0, '#4fb8ec'); sky.addColorStop(1, '#bfe9fb');
+            ctx.fillStyle = sky; ctx.fillRect(0, 0, cw, ch);
+        }
         if (!player) return;
         // Same amount of sky in both orientations: portrait sees high and low,
         // landscape sees far ahead and behind. The phone's way round is a choice.
         const zoom = (Math.sqrt(cw * ch) / 900) * Math.max(0.55, 1 - (size(player) - 6) * 0.004);
         const camX = player.x; const camY = Math.min(player.y, GROUND - ch / 2 / zoom + 60);
         // Far clouds (parallax).
-        ctx.fillStyle = 'rgba(255,255,255,.75)';
-        for (let i = 0; i < 18; i += 1) {
-            const px = ((i * 977 - camX * 0.3) % (cw + 400) + cw + 400) % (cw + 400) - 200;
-            const py = (i * 131) % (ch * 0.7) + 30 - (camY - H / 2) * 0.05;
-            ctx.beginPath(); ctx.ellipse(px, py, 90, 26, 0, 0, Math.PI * 2); ctx.ellipse(px + 50, py - 14, 60, 24, 0, 0, Math.PI * 2); ctx.fill();
+        for (let i = 0; i < 14; i += 1) {
+            const cloud = art.clouds[i % 4];
+            const cs = (0.5 + (i % 3) * 0.2) * (ch / 900);
+            const px = ((i * 977 - camX * 0.3) % (cw + 600) + cw + 600) % (cw + 600) - 300;
+            const py = (i * 173) % (ch * 0.75) + 20 - (camY - H / 2) * 0.05;
+            if (ready(cloud)) { ctx.globalAlpha = 0.85; ctx.drawImage(cloud, px, py, 512 * cs, 220 * cs); ctx.globalAlpha = 1; }
         }
         ctx.save();
         ctx.translate(cw / 2, ch / 2);
@@ -354,11 +380,18 @@
         const viewL = camX - cw / 2 / zoom - 80; const viewR = camX + cw / 2 / zoom + 80;
         const viewT = camY - ch / 2 / zoom - 80; const viewB = camY + ch / 2 / zoom + 80;
         // World edges and ground.
-        ctx.strokeStyle = 'rgba(255,255,255,.5)'; ctx.lineWidth = 8; ctx.setLineDash([30, 24]);
-        ctx.strokeRect(0, 60, W, GROUND - 60); ctx.setLineDash([]);
-        ctx.fillStyle = '#7fcf5a'; ctx.fillRect(-2000, GROUND, W + 4000, 800);
-        ctx.fillStyle = '#5fae43';
-        for (let x = Math.floor(viewL / 220) * 220; x < viewR; x += 220) { ctx.beginPath(); ctx.ellipse(x, GROUND + 10, 140, 50, 0, Math.PI, 0); ctx.fill(); }
+        // World edges: walls of wind pointing inward.
+        if (ready(art.edge)) {
+            for (let y = 60; y < GROUND; y += 256) {
+                if (viewL < 200) ctx.drawImage(art.edge, -60, y, 200, 256);
+                if (viewR > W - 200) { ctx.save(); ctx.translate(W + 60, y); ctx.scale(-1, 1); ctx.drawImage(art.edge, 0, 0, 200, 256); ctx.restore(); }
+            }
+        }
+        // Ground far below: the round-7 strip, then plain green under it.
+        ctx.fillStyle = '#7fcf5a'; ctx.fillRect(-2000, GROUND + 260, W + 4000, 800);
+        if (ready(art.ground)) {
+            for (let x = Math.floor(viewL / 2560) * 2560; x < viewR; x += 2560) ctx.drawImage(art.ground, x, GROUND - 40, 2560, 300);
+        }
         // Stars.
         for (const s of stars) {
             if (s.x < viewL || s.x > viewR || s.y < viewT || s.y > viewB) continue;
@@ -375,8 +408,8 @@
             if (e.form === 'orb') {
                 const r = orbRadius(e);
                 const left = (e.orbUntil - now) / (orbDuration(e) * 1000);
-                ctx.fillStyle = e.isPlayer ? 'rgba(182,255,59,.16)' : 'rgba(255,255,255,.16)';
-                ctx.beginPath(); ctx.arc(e.x, e.y, r + 12, 0, Math.PI * 2); ctx.fill();
+                const glow = e.isPlayer ? art.orbMe : art.orb;
+                if (ready(glow)) ctx.drawImage(glow, e.x - (r + 30), e.y - (r + 30), (r + 30) * 2, (r + 30) * 2);
                 ctx.strokeStyle = e.isPlayer ? '#b6ff3b' : 'rgba(255,255,255,.85)'; ctx.lineWidth = 5;
                 ctx.beginPath(); ctx.arc(e.x, e.y, r + 12, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * Math.max(0, left)); ctx.stroke();
             }
@@ -386,6 +419,10 @@
                 drawBird(b.hero, b.x, b.y + Math.sin(now / 160 + i) * 2, birdSize, e.form === 'orb' ? (Math.cos(b.orbA) < 0 ? 1 : -1) * Math.sign(b.orbSpin) : facing);
             }
             drawBird(e.hero, e.x, e.y, 74, facing);
+            if (e === sorted[sorted.length - 1] && ready(art.crown)) {
+                const cy = e.form === 'orb' ? e.y - orbRadius(e) - 64 : e.y - 78;
+                ctx.drawImage(art.crown, e.x - 22, cy, 44, 44);
+            }
             if (e.isPlayer || size(e) >= 20) {
                 ctx.font = '900 18px system-ui, sans-serif'; ctx.textAlign = 'center';
                 ctx.lineWidth = 5; ctx.strokeStyle = 'rgba(27,42,68,.8)'; ctx.fillStyle = e.isPlayer ? '#b6ff3b' : '#fff';
@@ -393,6 +430,15 @@
                 ctx.strokeText(`${e.name} · ${size(e)}`, e.x, y); ctx.fillText(`${e.name} · ${size(e)}`, e.x, y);
             }
         }
+        effects = effects.filter((fx) => (fx.age += 1 / 60) < 0.7);
+        effects.forEach((fx) => {
+            const image = art[fx.kind];
+            if (!ready(image)) return;
+            const k = 0.7 + fx.age * 0.6;
+            ctx.save(); ctx.globalAlpha = 1 - fx.age / 0.7;
+            ctx.drawImage(image, fx.x - fx.size * k / 2, fx.y - fx.size * k / 2, fx.size * k, fx.size * k);
+            ctx.restore();
+        });
         if (hawk) {
             const frame = hawkFrames[Math.floor(hawk.frame) % 4];
             if (frame.complete && frame.naturalWidth) {
@@ -467,6 +513,7 @@
             + (top.includes(player) ? '' : `<div class="me">… Dig · ${size(player)}</div>`);
         const ready = player.form === 'chain' && size(player) >= ORB_MIN && now >= player.orbReadyAt;
         flokBtn.disabled = !ready;
+        flokBtn.classList.toggle('on', ready || player.form === 'orb');
         flokBtn.textContent = player.form === 'orb' ? `${Math.ceil((player.orbUntil - now) / 1000)}s`
             : size(player) < ORB_MIN ? `${size(player)}/${ORB_MIN}` : now < player.orbReadyAt ? `${Math.ceil((player.orbReadyAt - now) / 1000)}s` : 'FLOK';
     }
@@ -487,7 +534,7 @@
         input.scale = ratio;
     }
     function start() {
-        entities = []; stars = []; hawk = null;
+        entities = []; stars = []; hawk = null; effects = [];
         for (let i = 0; i < STAR_TARGET; i += 1) addStar();
         for (let i = 0; i < BOT_COUNT; i += 1) spawn(false, Math.floor(rand(5, 30)));
         player = spawn(true, 6);

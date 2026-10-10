@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-93';
+    const BUILD_VERSION = 'worlds-relay-94';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -525,6 +525,8 @@
         g4Trail: 'assets/v2/g4/fx/trail.webp',
         g4ComboBurst: 'assets/v2/g4/fx/combo-burst.webp',
         g6Bonk: 'assets/v2/g6/fx/bonk.webp',
+        g7SwarmJoin: 'assets/v2/g7/swarm/join.webp',
+        g7SwarmLose: 'assets/v2/g7/swarm/lose.webp',
         ...Object.fromEntries(['desert', 'jungle', 'sky'].flatMap((set) => [1, 2, 3, 4, 5].map((n) => [`sticker_${set}_${n}`, ['assets/v2/g6/stickers', `${set}-${n}.webp`].join('/')]))),
         g6LevelUp: 'assets/v2/g6/fx/level-up.webp',
         g6RecordFlag: 'assets/v2/g6/fx/record-flag.webp',
@@ -648,16 +650,19 @@
         }
         if (kind === 'birdRun') for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCarry${i}`);
         if (kind === 'skyRelay') extra.push('relayGateLit', 'relaySkyRing');
+        if (kind === 'desert') extra.push('g7SwarmJoin', 'g7SwarmLose');
         const stickerSet = { desert: 'desert', jungle: 'jungle', happySky: 'sky' }[kind];
         if (stickerSet) for (let n = 1; n <= 5; n += 1) extra.push(`sticker_${stickerSet}_${n}`);
         if (kind === 'glide') {
-            [['v2Tower0', 'tower-happy'], ['v2Tower1', 'tower-sleepy'], ['v2Tower2', 'tower-cheeky'], ['v2Balloon', 'balloon']].forEach(([key, file]) => {
-                ASSET_PATHS[key] ||= `assets/v2/levels/happysky/${file}.webp`;
-                extra.push(key);
-            });
+            [['v2Balloon', 'assets/v2/levels/happysky/balloon.webp'],
+                ['g7GlideSky', 'assets/v2/g7/glide/sky.webp'], ['g7GlideBg1', 'assets/v2/g7/glide/bg1.webp'], ['g7GlideBg2', 'assets/v2/g7/glide/bg2.webp'],
+                ['g7GlideFg', 'assets/v2/g7/glide/fg.webp'], ['g7Thermal', 'assets/v2/g7/glide/thermal.webp'],
+                ['g7Hill0', 'assets/v2/g7/glide/hill-1.webp'], ['g7Hill1', 'assets/v2/g7/glide/hill-2.webp'], ['g7Hill2', 'assets/v2/g7/glide/hill-3.webp'],
+                ['g7Heat0', 'assets/v2/g7/glide/thermal-source-1.webp'], ['g7Heat1', 'assets/v2/g7/glide/thermal-source-2.webp'], ['g7Heat2', 'assets/v2/g7/glide/thermal-source-3.webp'],
+            ].forEach(([key, path]) => { ASSET_PATHS[key] ||= path; extra.push(key); });
         }
         if (kind === 'stormline') extra.push('stormSkyDark', 'stormGust', 'stormLeaves');
-        if ((kind === 'birdRun' || kind === 'skyRelay' || kind === 'glide') && V2.levels.has('happySky')) extra.push(...v2LayerKeys('happySky'));
+        if ((kind === 'birdRun' || kind === 'skyRelay' ) && V2.levels.has('happySky')) extra.push(...v2LayerKeys('happySky'));
         if (kind === 'birdRun' && ASSET_PATHS.v2HawkFly0) {
             for (let i = 0; i < 4; i += 1) extra.push(`v2HawkFly${i}`);
             for (let i = 0; i < 6; i += 1) extra.push(`v2HawkCatch${i}`);
@@ -2017,6 +2022,7 @@
         state.runFeathers = 0;
         state.stickersShown = {};
         state.swarm = [];
+        state.imageFx = [];
         state.birdTrail = [];
         state.glideSpeed = 1;
         state.glideDistance = 0;
@@ -3083,14 +3089,15 @@
         // A tower from the ground, sometimes a balloon in the air, and a thermal every other group.
         const x = VIEW.width + 80;
         const height = randomBetween(170, 200 + Math.min(260, state.elapsed * 3));
-        const art = ['v2Tower0', 'v2Tower1', 'v2Tower2'][Math.floor(gameRandom() * 3)];
-        obstacles.push({ id: state.obstacleId++, kind: 'glide-tower', art, x, y: VIEW.height - height, width: 110, height, harmful: true, age: 0 });
+        const pick = Math.floor(gameRandom() * 3);
+        const width = pick === 1 ? 230 : 140;
+        obstacles.push({ id: state.obstacleId++, kind: 'glide-tower', art: `g7Hill${pick}`, x, y: VIEW.height - height, width, height, harmful: true, age: 0 });
         if (gameRandom() < 0.4 + Math.min(0.3, state.elapsed / 200)) {
             obstacles.push({ id: state.obstacleId++, kind: 'glide-balloon', x: x + 330, y: randomBetween(90, 330), width: 110, height: 150, harmful: true, age: 0, phase: gameRandom() * 6 });
         }
         state.glideCount = (state.glideCount || 0) + 1;
         if (state.glideCount % 2 === 1) {
-            obstacles.push({ id: state.obstacleId++, kind: 'glide-thermal', x: x + 170, y: 0, width: 150, height: VIEW.height, harmful: false, age: 0 });
+            obstacles.push({ id: state.obstacleId++, kind: 'glide-thermal', x: x + 250, y: 0, width: 150, height: VIEW.height, harmful: false, age: 0, source: Math.floor(gameRandom() * 3) });
         }
         // A short arc of stars to dive through.
         for (let i = 0; i < 4; i += 1) {
@@ -3398,6 +3405,7 @@
         if (currentLevel.swarm && state.streak > 0 && state.streak % 10 === 0 && (state.swarm ||= []).length < 10) {
             const owned = BertMeta.heroCatalog().filter((hero) => hero.owned).map((hero) => hero.id);
             state.swarm.push({ hero: owned[Math.floor(Math.random() * owned.length)] || 'blue', x: bird.x, y: bird.y });
+            (state.imageFx ||= []).push({ key: 'g7SwarmJoin', x: bird.x - 40, y: bird.y + 30, age: 0 });
             playAudio('bert_pip');
         }
         if (currentLevel.swarm && state.swarm?.length) state.score += state.swarm.length; // each bird adds a point per star
@@ -3564,6 +3572,7 @@
         if (currentLevel.swarm && obstacle && state.swarm?.length) {
             const lost = state.swarm.pop();
             burst(lost.x, lost.y, '#ffffff', 10);
+            (state.imageFx ||= []).push({ key: 'g7SwarmLose', x: lost.x + 30, y: lost.y + 30, age: 0 });
             playAudio('pop');
             BertMeta.haptic('warning');
             state.invulnerableUntil = state.elapsed + 1.2;
@@ -4671,6 +4680,14 @@
             drawStormlineBackground();
             return;
         }
+        if (level.kind === 'glide') {
+            // Svæv (round 7): warm sky, far hills, patchwork fields.
+            if (assets.g7GlideSky?.naturalWidth) ctx.drawImage(assets.g7GlideSky, 0, 0, VIEW.width, VIEW.height);
+            else { ctx.fillStyle = '#9fd8f2'; ctx.fillRect(0, 0, VIEW.width, VIEW.height); }
+            if (assets.g7GlideBg1?.naturalWidth) drawTiled(assets.g7GlideBg1, 0, 720, 0.1);
+            if (assets.g7GlideBg2?.naturalWidth) drawTiled(assets.g7GlideBg2, 0, 720, 0.3);
+            return;
+        }
         ctx.fillStyle = level.kind === 'jungle' ? '#153c20' : level.kind === 'happySky' ? '#bdeeff' : level.kind === 'tunnel' ? '#061a2b' : '#70c8e0';
         ctx.fillRect(0, 0, VIEW.width, VIEW.height);
         level.layers.forEach((layer, index) => {
@@ -4721,6 +4738,10 @@
 
     function drawForeground() {
         if (['menu', 'levels', 'loading'].includes(state.phase)) return;
+        if (currentLevel.kind === 'glide' && assets.g7GlideFg?.naturalWidth) {
+            drawTiled(assets.g7GlideFg, VIEW.height - 160, 160, 1);
+            return;
+        }
         if (currentLevel.kind === 'stormline') {
             const cue = BertStormline.windCue(state.worldTime);
             drawWindSock(155, 604, cue);
@@ -4751,7 +4772,7 @@
         // Mirrored top edge only where it reads as natural (an ice overhang); a mirrored
         // quay or street looked upside down and made harbour read as water-sky-water-sky.
         if (currentLevel.kind === 'iceberg') v2Edge('iceberg', assets.icebergFg, false);
-        if ((currentLevel.kind === 'birdRun' || currentLevel.kind === 'skyRelay' || currentLevel.kind === 'glide') && V2.levels.has('happySky')) {
+        if ((currentLevel.kind === 'birdRun' || currentLevel.kind === 'skyRelay' ) && V2.levels.has('happySky')) {
             if (v2Edge('happySky', assets.v2_happySky_Fg)) return;
         }
         if (V2.levels.has(currentLevel.kind) && v2Edge(currentLevel.kind, assets[`v2_${currentLevel.kind}_Fg`])) return;
@@ -6025,17 +6046,26 @@
                 : assets[`snakeJump${obstacle.attackFrame}`];
             ctx.drawImage(frame, obstacle.renderX, obstacle.renderY, obstacle.renderWidth, obstacle.renderHeight);
         } else if (obstacle.kind === 'glide-tower') {
-            const tower = assets[obstacle.art];
-            if (tower?.naturalWidth) ctx.drawImage(tower, obstacle.x - 10, obstacle.y, obstacle.width + 20, obstacle.height + 40);
+            // Hill art is 400 × 600 with the hill in the middle; scale so the hill fills the box.
+            const hill = assets[obstacle.art];
+            if (hill?.naturalWidth) {
+                const inner = obstacle.art === 'g7Hill1' ? 386 : 236;
+                const scale = obstacle.width / inner;
+                const w = 400 * scale;
+                ctx.drawImage(hill, obstacle.x + obstacle.width / 2 - w / 2, obstacle.y, w, Math.max(obstacle.height + 40, 600 * scale * (obstacle.height / (600 * scale))));
+            }
         } else if (obstacle.kind === 'glide-balloon') {
             obstacle.y += Math.sin(state.worldTime * 1.4 + obstacle.phase) * 0.4;
             if (assets.v2Balloon?.naturalWidth) ctx.drawImage(assets.v2Balloon, obstacle.x, obstacle.y, obstacle.width, obstacle.height);
         } else if (obstacle.kind === 'glide-thermal') {
-            // Warm air: a soft orange column with arrows rising through it.
-            const g = ctx.createLinearGradient(obstacle.x, 0, obstacle.x + obstacle.width, 0);
-            g.addColorStop(0, 'rgba(255,180,90,0)'); g.addColorStop(0.5, 'rgba(255,170,80,.22)'); g.addColorStop(1, 'rgba(255,180,90,0)');
-            ctx.fillStyle = g;
-            ctx.fillRect(obstacle.x, 0, obstacle.width, VIEW.height);
+            // Warm air (round 7 art) rising from a heat source on the ground.
+            if (assets.g7Thermal?.naturalWidth) {
+                ctx.globalAlpha = 0.85;
+                ctx.drawImage(assets.g7Thermal, obstacle.x - 25, 0, obstacle.width + 50, VIEW.height);
+                ctx.globalAlpha = 1;
+            }
+            const heat = assets[`g7Heat${obstacle.source || 0}`];
+            if (heat?.naturalWidth) ctx.drawImage(heat, obstacle.x + obstacle.width / 2 - 110, VIEW.height - 190, 220, 183);
             ctx.strokeStyle = 'rgba(255,255,255,.75)';
             ctx.lineWidth = 4;
             ctx.lineCap = 'round';
@@ -6967,6 +6997,19 @@
             });
         }
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
+        if (state.imageFx?.length) {
+            // Short picture effects (round 7): a bird joins or leaves the swarm.
+            state.imageFx = state.imageFx.filter((fx) => (fx.age += 1 / 60) < 0.6);
+            state.imageFx.forEach((fx) => {
+                const art = assets[fx.key];
+                if (!art?.naturalWidth) return;
+                const k = 0.6 + fx.age;
+                ctx.save();
+                ctx.globalAlpha = 1 - fx.age / 0.6;
+                ctx.drawImage(art, fx.x - 60 * k, fx.y - 60 * k, 120 * k, 120 * k);
+                ctx.restore();
+            });
+        }
         drawRelayNearEdge();
         drawRelayLabels();
         drawLavaFloor();
