@@ -2613,3 +2613,11 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 
 #game-over .scoreboard { position: relative; }
 .sticker-row { background: rgba(255,250,240,.88) !important; }
+
+/* Balloner: egen række under kortet med store trykflader (feedback: for svære at ramme) */
+#journey-balloons.journey-balloons { position: static !important; display: flex !important; flex-wrap: nowrap !important; gap: 8px !important; max-width: none !important; width: 100%;
+    overflow-x: auto; padding: 8px 2px 2px !important; margin: 0 !important; justify-content: flex-start !important; scrollbar-width: none; height: auto !important; }
+#journey-balloons::-webkit-scrollbar { display: none; }
+#journey-balloons .journey-balloon { flex: 0 0 auto; min-height: 46px; font-size: 14px !important; padding: 6px 14px !important; border-radius: 16px; gap: 6px; }
+#journey-balloons .journey-balloon img { width: 20px !important; height: 28px !important; }
+#journey-balloons .journey-balloon.flok { background: #b6ff3b; }

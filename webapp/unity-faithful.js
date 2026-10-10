@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-94';
+    const BUILD_VERSION = 'worlds-relay-95';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -1385,6 +1385,9 @@
             dom.levelMenu.querySelector('.mode-tabs')?.insertAdjacentElement('beforebegin', journey);
         }
         dom.levelMenu.classList.add('journey-mode');
+        // The test-world balloons sit in their own row under the map, big enough to tap.
+        const balloonRow = document.getElementById('journey-balloons');
+        if (balloonRow && balloonRow.previousElementSibling !== journey) journey.insertAdjacentElement('afterend', balloonRow);
         const last = Number(localStorage.getItem('bertTheBird_lastLevel')) || 1;
         const track = document.createElement('div');
         track.className = 'journey-track';
@@ -1457,7 +1460,7 @@
             flok.type = 'button'; flok.className = 'journey-balloon flok';
             flok.innerHTML = `<img src="assets/v2/g6/journey/balloon.webp" alt="">${T('Flokken')}`;
             flok.addEventListener('click', () => { location.href = 'flok.html'; });
-            balloons.appendChild(flok);
+            balloons.prepend(flok);
             document.getElementById('journey-balloons')?.replaceChildren(...balloons.children);
         } else {
             document.getElementById('journey-balloons')?.replaceChildren();
