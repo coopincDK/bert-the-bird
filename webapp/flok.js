@@ -14,13 +14,17 @@
     const STAR_TARGET = 520;
     const BOT_COUNT = 14;
     const ORB_MIN = 15;
-    const HEROES = ['bert', 'blue', 'block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism', 'pingo', 'mogens', 'ninja', 'pakke', 'gold'];
+    const HEROES = ['bert', 'blue', 'block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism', 'pingo', 'mogens', 'ninja', 'pakke', 'gold',
+        'pixelara', 'skyggeravn', 'turbokolibri', 'kongeaben', 'tukantwist'];
+    // Hero id in the game → art folder (most are the same).
+    const HERO_FOLDER = { epicMalthe: 'epic-malthe', epicJohan: 'epic-johan', epicSos: 'epic-sos', epicThor: 'epic-thor', epicFan: 'fanbert', epicCoop: 'coopinc' };
+    const folderOf = (hero) => HERO_FOLDER[hero] || hero;
     const NAMES = ['Kaj', 'Rapper', 'Fjerfrida', 'Næbbe', 'Pip', 'Svupper', 'Lille Lars', 'Gustav', 'Vingemor', 'Kvidre', 'Fløjte', 'Sky-Sofie', 'Turbo', 'Blæsebert', 'Mågemads', 'Sus'];
     const images = {};
     const img = (src) => images[src] || (images[src] = Object.assign(new Image(), { src }));
-    const heroArt = (hero) => img(`assets/heroes/${hero}/glide.webp`);
+    const heroArt = (hero) => img(`assets/heroes/${folderOf(hero)}/glide.webp`);
     // Wingbeats (feedback): the heroes' 8 flap frames, loaded the first time a hero is drawn.
-    const flapArt = (hero, frame) => img(`assets/heroes/${hero}/flap-0${(frame % 8) + 1}.webp`);
+    const flapArt = (hero, frame) => img(`assets/heroes/${folderOf(hero)}/flap-0${(frame % 8) + 1}.webp`);
     const G7 = 'assets/v2/g7/flock/';
     const starArt = img(`${G7}star-food.webp`);
     const art = {
@@ -84,7 +88,8 @@
     }
 
     function spawn(isPlayer = false, size = 6) {
-        const hero = isPlayer ? (localStorage.getItem('bertFlokHero') || 'bert') : HEROES[Math.floor(Math.random() * HEROES.length)];
+        // You fly as the hero chosen in the game's wardrobe (feedback 10. okt.).
+        const hero = isPlayer ? (window.BertMeta?.currentHero?.() || 'bert') : HEROES[Math.floor(Math.random() * HEROES.length)];
         // Start somewhere quiet: the spot (of 20 tries) farthest from everyone else.
         let x = rand(400, W - 400); let y = rand(300, GROUND - 300); let bestGap = -1;
         for (let t = 0; t < 20; t += 1) {
