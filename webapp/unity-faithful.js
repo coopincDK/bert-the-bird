@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-103';
+    const BUILD_VERSION = 'worlds-relay-104';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2756,6 +2756,7 @@
             // Klistermærker: five hidden per level (Desert, Jungle, Happy Sky). Each shows up
             // once at its own moment in the run until it is found, then it is in the album.
             const stickerSet = STICKER_SETS[currentLevel.id];
+            if (stickerSet && state.elapsed < 0.2) for (let n = 1; n <= 5; n += 1) stickerArt(`${stickerSet}_${n}`);
             if (stickerSet && !isEventLevel() && !state.mirror) {
                 const found = BertMeta.stickers?.() || {};
                 STICKER_TIMES.forEach((at, index) => {
@@ -3383,7 +3384,17 @@
         return true;
     }
 
-    const STICKER_SETS = Object.freeze({ 1: 'desert', 4: 'jungle', 5: 'sky' });
+    // Five hidden stickers on every level (round 6: 3 levels, round 8: the other 12).
+    const STICKER_SETS = Object.freeze({ 1: 'desert', 4: 'jungle', 5: 'sky', 3: 'city', 6: 'shift', 7: 'flappy3', 2: 'tunnel', 8: 'tunnel2', 9: 'tunnel3',
+        21: 'harbor', 22: 'night', 24: 'wind', 23: 'volcano', 20: 'ice', 25: 'poop' });
+    const STICKER_BOOK = Object.freeze([[1, 'desert'], [4, 'jungle'], [5, 'sky'], [3, 'city'], [6, 'shift'], [7, 'flappy3'], [2, 'tunnel'], [8, 'tunnel2'], [9, 'tunnel3'],
+        [21, 'harbor'], [22, 'night'], [24, 'wind'], [23, 'volcano'], [20, 'ice'], [25, 'poop']]);
+    const stickerImages = new Map();
+    function stickerArt(id) {
+        // Loaded the first time a sticker is shown, so 75 small images never slow the start.
+        if (!stickerImages.has(id)) stickerImages.set(id, Object.assign(new Image(), { src: ['assets/v2/g6/stickers', `${id.replace('_', '-')}.webp`].join('/') }));
+        return stickerImages.get(id);
+    }
     const STICKER_TIMES = Object.freeze([14, 33, 55, 82, 120]);
 
     function spawnFeather(kind = 'feather') {
@@ -6516,7 +6527,7 @@
             return;
         }
         if (collectible.kind === 'sticker') {
-            const art = assets[`sticker_${collectible.sticker}`];
+            const art = stickerArt(collectible.sticker);
             ctx.globalAlpha = 0.45 + Math.sin(collectible.spin * 2) * 0.15;
             ctx.drawImage(assets.whiteGlow, -50, -50, 100, 100);
             ctx.globalAlpha = 1;
@@ -7658,8 +7669,8 @@
         const modal = document.createElement('section');
         modal.id = 'sticker-modal'; modal.className = 'modal-backdrop';
         const card = document.createElement('div'); card.className = 'sticker-album';
-        const sets = [['desert', 'Desert'], ['jungle', 'Jungle'], ['sky', 'Happy Sky']];
-        card.innerHTML = `<button class="round-close" type="button" aria-label="${T('Luk')}">×</button><h2>${T('KLISTERMÆRKER')} · ${Object.keys(found).length}/15</h2>`
+        const sets = STICKER_BOOK.map(([levelId, set]) => [set, levelById(levelId)?.name || set]);
+        card.innerHTML = `<button class="round-close" type="button" aria-label="${T('Luk')}">×</button><h2>${T('KLISTERMÆRKER')} · ${Object.keys(found).length}/${sets.length * 5}</h2>`
             + sets.map(([set, name]) => `<div class="sticker-row"><b>${name}</b>${[1, 2, 3, 4, 5].map((n) => {
                 const id = `${set}_${n}`;
                 const art = ['assets/v2/g6/stickers', `${set}-${n}.webp`].join('/');
@@ -7683,7 +7694,7 @@
         }
         const albumButton = document.getElementById('sticker-album-btn');
         if (albumButton) {
-            albumButton.querySelector('small').textContent = `${Object.keys(BertMeta.stickers?.() || {}).length}/15`;
+            albumButton.querySelector('small').textContent = `${Object.keys(BertMeta.stickers?.() || {}).length}/${STICKER_BOOK.length * 5}`;
             albumButton.onclick = openStickerAlbum;
         }
         const list = document.getElementById('book-list');
