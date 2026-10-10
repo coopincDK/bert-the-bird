@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-86';
+    const BUILD_VERSION = 'worlds-relay-87';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -338,13 +338,20 @@
         ],
         layers: [],
     });
-    const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT, GLIDE_EVENT]);
+    // Fuglesværm (feedback 10. okt.): every 10 stars in a row a small bird joins the
+    // formation. A hit costs a bird instead of the run. Built on the Desert level.
+    const SWARM_EVENT = ({
+        ...UNITY_LEVELS[0], id: 15, modeGroup: 'event', modeOrder: 6, unlockScore: 0, thumbnail: 15,
+        name: 'Fuglesværm', sourceName: 'Fuglesværm', cardText: T('FLOK & FORMATION · TESTBANE'), swarm: true,
+    });
+    const EVENT_LEVELS = Object.freeze([BIRD_RUN_EVENT, EDM_EVENT, STORMLINE_EVENT, SKY_RELAY_EVENT, GLIDE_EVENT, SWARM_EVENT]);
     const EVENT_CARD = Object.freeze({
         11: { name: 'Bird Run', card: T('FUGLE & ROVFUGL'), order: 7 },
         10: { name: 'Neon Encore', card: T('RIGGE & BOLDE'), order: 8 },
         12: { name: 'Stormline', card: T('VIND & GENSTANDE'), order: 9 },
         13: { name: 'Sky Relay', card: T('PORTE & KLOKKE'), order: 10 },
         14: { name: 'Svæv', card: T('GLID & OPVIND'), order: 11 },
+        15: { name: 'Fuglesværm', card: T('FLOK & FORMATION'), order: 12 },
     });
 
     function isEventLevel(level = currentLevel) {
@@ -663,7 +670,7 @@
             const folder = `assets/v2/levels/${V2_LEVEL_FOLDER[kind]}`;
             ['sky', 'bg1', 'bg2', 'mg', 'fg'].forEach((file, index) => { ASSET_PATHS[v2LayerKeys(kind)[index]] = `${folder}/${file}.webp`; });
             Object.entries(V2_KEY_SWAPS[kind] || {}).forEach(([key, file]) => { ASSET_PATHS[key] = `${folder}/${file}.webp`; });
-            UNITY_LEVELS.filter((level) => level.kind === kind).forEach((level) => { level.layers = v2Layers(kind); });
+            [...UNITY_LEVELS, SWARM_EVENT].filter((level) => level.kind === kind).forEach((level) => { level.layers = v2Layers(kind); });
             const band = FOREGROUND_BANDS[kind];
             if (band) { band.image = v2LayerKeys(kind)[4]; band.y = 520; band.height = 200; }
         });
@@ -1929,6 +1936,7 @@
                 : Number(levelId) === STORMLINE_EVENT.id ? STORMLINE_EVENT
                     : Number(levelId) === SKY_RELAY_EVENT.id ? SKY_RELAY_EVENT
                     : Number(levelId) === GLIDE_EVENT.id ? GLIDE_EVENT
+                    : Number(levelId) === SWARM_EVENT.id ? SWARM_EVENT
                     : ADVENTURE_LEVELS.find((level) => level.id === Number(levelId))
                     || UNITY_LEVELS.find((level) => level.id === Number(levelId)) || UNITY_LEVELS[0];
         const unlock = isEventLevel(requestedLevel) || isAdventureLevel(requestedLevel)
@@ -1991,6 +1999,8 @@
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
         state.runFeathers = 0;
+        state.swarm = [];
+        state.birdTrail = [];
         state.glideSpeed = 1;
         state.glideDistance = 0;
         state.glideCount = 0;
@@ -3342,6 +3352,12 @@
         state.bestStreak = Math.max(state.bestStreak, state.streak);
         state.starsCollected += value;
         noteCombo(state.streak);
+        if (currentLevel.swarm && state.streak > 0 && state.streak % 10 === 0 && (state.swarm ||= []).length < 10) {
+            const owned = BertMeta.heroCatalog().filter((hero) => hero.owned).map((hero) => hero.id);
+            state.swarm.push({ hero: owned[Math.floor(Math.random() * owned.length)] || 'blue', x: bird.x, y: bird.y });
+            playAudio('bert_pip');
+        }
+        if (currentLevel.swarm && state.swarm?.length) state.score += state.swarm.length; // each bird adds a point per star
         state.score += BertEventPowerups.score(state.streak * value, state.activePowerup) * (state.activePowerup === POWERUP.GROW ? 2 : 1)
             + (BertMeta.nestPerks?.().gold && state.elapsed < 10 && !isEventLevel() ? 1 : 0);
         if (!isEventLevel() && state.cleanRun && state.score >= 180 && BertMeta.noteCleanScore(state.score)) {
@@ -3502,6 +3518,14 @@
             return;
         }
         if (state.phase !== 'playing') return;
+        if (currentLevel.swarm && obstacle && state.swarm?.length) {
+            const lost = state.swarm.pop();
+            burst(lost.x, lost.y, '#ffffff', 10);
+            playAudio('pop');
+            BertMeta.haptic('warning');
+            state.invulnerableUntil = state.elapsed + 1.2;
+            return;
+        }
         state.cleanRun = false;
         if (state.activePowerup === POWERUP.SHIELD && state.shieldCharges > 0) {
             state.shieldCharges -= 1;
@@ -6820,6 +6844,19 @@
             ctx.ellipse(bird.x + BIRD.width / 2, groundY, 44 * (1 - height * 0.5), 9 * (1 - height * 0.5), 0, 0, Math.PI * 2);
             ctx.fill();
             ctx.restore();
+        }
+        if (currentLevel.swarm && state.swarm?.length && state.phase === 'playing') {
+            // Followers fly in a V behind Bert, each a little later along his path.
+            state.birdTrail.unshift(bird.y);
+            state.birdTrail.length = Math.min(state.birdTrail.length, 80);
+            state.swarm.forEach((follower, index) => {
+                const lag = Math.min(state.birdTrail.length - 1, (index + 1) * 6);
+                const side = index % 2 === 0 ? -1 : 1;
+                const row = Math.floor(index / 2) + 1;
+                follower.x = bird.x - 44 * row;
+                follower.y = state.birdTrail[lag] + side * 34 * row * 0.6;
+                drawHeroAnimation(follower.hero, bird.animationTime + index * 0.13, false, follower.x, follower.y + 14, BIRD.width * 0.55, BIRD.height * 0.55);
+            });
         }
         if (state.birdsVisible && state.phase !== 'menu' && state.phase !== 'levels' && state.phase !== 'gameover') drawBird();
         drawRelayNearEdge();

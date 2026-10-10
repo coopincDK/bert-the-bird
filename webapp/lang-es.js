@@ -682,4 +682,7 @@ window.BertI18n.register('es', {
     "GLID & OPVIND": "PLANEA Y CORRIENTES",
     "Svæv": "Planear",
     "Vælg et andet navn": "Elige otro nombre",
+    "FLOK & FORMATION · TESTBANE": "BANDADA Y FORMACIÓN · NIVEL DE PRUEBA",
+    "FLOK & FORMATION": "BANDADA Y FORMACIÓN",
+    "Fuglesværm": "Bandada",
 });

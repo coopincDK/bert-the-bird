@@ -682,4 +682,7 @@ window.BertI18n.register('fr', {
     "GLID & OPVIND": "PLANE & ASCENDANCES",
     "Svæv": "Planer",
     "Vælg et andet navn": "Choisis un autre nom",
+    "FLOK & FORMATION · TESTBANE": "VOLÉE & FORMATION · NIVEAU TEST",
+    "FLOK & FORMATION": "VOLÉE & FORMATION",
+    "Fuglesværm": "Nuée d'oiseaux",
 });

@@ -682,4 +682,7 @@ window.BertI18n.register('pt', {
     "GLID & OPVIND": "PLANE & CORRENTES",
     "Svæv": "Planar",
     "Vælg et andet navn": "Escolha outro nome",
+    "FLOK & FORMATION · TESTBANE": "BANDO E FORMAÇÃO · FASE DE TESTE",
+    "FLOK & FORMATION": "BANDO E FORMAÇÃO",
+    "Fuglesværm": "Bando",
 });

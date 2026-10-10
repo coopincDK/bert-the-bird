@@ -682,4 +682,7 @@ window.BertI18n.register('sv', {
     "GLID & OPVIND": "GLID & UPPVIND",
     "Svæv": "Sväva",
     "Vælg et andet navn": "Välj ett annat namn",
+    "FLOK & FORMATION · TESTBANE": "FLOCK & FORMATION · TESTBANA",
+    "FLOK & FORMATION": "FLOCK & FORMATION",
+    "Fuglesværm": "Fågelsvärm",
 });

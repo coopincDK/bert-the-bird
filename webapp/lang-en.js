@@ -715,4 +715,7 @@ window.BertI18n.register('en', {
     "GLID & OPVIND": "GLIDE & THERMALS",
     "Svæv": "Glide",
     "Vælg et andet navn": "Pick another name",
+    "FLOK & FORMATION · TESTBANE": "FLOCK & FORMATION · TEST LEVEL",
+    "FLOK & FORMATION": "FLOCK & FORMATION",
+    "Fuglesværm": "Bird swarm",
 });

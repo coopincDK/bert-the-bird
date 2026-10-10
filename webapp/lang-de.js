@@ -682,4 +682,7 @@ window.BertI18n.register('de', {
     "GLID & OPVIND": "GLEITEN & AUFWIND",
     "Svæv": "Gleiten",
     "Vælg et andet navn": "Wähle einen anderen Namen",
+    "FLOK & FORMATION · TESTBANE": "SCHWARM & FORMATION · TESTSTRECKE",
+    "FLOK & FORMATION": "SCHWARM & FORMATION",
+    "Fuglesværm": "Vogelschwarm",
 });
