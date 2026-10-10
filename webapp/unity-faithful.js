@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-109';
+    const BUILD_VERSION = 'worlds-relay-110';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2261,10 +2261,18 @@
         const group = isEventLevel() ? T('BONUSBANE') : isAdventureLevel() ? T('EVENTYR') : (modeForLevel(currentLevel) || 'classic').toUpperCase();
         const best = loadHighscore(currentLevel.id);
         card.querySelector('.intro-group').textContent = state.mirror ? `${group} · ${T('SPEJLVENDT')}` : group;
+        // Round 10 icons: the level type and a drawing of the controls.
+        const typeKey = state.mirror ? 'mirror' : isEventLevel() ? 'bonus' : isAdventureLevel() ? 'adventure' : (modeForLevel(currentLevel) || 'classic');
+        card.querySelector('.intro-type').src = ['assets/v2/g10/intro', `type-${typeKey}.webp`].join('/');
+        card.querySelector('.intro-control').src = ['assets/v2/g10/intro', `control-${controls === CONTROL_TAP ? 'tap' : 'hold'}.webp`].join('/');
+        const medal = best >= 100 ? 'gold' : best >= 50 ? 'silver' : '';
+        const medalImg = card.querySelector('.intro-medal');
+        medalImg.hidden = !medal;
+        if (medal) medalImg.src = ['assets/v2/g10/intro', `medal-${medal}.webp`].join('/');
         card.querySelector('.intro-name').textContent = currentLevel.name;
         card.querySelector('.intro-goal').textContent = goal;
         card.querySelector('.intro-controls').textContent = controls;
-        card.querySelector('.intro-medals').textContent = best > 0 ? T`Rekord ${best} · bronze 20 · sølv 50 · guld 100` : T('Bronze 20 · sølv 50 · guld 100');
+        card.querySelector('.intro-medals span').textContent = best > 0 ? T`Rekord ${best} · bronze 20 · sølv 50 · guld 100` : T('Bronze 20 · sølv 50 · guld 100');
         setVisible(dom.hint, false);
         card.classList.remove('hidden');
     }

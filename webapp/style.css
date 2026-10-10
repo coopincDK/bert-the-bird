@@ -2762,3 +2762,13 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 @keyframes intro-in { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, -50%); } }
 @keyframes intro-blink { 50% { opacity: .45; } }
 @media (prefers-reduced-motion: reduce) { .level-intro, .intro-start { animation: none; } }
+
+/* Introkort med ikoner (runde 10) */
+.level-intro { padding-top: 34px !important; }
+.intro-type { position: absolute; left: 50%; top: -30px; width: 60px; height: 60px; transform: translateX(-50%); filter: drop-shadow(0 3px 0 rgba(0,0,0,.3)); }
+.intro-control { display: block; width: 120px; height: auto; margin: 6px auto 0; }
+.intro-controls { margin-top: 2px !important; }
+.intro-medals { display: flex; justify-content: center; align-items: center; gap: 4px; }
+.intro-medal { width: 20px; height: 20px; }
+.intro-medal[hidden] { display: none; }
+@media (max-height: 430px) { .intro-control { width: 92px; } .level-intro { padding-top: 30px !important; padding-bottom: 8px !important; } .intro-start { margin-top: 6px !important; } }

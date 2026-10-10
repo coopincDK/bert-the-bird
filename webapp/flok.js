@@ -28,12 +28,21 @@
         clouds: [1, 2, 3, 4].map((n) => img(`${G7}clouds-${n}.webp`)),
         orb: img(`${G7}orb-glow.webp`), orbMe: img(`${G7}orb-glow-me.webp`),
         catch: img(`${G7}catch.webp`), eat: img(`${G7}eat.webp`), crown: img(`${G7}crown.webp`),
+        edge: img('assets/v2/g10/flock/edge-bonk.webp'),
     };
     const ready = (image) => image.complete && image.naturalWidth > 0;
     // Short picture effects in the world: something eaten, a flok caught in a ring.
     let effects = [];
     const effect = (kind, x, y, size = 160) => effects.push({ kind, x, y, size, age: 0 });
-    const hawkFrames = [1, 2, 3, 4].map((n) => img(`assets/v2/birdrun/predator-fly-${n}.webp`));
+    // Round 10: Flokken's own hawk (faces right), joystick, effects.
+    const G10 = 'assets/v2/g10/flock/';
+    const hawkFrames = [1, 2, 3, 4].map((n) => img(`${G10}hawk-fly-${n}.webp`));
+    const hawkPose = { dive: img(`${G10}hawk-dive.webp`), catch: img(`${G10}hawk-catch.webp`), rest: img(`${G10}hawk-rest.webp`) };
+    const hawkWarning = img(`${G10}hawk-warning.webp`);
+    const stickBase = img(`${G10}joystick-base.webp`);
+    const stickKnob = img(`${G10}joystick-knob.webp`);
+    const slipArt = img(`${G10}slipstream.webp`);
+    const edgeArt = img(`${G10}edge-bonk.webp`);
     // The hawk: a computer predator that always hunts the biggest bird group. It makes
     // number 1 a target and gives the small ones a chance (feedback 10. okt.).
     let hawk = null;
@@ -251,6 +260,7 @@
             const pad = e.form === 'orb' ? orbRadius(e) * 0.5 : 0;
             if (e.x < pad || e.x > W - pad || e.y < 60 + pad || e.y > GROUND - pad) {
                 e.edgeDeath = true;
+                if (e.isPlayer) effect('edge', e.x, e.y, 200);
                 kill(e, null);
                 continue;
             }
@@ -344,6 +354,7 @@
             if (prey.isPlayer && prey.alive) sfx('shield-break', 0.7);
             effect('eat', hawk.x, hawk.y, 170);
             hawk.restUntil = now + 6000;
+            hawk.caughtUntil = now + 1400;
             hawk.angle = -Math.PI / 2;
         }
     }
@@ -520,25 +531,26 @@
             ctx.restore();
         });
         if (hawk) {
-            const frame = hawkFrames[Math.floor(hawk.frame) % 4];
-            if (frame.complete && frame.naturalWidth) {
+            // Pose: catch just after a catch, rest while resting, dive when close to its prey.
+            let frame = hawkFrames[Math.floor(hawk.frame) % 4];
+            if (now < (hawk.caughtUntil || 0)) frame = hawkPose.catch;
+            else if (now < hawk.restUntil) frame = hawkPose.rest;
+            else if (hawk.prey && dist2(hawk.x, hawk.y, hawk.prey.x, hawk.prey.y) < 280 * 280) frame = hawkPose.dive;
+            if (ready(frame)) {
                 ctx.save();
                 ctx.translate(hawk.x, hawk.y);
-                if (Math.cos(hawk.angle) > 0) ctx.scale(-1, 1);
-                ctx.drawImage(frame, -80, -80, 160, 160);
+                if (Math.cos(hawk.angle) < 0) ctx.scale(-1, 1);
+                ctx.drawImage(frame, -110, -82, 220, 165);
                 ctx.restore();
             }
         }
         // Wind lines behind a drafting head.
         entities.forEach((e) => {
             if (!e.drafting || e.x < viewL || e.x > viewR) return;
-            ctx.strokeStyle = 'rgba(255,255,255,.8)'; ctx.lineWidth = 3;
-            for (let i = 0; i < 3; i += 1) {
-                const off = (i - 1) * 12;
-                ctx.beginPath();
-                ctx.moveTo(e.x - Math.cos(e.angle) * 30 - Math.sin(e.angle) * off, e.y - Math.sin(e.angle) * 30 + Math.cos(e.angle) * off);
-                ctx.lineTo(e.x - Math.cos(e.angle) * 70 - Math.sin(e.angle) * off, e.y - Math.sin(e.angle) * 70 + Math.cos(e.angle) * off);
-                ctx.stroke();
+            if (ready(slipArt)) {
+                ctx.save(); ctx.translate(e.x, e.y); ctx.rotate(e.angle); ctx.globalAlpha = 0.85;
+                ctx.drawImage(slipArt, -130, -26, 100, 40);
+                ctx.restore();
             }
         });
         ctx.restore();
@@ -549,10 +561,9 @@
             const ey = ch / 2 + Math.sin(a) * Math.min(cw, ch) * 0.42;
             ctx.save();
             ctx.globalAlpha = 0.6 + Math.sin(now / 120) * 0.3;
-            ctx.fillStyle = '#ff4d5e';
-            ctx.beginPath(); ctx.arc(ex, ey, 22 * (input.scale || 1), 0, Math.PI * 2); ctx.fill();
-            ctx.fillStyle = '#fff'; ctx.font = `900 ${22 * (input.scale || 1)}px system-ui`; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.fillText('!', ex, ey);
+            const k = input.scale || 1;
+            if (ready(hawkWarning)) ctx.drawImage(hawkWarning, ex - 28 * k, ey - 28 * k, 56 * k, 56 * k);
+            else { ctx.fillStyle = '#ff4d5e'; ctx.beginPath(); ctx.arc(ex, ey, 22 * k, 0, Math.PI * 2); ctx.fill(); }
             ctx.restore();
         }
         if (input.active && running) {
@@ -561,13 +572,18 @@
             const dx = input.x - input.ox; const dy = input.y - input.oy; const d = Math.hypot(dx, dy) || 1;
             const kx = input.ox + dx / d * Math.min(d, max); const ky = input.oy + dy / d * Math.min(d, max);
             ctx.save();
-            ctx.globalAlpha = 0.5;
-            ctx.fillStyle = 'rgba(8,20,32,.5)';
-            ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3 * k;
-            ctx.beginPath(); ctx.arc(input.ox, input.oy, max, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-            ctx.globalAlpha = 0.85;
-            ctx.fillStyle = '#b6ff3b';
-            ctx.beginPath(); ctx.arc(kx, ky, 30 * k, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            if (ready(stickBase) && ready(stickKnob)) {
+                ctx.globalAlpha = 0.75;
+                ctx.drawImage(stickBase, input.ox - max * 1.15, input.oy - max * 1.15, max * 2.3, max * 2.3);
+                ctx.globalAlpha = 0.95;
+                ctx.drawImage(stickKnob, kx - 34 * k, ky - 34 * k, 68 * k, 68 * k);
+            } else {
+                ctx.globalAlpha = 0.5;
+                ctx.fillStyle = 'rgba(8,20,32,.5)'; ctx.strokeStyle = '#ffffff'; ctx.lineWidth = 3 * k;
+                ctx.beginPath(); ctx.arc(input.ox, input.oy, max, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.globalAlpha = 0.85; ctx.fillStyle = '#b6ff3b';
+                ctx.beginPath(); ctx.arc(kx, ky, 30 * k, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+            }
             ctx.restore();
         }
     }
@@ -617,20 +633,21 @@
         canvas.height = Math.floor(innerHeight * ratio);
         input.scale = ratio;
     }
-    function livesText() {
+    function livesHtml() {
         const st = window.BertMeta?.flokStatus?.();
         if (!st || st.unlimited) return '';
-        const hearts = '❤'.repeat(st.lives) + '♡'.repeat(st.max - st.lives);
-        const mins = Math.ceil(st.nextInMs / 60000);
-        return st.lives >= st.max ? `${hearts}` : `${hearts} · nyt liv om ${mins} min`;
+        const heart = (full) => `<img class="heart" src="${G10}heart-${full ? 'full' : 'empty'}.webp" alt="${full ? '♥' : '♡'}">`;
+        const hearts = Array.from({ length: st.max }, (_, i) => heart(i < st.lives)).join('');
+        if (st.lives >= st.max) return hearts;
+        return `${hearts}<span class="next-life"><img src="${G10}heart-timer.webp" alt="">${Math.ceil(st.nextInMs / 60000)} min</span>`;
     }
     function refreshLives() {
         const st = window.BertMeta?.flokStatus?.();
-        document.querySelectorAll('.lives').forEach((el) => { el.textContent = livesText(); });
+        document.querySelectorAll('.lives').forEach((el) => { el.innerHTML = livesHtml(); });
         document.querySelectorAll('.buy-life').forEach((btn) => {
             const show = st && !st.unlimited && st.lives <= 0;
             btn.hidden = !show;
-            if (show) { btn.textContent = `KØB ET LIV · ${st.cost} FJER (du har ${st.feathers})`; btn.disabled = st.feathers < st.cost; }
+            if (show) { btn.innerHTML = `<img src="${G10}buy-life.webp" alt="">KØB ET LIV · ${st.cost} FJER <small>(du har ${st.feathers})</small>`; btn.disabled = st.feathers < st.cost; }
         });
         document.querySelectorAll('#play, #again').forEach((btn) => { btn.disabled = Boolean(st && !st.unlimited && st.lives <= 0); });
     }
@@ -660,6 +677,8 @@
         document.getElementById('dead-title').textContent = killer ? `${killer.name} fangede dig!` : player.hawkDeath ? 'Høgen tog dig!' : player.edgeDeath ? 'Du fløj ud af himlen!' : 'Ude!';
         const peak = Math.max(size(player), player.peak || 0);
         document.getElementById('stat-birds').textContent = String(peak);
+        const pic = document.querySelector('.caught-art');
+        if (pic) pic.src = player.hawkDeath ? `${G10}hawk-catch.webp` : player.edgeDeath ? `${G10}edge-bonk.webp` : 'assets/v2/g7/flock/caught.webp';
         document.getElementById('stat-kills').textContent = String(player.kills);
         document.getElementById('stat-time').textContent = `${Math.floor(seconds / 60)}:${String(seconds % 60).padStart(2, '0')}`;
         let best = 0;
