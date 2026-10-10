@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-117';
+    const BUILD_VERSION = 'worlds-relay-118';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2086,6 +2086,7 @@
         state.nextRelayBirdAt = 0;
         state.relayBirdCount = 0;
         state.runFeathers = 0;
+        state.runCoins = 0;
         state.nearMisses = 0;
         state.stickersShown = {};
         state.swarm = [];
@@ -2721,6 +2722,10 @@
                     : collectible.motion.baseY;
                 collectible.y = BertCollectibleMotion.yAt(collectible.motion, collectible.age, corridor);
             }
+            if (collectible.kind === 'star' && !collectible.coinChecked) {
+                collectible.coinChecked = true;
+                if (!isEventLevel() && currentLevel.kind !== 'tunnel' && gameRandom() < 0.085) collectible.kind = 'coin';
+            }
             if (collectible.kind === 'star' && collectible.drift) {
                 collectible.age = (collectible.age || 0) + delta;
                 const drift = collectible.drift;
@@ -2748,6 +2753,13 @@
                 if (circleHitsRect(liveCollider, liveCollider.radius, collectibleBounds)) {
                     collectible.collected = true;
                     if (collectible.kind === 'powerup') activatePowerup(collectible.type);
+                    else if (collectible.kind === 'coin') {
+                        // Coins buy packs of collectible figures (Samlefigurer).
+                        if (!opMode()) window.BertFigures?.addCoins(1);
+                        state.runCoins = (state.runCoins || 0) + 1;
+                        playAudio('coin');
+                        burst(collectible.x, collectible.y, '#ffd23b', 8);
+                    }
                     else if (collectible.kind === 'feather') collectFeather(collectible);
                     else if (collectible.kind === 'sticker') {
                         if (!opMode() && BertMeta.findSticker?.(collectible.sticker)) {
@@ -3461,6 +3473,8 @@
     const STICKER_BOOK = Object.freeze([[1, 'desert'], [4, 'jungle'], [5, 'sky'], [3, 'city'], [6, 'shift'], [7, 'flappy3'], [2, 'tunnel'], [8, 'tunnel2'], [9, 'tunnel3'],
         [21, 'harbor'], [22, 'night'], [24, 'wind'], [23, 'volcano'], [20, 'ice'], [25, 'poop']]);
     const stickerImages = new Map();
+    let coinImage = null;
+    function coinArt() { return coinImage ||= Object.assign(new Image(), { src: 'assets/v2/g12/coin.webp' }); }
     function stickerArt(id) {
         // Loaded the first time a sticker is shown, so 75 small images never slow the start.
         if (!stickerImages.has(id)) stickerImages.set(id, Object.assign(new Image(), { src: ['assets/v2/g6/stickers', `${id.replace('_', '-')}.webp`].join('/') }));
@@ -4060,6 +4074,7 @@
         if ((state.runPowerups || 0) >= 2) lines.push(['⚡', T`${state.runPowerups} power-ups taget`]);
         if (state.elapsed >= 60) lines.push(['⏱️', T`I luften i ${formatTime(state.elapsed)}`]);
         if ((state.runFeathers || 0) > 0) lines.push(['🪶', T`${state.runFeathers} gyldne fjer fundet`]);
+        if ((state.runCoins || 0) > 0) lines.push(['🪙', T`${state.runCoins} mønter til samlefigurer`]);
         if (state.swarm?.length) lines.push(['🐦', T`${state.swarm.length} fugle i flokken til sidst`]);
         // Encouragement, never "you are bad".
         if (!lines.length || (insight.total >= 4 && score < insight.average * 0.6)) {
@@ -6631,6 +6646,23 @@
             ctx.restore();
             return;
         }
+        if (collectible.kind === 'coin') {
+            // Placeholder coin until round 12 delivers the art: a golden coin with a bird footprint.
+            const art = coinArt();
+            const squash = Math.abs(Math.cos(collectible.spin * 0.6));
+            if (art.complete && art.naturalWidth) ctx.drawImage(art, -26 * squash, -26, 52 * squash, 52);
+            else {
+                ctx.scale(Math.max(0.15, squash), 1);
+                ctx.fillStyle = '#ffcf2e'; ctx.strokeStyle = '#1b2a44'; ctx.lineWidth = 4;
+                ctx.beginPath(); ctx.arc(0, 0, 22, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
+                ctx.strokeStyle = '#d99a00'; ctx.lineWidth = 3;
+                ctx.beginPath(); ctx.arc(0, 0, 15, 0, Math.PI * 2); ctx.stroke();
+                ctx.fillStyle = '#1b2a44'; ctx.font = '900 18px "Bert Display", sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+                ctx.fillText('B', 0, 1);
+            }
+            ctx.restore();
+            return;
+        }
         if (collectible.kind === 'sticker') {
             const art = stickerArt(collectible.sticker);
             ctx.globalAlpha = 0.45 + Math.sin(collectible.spin * 2) * 0.15;
@@ -7770,6 +7802,72 @@
         row.append(title, track, count, claim);
         return row;
     }
+    // ---------- Samlefigurer: album, packs and duplicates ----------
+    const RARITY_NAME = { common: T('Almindelig'), rare: T('Sjælden'), epic: T('Episk'), legendary: T('Legendarisk') };
+    function figureCard(figure, count = 1) {
+        const card = document.createElement('div');
+        card.className = `figure-card ${figure.rarity}${count ? '' : ' missing'}`;
+        const img = new Image();
+        img.src = figure.art;
+        img.alt = '';
+        img.onerror = () => img.replaceWith(Object.assign(document.createElement('span'), { className: 'figure-emoji', textContent: figure.icon }));
+        card.append(img);
+        const n = document.createElement('b'); n.textContent = `#${figure.number}`; card.append(n);
+        if (count > 1) { const c = document.createElement('i'); c.textContent = `×${count}`; card.append(c); }
+        return card;
+    }
+    function openFigureAlbum() {
+        const F = window.BertFigures;
+        if (!F) return;
+        document.getElementById('figure-modal')?.remove();
+        const modal = document.createElement('section');
+        modal.id = 'figure-modal'; modal.className = 'modal-backdrop';
+        const card = document.createElement('div'); card.className = 'figure-album';
+        modal.appendChild(card);
+        const render = (reveal = null) => {
+            const st = F.status();
+            card.innerHTML = `<button class="round-close" type="button" aria-label="${T('Luk')}">×</button>
+                <h2>${T('SAMLEFIGURER')} · ${st.count}/${st.total}</h2>
+                <div class="figure-bar"><span class="coins">🪙 ${st.coins}</span>
+                <button class="pack-btn" type="button" ${st.coins < F.PACK_COST ? 'disabled' : ''}>${T`ÅBN PAKKE · ${F.PACK_COST} MØNTER`}</button>
+                <button class="swap-btn" type="button" ${st.duplicates < 3 ? 'disabled' : ''}>${T`BYT 3 DUBLETTER (${st.duplicates})`}</button></div>
+                <p class="odds">${T('Pakke med 3 figurer, den sidste mindst sjælden. Chancer: almindelig 70 %, sjælden 22 %, episk 7 %, legendarisk 1 %.')}</p>`;
+            if (reveal) {
+                const row = document.createElement('div'); row.className = 'pack-reveal';
+                reveal.forEach((f, i) => {
+                    const c = figureCard(f); c.style.animationDelay = `${i * 0.35}s`; c.classList.add('reveal');
+                    const label = document.createElement('small'); label.textContent = f.isNew ? T('NY!') : T('DUBLET'); c.append(label);
+                    const r = document.createElement('em'); r.textContent = RARITY_NAME[f.rarity]; c.append(r);
+                    row.append(c);
+                });
+                card.append(row);
+            }
+            F.SERIES.forEach((series) => {
+                const sec = document.createElement('div'); sec.className = 'figure-series';
+                const have = F.FIGURES.filter((f) => f.series === series.id && st.owned[f.id]).length;
+                sec.innerHTML = `<h3>${series.name} <small>${have}/8</small></h3>`;
+                const grid = document.createElement('div'); grid.className = 'figure-grid';
+                F.FIGURES.filter((f) => f.series === series.id).forEach((f) => grid.append(figureCard(f, st.owned[f.id] || 0)));
+                sec.append(grid); card.append(sec);
+            });
+            card.querySelector('.round-close').onclick = () => modal.remove();
+            card.querySelector('.pack-btn').onclick = () => {
+                const res = F.openPack();
+                if (!res.ok) return;
+                playAudio('fanfare'); BertMeta.haptic('reward');
+                render(res.figures);
+                card.scrollTop = 0;
+            };
+            card.querySelector('.swap-btn').onclick = () => {
+                const res = F.swapDuplicates();
+                if (res.ok) { playAudio('ding'); render([res.figure]); }
+            };
+        };
+        render();
+        modal.addEventListener('click', (event) => { if (event.target === modal) modal.remove(); });
+        document.body.appendChild(modal);
+    }
+
     function openStickerAlbum() {
         const found = BertMeta.stickers?.() || {};
         document.getElementById('sticker-modal')?.remove();
@@ -7798,6 +7896,12 @@
                 if (result.ok) { BertMeta.haptic('reward'); playAudio('ding'); window.BertApp?.showToast(T`+${result.reward} fjer til reden`); }
                 renderMissions();
             })));
+        }
+        const figuresButton = document.getElementById('figures-btn');
+        if (figuresButton && window.BertFigures) {
+            const st = window.BertFigures.status();
+            figuresButton.querySelector('small').textContent = `${st.count}/${st.total} · 🪙 ${st.coins}`;
+            figuresButton.onclick = openFigureAlbum;
         }
         const albumButton = document.getElementById('sticker-album-btn');
         if (albumButton) {
