@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'bert-the-bird-worlds-relay-111';
+const CACHE_VERSION = 'bert-the-bird-worlds-relay-112';
 
 const frames = (folder, prefix, count) => Array.from(
     { length: count },
@@ -29,36 +29,39 @@ const HAPPY_PIPE_ASSETS = HAPPY_PIPE_COLORS.flatMap((color) => [
 const APP_SHELL = [
     './',
     './index.html',
-    './style.css?v=worlds-relay-111',
-    './bert-i18n.js?v=worlds-relay-111',
-    './lang-en.js?v=worlds-relay-111',
-    './lang-nb.js?v=worlds-relay-111',
-    './lang-sv.js?v=worlds-relay-111',
-    './lang-de.js?v=worlds-relay-111',
-    './lang-es.js?v=worlds-relay-111',
-    './lang-fr.js?v=worlds-relay-111',
-    './lang-pt.js?v=worlds-relay-111',
-    './app-shell.js?v=worlds-relay-111',
-    './unity-collision.js?v=worlds-relay-111',
-    './bert-physics.js?v=worlds-relay-111',
-    './bert-progression.js?v=worlds-relay-111',
-    './bert-tunnel.js?v=worlds-relay-111',
-    './bert-edm.js?v=worlds-relay-111',
-    './bert-bird-run.js?v=worlds-relay-111',
-    './bert-stormline.js?v=worlds-relay-111',
-    './bert-world-mastery.js?v=worlds-relay-111',
-    './bert-sky-relay.js?v=worlds-relay-111',
-    './bert-adventure.js?v=worlds-relay-111',
-    './bert-event-powerups.js?v=worlds-relay-111',
-    './bert-collectible-motion.js?v=worlds-relay-111',
-    './bert-haptics.js?v=worlds-relay-111',
-    './bert-hero-store.js?v=worlds-relay-111',
-    './bert-meta.js?v=worlds-relay-111',
-    './bert-social.js?v=worlds-relay-111',
-    './bert-focus-audio.js?v=worlds-relay-111',
-    './bert-star-audio.js?v=worlds-relay-111',
-    './unity-faithful.js?v=worlds-relay-111',
-    './manifest.webmanifest?v=worlds-relay-111',
+    './style.css?v=worlds-relay-112',
+    './bert-i18n.js?v=worlds-relay-112',
+    './lang-en.js?v=worlds-relay-112',
+    './lang-nb.js?v=worlds-relay-112',
+    './lang-sv.js?v=worlds-relay-112',
+    './lang-de.js?v=worlds-relay-112',
+    './lang-es.js?v=worlds-relay-112',
+    './lang-fr.js?v=worlds-relay-112',
+    './lang-pt.js?v=worlds-relay-112',
+    './app-shell.js?v=worlds-relay-112',
+    './unity-collision.js?v=worlds-relay-112',
+    './bert-physics.js?v=worlds-relay-112',
+    './bert-progression.js?v=worlds-relay-112',
+    './bert-tunnel.js?v=worlds-relay-112',
+    './bert-edm.js?v=worlds-relay-112',
+    './bert-bird-run.js?v=worlds-relay-112',
+    './bert-stormline.js?v=worlds-relay-112',
+    './bert-world-mastery.js?v=worlds-relay-112',
+    './bert-sky-relay.js?v=worlds-relay-112',
+    './bert-adventure.js?v=worlds-relay-112',
+    './bert-event-powerups.js?v=worlds-relay-112',
+    './bert-collectible-motion.js?v=worlds-relay-112',
+    './bert-haptics.js?v=worlds-relay-112',
+    './bert-hero-store.js?v=worlds-relay-112',
+    './bert-meta.js?v=worlds-relay-112',
+    './bert-sfx.js?v=worlds-relay-112',
+    './flok.html',
+    './flok.js?v=worlds-relay-112',
+    './bert-social.js?v=worlds-relay-112',
+    './bert-focus-audio.js?v=worlds-relay-112',
+    './bert-star-audio.js?v=worlds-relay-112',
+    './unity-faithful.js?v=worlds-relay-112',
+    './manifest.webmanifest?v=worlds-relay-112',
     './icons/bert-192.png',
     './icons/bert-512.png',
     './icons/bert-180.png',
@@ -254,12 +257,15 @@ self.addEventListener('fetch', (event) => {
                     if (!response.ok || !response.headers.get('content-type')?.includes('text/html')) {
                         return (await caches.match('./index.html')) || response;
                     }
+                    // Cache each page under its own name (Flokken must never replace the game's index).
+                    const page = url.pathname.endsWith('/flok.html') ? './flok.html' : './index.html';
                     await caches.open(CACHE_VERSION)
-                        .then((cache) => cache.put('./index.html', response.clone()))
+                        .then((cache) => cache.put(page, response.clone()))
                         .catch(() => {});
                     return response;
                 } catch (_) {
-                    return (await caches.match('./index.html')) || Response.error();
+                    const page = url.pathname.endsWith('/flok.html') ? './flok.html' : './index.html';
+                    return (await caches.match(page)) || (await caches.match('./index.html')) || Response.error();
                 } finally {
                     clearTimeout(timeout);
                 }
