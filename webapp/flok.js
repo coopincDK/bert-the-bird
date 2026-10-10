@@ -74,7 +74,7 @@
     let startedAt = 0;
     // A floating joystick: it appears where the finger lands, and the direction is from
     // there to the finger. Release and Bert keeps his heading.
-    const input = { active: false, x: 0, y: 0, ox: 0, oy: 0, keyTurn: 0, id: null };
+    const input = { active: false, x: 0, y: 0, ox: 0, oy: 0, keyTurn: 0, id: null, boost: false };
     const rand = (a, b) => a + Math.random() * (b - a);
     const dist2 = (ax, ay, bx, by) => (ax - bx) ** 2 + (ay - by) ** 2;
     const angleDiff = (a, b) => { let d = b - a; while (d > Math.PI) d -= Math.PI * 2; while (d < -Math.PI) d += Math.PI * 2; return d; };
@@ -179,11 +179,19 @@
             if (prey) { e.target = Math.atan2(prey.y - e.y, prey.x - e.x); return; }
         } else {
             // Run from bigger floks.
+            e.boost = false;
             const threat = near((o) => o.form === 'orb' && size(o) > size(e), 520);
-            if (threat) { e.target = Math.atan2(e.y - threat.y, e.x - threat.x); return; }
+            if (threat) { e.target = Math.atan2(e.y - threat.y, e.x - threat.x); e.boost = size(e) > 10 && Math.random() < 0.6; return; }
             // Smaller chain close by: fold into a flok and eat it.
             const snack = near((o) => size(o) < size(e) * 0.8, 320);
             if (snack && formOrb(e, now)) return;
+            // Cut off a smaller chain: race ahead of its head.
+            const cutoff = size(e) > 14 && near((o) => o.form === 'chain' && size(o) < size(e), 420);
+            if (cutoff && Math.random() < 0.5) {
+                e.target = Math.atan2(cutoff.y + Math.sin(cutoff.angle) * 160 - e.y, cutoff.x + Math.cos(cutoff.angle) * 160 - e.x);
+                e.boost = true;
+                return;
+            }
             // Big enough: try to ring a smaller flok.
             const ringable = size(e) >= 28 && near((o) => o.form === 'orb' && size(o) < size(e), 600);
             if (ringable) {
@@ -253,7 +261,19 @@
                 }
                 return false;
             });
-            const v = speedOf(e) * gravity * (e.drafting ? 1.2 : 1);
+            // Boost (feedback: like slither): +70 % speed, paid with the tail. Every 0.25 s the
+            // last bird drops off as a star behind you. Only chains longer than 6 can boost.
+            const boosting = e.form === 'chain' && e.birds.length > 5 && (e.isPlayer ? input.boost : e.boost);
+            e.boosting = boosting;
+            if (boosting) {
+                e.boostClock = (e.boostClock || 0) + dt;
+                while (e.boostClock >= 0.25 && e.birds.length > 5) {
+                    e.boostClock -= 0.25;
+                    const dropped = e.birds.pop();
+                    addStar(dropped.x, Math.min(GROUND - 20, dropped.y), 1);
+                }
+            } else e.boostClock = 0;
+            const v = speedOf(e) * gravity * (e.drafting ? 1.2 : 1) * (boosting ? 1.7 : 1);
             e.x += Math.cos(e.angle) * v * dt;
             e.y += Math.sin(e.angle) * v * dt;
             // The edge of the sky is deadly (feedback 10. okt.): the wind walls and the ground.
@@ -497,11 +517,11 @@
             const climb = -Math.sin(e.angle);
             const diving = e.form === 'chain' && climb < -0.3;
             const climbing = climb > 0.35;
-            const rate = e.form === 'orb' ? 7 : climbing ? 7 + climb * 3 : 8;
+            const rate = e.form === 'orb' ? 7 : e.boosting ? 16 : climbing ? 7 + climb * 3 : 8;
             const beat = (offset) => {
                 if (diving) return null;
                 const t = now / 1000 + offset;
-                if (climbing || e.form === 'orb') return t * rate;
+                if (climbing || e.form === 'orb' || e.boosting) return t * rate;
                 return (t % 1.6) < 0.5 ? t * rate : null; // one short burst every 1.6 s
             };
             for (let i = e.birds.length - 1; i >= 0; i -= 1) {
@@ -544,6 +564,19 @@
                 ctx.restore();
             }
         }
+        // Boost: a bright streak behind the leader.
+        entities.forEach((e) => {
+            if (!e.boosting || e.x < viewL || e.x > viewR) return;
+            ctx.save();
+            ctx.globalAlpha = 0.55 + Math.sin(now / 60) * 0.2;
+            ctx.strokeStyle = e.isPlayer ? '#b6ff3b' : '#ffffff';
+            ctx.lineWidth = 10; ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(e.x - Math.cos(e.angle) * 30, e.y - Math.sin(e.angle) * 30);
+            ctx.lineTo(e.x - Math.cos(e.angle) * 120, e.y - Math.sin(e.angle) * 120);
+            ctx.stroke();
+            ctx.restore();
+        });
         // Wind lines behind a drafting head.
         entities.forEach((e) => {
             if (!e.drafting || e.x < viewL || e.x > viewR) return;
@@ -614,6 +647,7 @@
         const ready = player.form === 'chain' && size(player) >= ORB_MIN && now >= player.orbReadyAt;
         flokBtn.disabled = !ready;
         flokBtn.classList.toggle('on', ready || player.form === 'orb');
+        if (boostBtn) boostBtn.disabled = player.form !== 'chain' || player.birds.length <= 5;
         flokBtn.textContent = player.form === 'orb' ? `${Math.ceil((player.orbUntil - now) / 1000)}s`
             : size(player) < ORB_MIN ? `${size(player)}/${ORB_MIN}` : now < player.orbReadyAt ? `${Math.ceil((player.orbReadyAt - now) / 1000)}s` : 'FLOK';
     }
@@ -713,7 +747,11 @@
         if (e.key === 'ArrowRight' || e.key === 'ArrowDown') input.keyTurn = 1;
         if (e.key === ' ' && player) formOrb(player, performance.now());
     });
-    window.addEventListener('keyup', () => { input.keyTurn = 0; });
+    window.addEventListener('keyup', (e) => { if (e.key === 'Shift') input.boost = false; else input.keyTurn = 0; });
+    window.addEventListener('keydown', (e) => { if (e.key === 'Shift') input.boost = true; });
+    const boostBtn = document.getElementById('boost-btn');
+    boostBtn?.addEventListener('pointerdown', (e) => { e.stopPropagation(); e.preventDefault(); input.boost = true; boostBtn.classList.add('on'); });
+    ['pointerup', 'pointercancel', 'pointerleave'].forEach((type) => boostBtn?.addEventListener(type, () => { input.boost = false; boostBtn.classList.remove('on'); }));
     flokBtn.addEventListener('pointerdown', (e) => { e.stopPropagation(); if (player) formOrb(player, performance.now()); });
     document.getElementById('play').addEventListener('click', tryStart);
     document.getElementById('again').addEventListener('click', tryStart);

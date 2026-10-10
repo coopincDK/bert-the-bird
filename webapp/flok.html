@@ -77,13 +77,19 @@
   }
   @media (max-height: 430px) and (orientation: landscape) { .start-rules ul { font-size: 12px; line-height: 1.35; } .cta { min-height: 56px; font-size: 26px !important; } }
 
+  .boost-btn { position: fixed; right: calc(140px + env(safe-area-inset-right, 0)); bottom: calc(22px + env(safe-area-inset-bottom, 0)); width: 84px; height: 84px; border-radius: 50%;
+    border: 4px solid #fff; background: radial-gradient(circle at 35% 30%, #ffe27a, #ff9f1a); color: #3a1d00; font-weight: 900; font-size: 15px; letter-spacing: .06em;
+    box-shadow: 0 5px 0 #a35a00; touch-action: none; user-select: none; -webkit-user-select: none; }
+  .boost-btn.on { transform: translateY(3px) scale(.96); box-shadow: 0 2px 0 #a35a00; background: radial-gradient(circle at 35% 30%, #fff3b0, #ffb84a); }
+  .boost-btn[disabled] { filter: grayscale(.9) brightness(.85); }
+  body.menu .boost-btn { display: none !important; }
   /* Round 10 */
   .rule-pics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px; margin-bottom: 6px; }
   .rule-pics figure { margin: 0; text-align: center; }
   .rule-pics img { width: 100%; height: auto; max-height: 15vh; object-fit: contain; display: block; }
   .rule-pics figcaption { font-size: 11px; font-weight: 900; line-height: 1.2; }
   .rule-text { font-size: 11px !important; opacity: .85; }
-  .rule-text li:nth-child(n+3) { display: none; }
+  .rule-text li:nth-child(n+4) { display: none; }
   @media (orientation: portrait) { .rule-pics { grid-template-columns: repeat(4, 1fr); } .rule-pics figcaption { font-size: 9px; } }
   .lives { display: flex; justify-content: center; align-items: center; gap: 3px; }
   .lives .heart { width: 26px; height: 26px; }
@@ -104,6 +110,7 @@
   <div class="board" id="board"></div>
 </div>
 <button class="flok-btn" id="flok-btn" type="button">FLOK</button>
+<button class="boost-btn" id="boost-btn" type="button" aria-label="Fart">FART</button>
 <button class="exit" id="exit" type="button">← TILBAGE</button>
 <div class="screen" id="start">
   <div class="card start-card">
@@ -126,6 +133,7 @@
       <ul class="rule-text">
         <li><b>Styr:</b> sæt fingeren på skærmen og træk.</li>
         <li><b>Voks:</b> 3 stjerner giver en ny fugl.</li>
+        <li><b>FART:</b> hold knappen for ekstra fart. Det koster fugle fra halen.</li>
         <li><b>Pas på:</b> rammer dit hoved en anden kæde, kanten eller jorden, er du ude.</li>
         <li><b>FLOK:</b> ved 15 fugle bliver I kort til en kugle, der spiser mindre fugle.</li>
         <li><b>Fang:</b> flyv en ring om en flok.</li>
