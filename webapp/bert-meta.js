@@ -486,7 +486,7 @@
     // ---------- Rugepladsen: eggs hatch new heroes ----------
     // Opens at nest step 4 (one egg, slow), improves at step 7 (faster, two eggs is a later idea).
     const EGG_TIERS = Object.freeze({
-        common: ['moss', 'ink', 'pingo', 'mogens', 'ninja', 'pakke', 'pixelara', 'skyggeravn', 'turbokolibri', 'kongeaben', 'tukantwist'],
+        common: ['moss', 'ink', 'pingo', 'mogens', 'ninja', 'pakke', 'pixelara', 'skyggeravn', 'turbokolibri', 'kongeaben', 'tukantwist', 'powerorn', 'kaptajnmaage', 'glitterkakadue', 'lynisfugl', 'skrotskade', 'guldfasan', 'hjertesvale', 'mursejler', 'dobbeltpapegoje', 'flammefugl', 'spoergeugle', 'turbospaette', 'farvepaafugl', 'eventyrfalk', 'solparakit'],
         rare: ['eagle', 'mecha', 'noir', 'vulture', 'prism', 'gold'],
     });
     const EGG_BASE_PRICE = 40;

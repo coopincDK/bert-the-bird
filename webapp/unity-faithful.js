@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-118';
+    const BUILD_VERSION = 'worlds-relay-119';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -613,6 +613,7 @@
         sugar: 'sugar', moss: 'moss', ink: 'ink', prism: 'prism', pingo: 'pingo', mogens: 'mogens', ninja: 'ninja', pakke: 'pakke', gold: 'gold', eggbert: 'eggbert',
         // Round 11: creator heroes (nicknames until each creator has approved).
         pixelara: 'pixelara', skyggeravn: 'skyggeravn', turbokolibri: 'turbokolibri', kongeaben: 'kongeaben', tukantwist: 'tukantwist',
+        powerorn: 'powerorn', kaptajnmaage: 'kaptajnmaage', glitterkakadue: 'glitterkakadue', lynisfugl: 'lynisfugl', skrotskade: 'skrotskade', guldfasan: 'guldfasan', hjertesvale: 'hjertesvale', mursejler: 'mursejler', dobbeltpapegoje: 'dobbeltpapegoje', flammefugl: 'flammefugl', spoergeugle: 'spoergeugle', turbospaette: 'turbospaette', farvepaafugl: 'farvepaafugl', eventyrfalk: 'eventyrfalk', solparakit: 'solparakit',
         epicMalthe: 'epic-malthe', epicJohan: 'epic-johan', epicSos: 'epic-sos', epicThor: 'epic-thor', epicFan: 'fanbert', epicCoop: 'coopinc',
     });
     // Existing art keys that simply point at a new file once the level is delivered.
@@ -811,7 +812,7 @@
     }));
     let edmSmokeStamp = null;
     const birdFrames = { bert: [], blue: [], block: [], brain: [], eagle: [], mecha: [], noir: [], vulture: [], sugar: [], moss: [], ink: [], prism: [],
-        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], eggbert: [], pixelara: [], skyggeravn: [], turbokolibri: [], kongeaben: [], tukantwist: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
+        pingo: [], mogens: [], ninja: [], pakke: [], gold: [], eggbert: [], pixelara: [], skyggeravn: [], turbokolibri: [], kongeaben: [], tukantwist: [], powerorn: [], kaptajnmaage: [], glitterkakadue: [], lynisfugl: [], skrotskade: [], guldfasan: [], hjertesvale: [], mursejler: [], dobbeltpapegoje: [], flammefugl: [], spoergeugle: [], turbospaette: [], farvepaafugl: [], eventyrfalk: [], solparakit: [], epicMalthe: [], epicJohan: [], epicSos: [], epicThor: [], epicFan: [], epicCoop: [] };
     // Folder per hero. Epic heroes fall back to a stand-in until their own art is added.
     // Heroes redrawn in the shared style (see docs: grafikplan). Folder under assets/.
     const V2_FPS = 12;
@@ -853,6 +854,21 @@
         turbokolibri: 'assets/heroes/turbokolibri/flap-03.webp',
         kongeaben: 'assets/heroes/kongeaben/flap-03.webp',
         tukantwist: 'assets/heroes/tukantwist/flap-03.webp',
+        powerorn: 'assets/heroes/powerorn/flap-03.webp',
+        kaptajnmaage: 'assets/heroes/kaptajnmaage/flap-03.webp',
+        glitterkakadue: 'assets/heroes/glitterkakadue/flap-03.webp',
+        lynisfugl: 'assets/heroes/lynisfugl/flap-03.webp',
+        skrotskade: 'assets/heroes/skrotskade/flap-03.webp',
+        guldfasan: 'assets/heroes/guldfasan/flap-03.webp',
+        hjertesvale: 'assets/heroes/hjertesvale/flap-03.webp',
+        mursejler: 'assets/heroes/mursejler/flap-03.webp',
+        dobbeltpapegoje: 'assets/heroes/dobbeltpapegoje/flap-03.webp',
+        flammefugl: 'assets/heroes/flammefugl/flap-03.webp',
+        spoergeugle: 'assets/heroes/spoergeugle/flap-03.webp',
+        turbospaette: 'assets/heroes/turbospaette/flap-03.webp',
+        farvepaafugl: 'assets/heroes/farvepaafugl/flap-03.webp',
+        eventyrfalk: 'assets/heroes/eventyrfalk/flap-03.webp',
+        solparakit: 'assets/heroes/solparakit/flap-03.webp',
         epicMalthe: 'assets/epic-malthe/up.webp',
         epicJohan: 'assets/epic-johan/up.webp',
         epicSos: 'assets/epic-sos/up.webp',

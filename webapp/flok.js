@@ -15,7 +15,8 @@
     const BOT_COUNT = 14;
     const ORB_MIN = 15;
     const HEROES = ['bert', 'blue', 'block', 'brain', 'eagle', 'mecha', 'noir', 'vulture', 'sugar', 'moss', 'ink', 'prism', 'pingo', 'mogens', 'ninja', 'pakke', 'gold',
-        'pixelara', 'skyggeravn', 'turbokolibri', 'kongeaben', 'tukantwist'];
+        'pixelara', 'skyggeravn', 'turbokolibri', 'kongeaben', 'tukantwist',
+        'powerorn', 'kaptajnmaage', 'glitterkakadue', 'lynisfugl', 'skrotskade', 'guldfasan', 'hjertesvale', 'mursejler', 'dobbeltpapegoje', 'flammefugl', 'spoergeugle', 'turbospaette', 'farvepaafugl', 'eventyrfalk', 'solparakit'];
     // Hero id in the game → art folder (most are the same).
     const HERO_FOLDER = { epicMalthe: 'epic-malthe', epicJohan: 'epic-johan', epicSos: 'epic-sos', epicThor: 'epic-thor', epicFan: 'fanbert', epicCoop: 'coopinc' };
     const folderOf = (hero) => HERO_FOLDER[hero] || hero;

@@ -19,7 +19,7 @@ require(path.join(__dirname, '..', 'webapp', 'bert-meta.js'));
 const meta = global.window.BertMeta;
 
 assert.equal(meta.snapshot().hero, 'bert');
-assert.equal(meta.heroCatalog().length, 29); // 23 + 5 creator heroes (round 11) + Æggebert
+assert.equal(meta.heroCatalog().length, 44); // 23 + 20 creator heroes (round 11) + Æggebert
 meta.setHero('blue');
 assert.equal(meta.snapshot().hero, 'bert', 'A locked hero cannot be selected.');
 assert.equal(meta.buyHero('prism').ok, false, 'A new player cannot buy a hero without feathers.');

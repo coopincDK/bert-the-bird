@@ -20,7 +20,7 @@ function load(seed = null, memory = new Map()) {
 const owned = (meta, id) => meta.heroCatalog().find((entry) => entry.id === id);
 
 let { meta, heroes } = load();
-assert.equal(meta.heroCatalog().length, 29); // 23 + 5 creator heroes (round 11) + Æggebert
+assert.equal(meta.heroCatalog().length, 44); // 23 + 20 creator heroes (round 11) + Æggebert
 assert.equal(meta.heroCatalog().filter((hero) => hero.owned).length, 1);
 assert.equal(owned(meta, 'block').price, 180);
 assert.equal(owned(meta, 'prism').price, 480);
