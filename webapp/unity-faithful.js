@@ -16,7 +16,7 @@
     const BASE_WIDTH = 1280;
     const MAX_ASPECT = 21 / 9;
     const BASE_BIRD_X = 185;
-    const BUILD_VERSION = 'worlds-relay-107';
+    const BUILD_VERSION = 'worlds-relay-108';
     const FLAPPY_GRAVITY = 1750;
     const BIRD = { x: 185, width: 124, height: 113 };
     const FIXED_STEP = 1 / 60;
@@ -2191,10 +2191,7 @@
         document.body.classList.add('is-prewarm');
         dom.levelName.textContent = state.dailyKey
             ? T`DAGENS RUTE · MÅL ${state.dailyTarget}`
-            : currentLevel === EDM_EVENT ? T('EVENT · NEON ENCORE · TESTBANE')
-            : currentLevel === BIRD_RUN_EVENT ? T('EVENT · BIRD RUN · TESTBANE')
-            : currentLevel === STORMLINE_EVENT ? T('EVENT · STORMLINE · TESTBANE')
-            : currentLevel === SKY_RELAY_EVENT ? T('MINISPIL · SKY RELAY · LOKALT')
+            : isEventLevel() ? T`BONUSBANE · ${currentLevel.name.toUpperCase()}`
             : isAdventureLevel() ? `EVENTYR · ${currentLevel.name.toUpperCase()}`
             : `${currentLevel.modeGroup.toUpperCase()} ${currentLevel.modeOrder} · ${currentLevel.name.toUpperCase()}`;
         dom.hint.textContent = currentLevel.mode === MODE.FLAPPY
@@ -2223,14 +2220,59 @@
                 ? T`${currentLevel.cardText} · VENSTRE OP · HØJRE NED`
                 : T('VENSTRE SIDE = OP · HØJRE SIDE = NED');
         setVisible(dom.hint, true);
+        showLevelIntro();
         updateHud();
         stopMusic();
         window.BertApp?.enterGameMode();
         return true;
     }
 
+    // Before a level starts: a short card that says what THIS level is about, so look-alike
+    // levels (Desert and Fuglesværm) are not confused (feedback 10. okt.).
+    const CONTROL_HOLD = T('Hold venstre side = op · højre side = ned');
+    const CONTROL_TAP = T('Tryk for at baske · slip for at falde');
+    const LEVEL_INTRO = {
+        1: [T('Flyv mellem søjlerne og saml stjerner. Banen bliver hurtigere, og hullerne bliver mindre.'), CONTROL_HOLD],
+        4: [T('Pas på slanger, der hopper op, og edderkopper, der hænger i spind.'), CONTROL_HOLD],
+        5: [T('Slikstårne ruller og står skævt. Find hullet i tide.'), CONTROL_HOLD],
+        3: [T('Flappy: flyv gennem hullerne mellem skorstenene.'), CONTROL_TAP],
+        6: [T('Flappy: hullerne skifter højde, mens du flyver.'), CONTROL_TAP],
+        7: [T('Flappy: den sværeste af de tre. Små huller og høj fart.'), CONTROL_TAP],
+        2: [T('Følg tunnelen, og rør ikke væggene.'), CONTROL_HOLD],
+        8: [T('Tunnelen snor sig mere og bliver smallere.'), CONTROL_HOLD],
+        9: [T('Den hurtigste tunnel. Hold dig i midten.'), CONTROL_HOLD],
+        21: [T('Containerne flytter sig. Pas på kranekroge og måger.'), CONTROL_HOLD],
+        22: [T('Lyset slukker langsomt. Saml lanterner for at kunne se.'), CONTROL_HOLD],
+        24: [T('Vinden skubber dig. Pas på møllevinger og drager.'), CONTROL_HOLD],
+        23: [T('Lavaen stiger. Saml kølesten, og undgå bomber og meteorer.'), CONTROL_HOLD],
+        20: [T('Glat styring: Bert glider efter. Styr i god tid.'), CONTROL_HOLD],
+        25: [T('Spis mad, og tryk på 💩 for at ramme mål nedenunder.'), CONTROL_HOLD],
+        10: [T('Koncert: kom forbi boldene, når publikum laver bølgen.'), CONTROL_HOLD],
+        11: [T('Flyv med flokken, og undgå rovfuglen, når den varsles.'), CONTROL_HOLD],
+        12: [T('Stormen kaster ting efter dig. Hold øje med pilene.'), CONTROL_HOLD],
+        13: [T('Flyv gennem tre skyporte, og ring med klokken. Portene bliver mindre.'), CONTROL_HOLD],
+        14: [T('Ingen vingeslag: op koster fart, ned giver fart. Find opvinden, og flyv langt.'), CONTROL_HOLD],
+        15: [T('Hver 10. stjerne i træk giver en fugl i flokken. Et sammenstød koster en fugl i stedet for turen.'), CONTROL_HOLD],
+    };
+    function showLevelIntro() {
+        const card = document.getElementById('level-intro');
+        if (!card) return;
+        const [goal, controls] = LEVEL_INTRO[currentLevel.id] || [T('Saml stjerner, og undgå forhindringerne.'), CONTROL_HOLD];
+        const group = isEventLevel() ? T('BONUSBANE') : isAdventureLevel() ? T('EVENTYR') : (modeForLevel(currentLevel) || 'classic').toUpperCase();
+        const best = loadHighscore(currentLevel.id);
+        card.querySelector('.intro-group').textContent = state.mirror ? `${group} · ${T('SPEJLVENDT')}` : group;
+        card.querySelector('.intro-name').textContent = currentLevel.name;
+        card.querySelector('.intro-goal').textContent = goal;
+        card.querySelector('.intro-controls').textContent = controls;
+        card.querySelector('.intro-medals').textContent = best > 0 ? T`Rekord ${best} · bronze 20 · sølv 50 · guld 100` : T('Bronze 20 · sølv 50 · guld 100');
+        setVisible(dom.hint, false);
+        card.classList.remove('hidden');
+    }
+    function hideLevelIntro() { document.getElementById('level-intro')?.classList.add('hidden'); }
+
     function beginRun() {
         if (state.phase !== 'prewarm') return;
+        hideLevelIntro();
         state.phase = 'playing';
         state.elapsed = 0;
         // Nest perk "Hurtig start": the first five seconds are safe and a little faster.

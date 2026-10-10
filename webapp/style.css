@@ -2746,3 +2746,19 @@ aside.menu-record { width: min(250px, 28vw) !important; min-width: 0 !important;
 /* Dagens rute: status i hjørnet, navnet får hele linjen. */
 #main-menu #daily-btn #daily-state { position: absolute !important; right: 14px !important; top: 9px !important; grid-column: auto !important; grid-row: auto !important; font-size: 9px !important; }
 #main-menu #daily-btn > strong { grid-column: 2 / -1 !important; }
+
+/* Kort før banen starter: hvad går banen ud på (10. okt.) */
+.level-intro { position: absolute; z-index: 40; left: 50%; top: 50%; transform: translate(-50%, -50%); width: min(78vw, 560px); padding: 14px 20px 12px;
+    border-radius: 18px; background: rgba(8,20,32,.86); border: 2px solid rgba(255,217,138,.8); color: #fff; text-align: center; pointer-events: none;
+    box-shadow: 0 10px 30px rgba(0,0,0,.35); animation: intro-in .25s ease-out; }
+.level-intro.hidden { display: none; }
+.level-intro p { margin: 0; }
+.intro-group { font-size: 10px; font-weight: 900; letter-spacing: .14em; color: #b6ff3b; }
+.intro-name { margin: 2px 0 6px; font: 900 clamp(22px, 6vh, 32px) "Bert Display", sans-serif; letter-spacing: .04em; text-shadow: 0 3px 0 #0a2342; }
+.intro-goal { font-size: clamp(13px, 3.6vh, 16px); font-weight: 800; line-height: 1.35; }
+.intro-controls { margin-top: 6px !important; font-size: 11px; font-weight: 900; letter-spacing: .06em; color: #8fd6ff; }
+.intro-medals { margin-top: 4px !important; font-size: 11px; font-weight: 800; color: #ffd98a; }
+.intro-start { margin-top: 10px !important; font: 900 13px "Bert Display", sans-serif; letter-spacing: .12em; color: #b6ff3b; animation: intro-blink 1.2s ease-in-out infinite; }
+@keyframes intro-in { from { opacity: 0; transform: translate(-50%, -46%); } to { opacity: 1; transform: translate(-50%, -50%); } }
+@keyframes intro-blink { 50% { opacity: .45; } }
+@media (prefers-reduced-motion: reduce) { .level-intro, .intro-start { animation: none; } }
