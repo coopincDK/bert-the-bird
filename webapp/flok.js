@@ -46,7 +46,7 @@
         if (setting('sfx', true) === false) return;
         window.BertSfx?.play(name, 0.45 * Number(setting('sfxVolume', 0.7)) * volume);
     }
-    const music = new Audio('assets/music/windfarm.mp3');
+    const music = new Audio('assets/music/flokken.mp3');
     music.loop = true;
     function startMusic() {
         if (setting('music', true) === false) return;
